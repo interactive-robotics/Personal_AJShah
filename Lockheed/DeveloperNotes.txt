@@ -1,0 +1,9 @@
+Describe each model as a class with with parameters, current sufficient statistics and model evidence based on the sufficient statistics.
+
+TrajEntry structure
+TrajEntry.X (Vector of state space)
+TrajEntry.t
+TrajEntry.reward
+TrajEntry.u (Vector of recording control inputs)
+
+NOTE: verify whether Konidaris CST paper has inverted the definition of the D matrix. Take note
