@@ -5,6 +5,7 @@ classdef Model < handle
         %Basis.order
         %Basis.Bounds
         %Basis.dimension
+        %Basis.Size
         
         Params
         %Params.delta
@@ -26,7 +27,8 @@ classdef Model < handle
         %A function of time
         
         Ptjq
-        % A function of time.
+        % Ptjq[]
+        %Probability of previous changepoint occuring at t
         
         tCurrent
         
@@ -53,15 +55,15 @@ classdef Model < handle
             
             NewModel.Ptjq = [];
             
-            NewModel.t = [0];
+            NewModel.t = 0;
         end
         
-        function [Pjt C1 C2 C3 C4 yq] = ComputeModelEvidence(NewModel,t,j)
+        function [Pjt, C1, C2, C3, C4, yq] = ComputeModelEvidence(NewModel,t,j)
             Aq = NewModel.Statistics(j).Aq;
-            zq = NewModel.Statistics(j).zq;
+            %zq = NewModel.Statistics(j).zq;
             bq = NewModel.Statistics(j).bq;
-            tr_1q = NewModel.Statistics(j).tr_1q;
-            tr_2q = NewModel.Statistics(j).tr_2q;
+            %tr_1q = NewModel.Statistics(j).tr_1q;
+            %tr_2q = NewModel.Statistics(j).tr_2q;
             sum_rq = NewModel.Statistics(j).sum_rq;
             delta = NewModel.Params.delta;
             %sigma2v = NewModel.Params.sigma2v;
@@ -130,20 +132,36 @@ classdef Model < handle
         function UpdateModelEvidence(NewModel)
             nSize = size(NewModel.Statistics,1);
             for tStep = 1:nSize
-                [ME.Pjt ME.C1 ME.C2 ME.C3 ME.C4 ME.yq] = NewModel.ComputeModelEvidence(NewModel.tCurrent,tStep); 
+                [ME.Pjt, ME.C1, ME.C2, ME.C3, ME.C4, ME.yq] = NewModel.ComputeModelEvidence(NewModel.tCurrent,tStep); 
                 NewModel.ModelEvidence(tStep) = ME;
             end
         end
         
-        function ReceiveNewTrajEntry(NewModel,TrajEntry)
+        function UpdatePtjq(NewModel,MAPEstimates, ModelPrior, skillLength)
+            p = 1/skillLength;
+            for itStep = 1:NewModel.tCurrent-1
+                C1 = 1 - geocdf(NewModel.tCurrent - itStep - 1,p);
+                C2 = NewModel.ModelEvidence(itStep).Pjt;
+                C3 = ModelPrior;
+                C4 = MAPEstimates(itStep).P;
+                NewModel.Ptjq(itStep,1) = C1*C2*C3*C4;
+            end
+        end
+        
+        function ReceiveNewTrajEntry(NewModel,TrajEntry,MAPEstimates,ModelPrior,skillLength)
             NewModel.tCurrent = NewModel.tCurrent+1;
             NewModel.t = [NewModel.t; TrajEntry.t];
             NewModel.UpdateModelStatistics(TrajEntry);
             %Update the model evidence
             NewModel.UpdateModelEvidence();
-            % Update the viterbi path probabilities
+            if nargin>2 %if called only with 2 arguments, then being called from the test script
+            NewModel.UpdatePtjq(MAPEstimates,ModelPrior,skillLength);
+            end
+            
             
         end
+        
+        
         
     end    
 end

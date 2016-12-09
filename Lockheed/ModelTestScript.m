@@ -10,6 +10,7 @@ Bounds(3).max = pi;
 Bounds(3).min = -pi;
 Basis.Bounds = Bounds;
 Basis.dimension = 3;
+Basis.size = (Basis.order+1)^Basis.dimension;
 
 %Define Parameters
  
