@@ -31,11 +31,22 @@ CPDParameters.skillLength = 100;
 %Create the CPD Object
 NewCPD = CPD(Models,ModelPriors,CPDParameters);
 
-load ExampleTraj2.mat
-TrajEntryTable = (NewDomain.Trajectory(2,:));
-TrajEntry.t = TrajEntryTable.t;
-TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
-TrajEntry.reward = TrajEntryTable.reward;
-TrajEntry.U = TrajEntryTable.control;
+load ExampleTraj3.mat
+% TrajEntryTable = (NewDomain.Trajectory(2,:));
+% TrajEntry.t = TrajEntryTable.t;
+% TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
+% TrajEntry.reward = TrajEntryTable.reward;
+% TrajEntry.U = TrajEntryTable.control;
+% 
+% NewCPD.ReceiveTrajectory(TrajEntry);
 
-NewCPD.ReceiveTrajectory(TrajEntry);
+for i = 2:200
+    TrajEntryTable = (NewDomain.Trajectory(i,:));
+    TrajEntry.t = TrajEntryTable.t;
+    TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
+    TrajEntry.reward = TrajEntryTable.reward;
+    TrajEntry.U = TrajEntryTable.control;
+    NewCPD.ReceiveTrajectory(TrajEntry);
+end
+
+Changepoints = NewCPD.LookBack();

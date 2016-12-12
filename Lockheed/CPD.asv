@@ -70,9 +70,10 @@ classdef CPD < handle
             Changepoints(1,1).model = prevModel;
             %tLookBack = tCurr;
             
-            while prevChangepoint > 1
+            while prevChangepoint >=1
                 prevModel = NewCPD.MAPEstimates(prevChangepoint).model;
                 prevChangepoint = NewCPD.MAPEstimates(prevChangepoint).tStep;
+                
                 newChangepoint.tStep = prevChangepoint;
                 newChangepoint.model = prevModel;
                 Changepoints = [Changepoints; newChangepoint];

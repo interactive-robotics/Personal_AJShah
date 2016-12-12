@@ -20,7 +20,7 @@ Waypoint(3).x = 1;
 Waypoint(3).y = 2;
 
 Waypoint(4).x = -3;
-Waypoint(4).y = -4;
+Waypoint(4).y = 4;
 
 NewDomain.SetWaypoints(Waypoint);
 % for i = 1:100
