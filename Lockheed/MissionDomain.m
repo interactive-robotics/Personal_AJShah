@@ -192,6 +192,12 @@ classdef MissionDomain < handle
             end
         end
         
+        function PlotChangepoints(NewDomain,Changepoints)
+            NewDomain.PlotDomain()
+            tsteps = [Changepoints(:).tStep];
+            plot([NewDomain.Trajectory.x(tsteps)],[NewDomain.Trajectory.y(tsteps)],'rx','MarkerSize',12);
+        end
+        
             
             
         

@@ -1,8 +1,10 @@
+clear all
+datafile = 'ExampleTraj5.mat';
 
 %Define all the models in the CPD formulation
 %Model 1:
 %Define Basis information
-Basis.order = 2;
+Basis.order = 1;
 Bounds(1).max = 5;
 Bounds(1).min = -5;
 Bounds(2).max = 5;
@@ -31,7 +33,7 @@ CPDParameters.skillLength = 100;
 %Create the CPD Object
 NewCPD = CPD(Models,ModelPriors,CPDParameters);
 
-load ExampleTraj3.mat
+load(datafile)
 % TrajEntryTable = (NewDomain.Trajectory(2,:));
 % TrajEntry.t = TrajEntryTable.t;
 % TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
@@ -40,7 +42,9 @@ load ExampleTraj3.mat
 % 
 % NewCPD.ReceiveTrajectory(TrajEntry);
 
-for i = 2:200
+Tmax = size(NewDomain.Trajectory,1);
+
+for i = 2:Tmax
     TrajEntryTable = (NewDomain.Trajectory(i,:));
     TrajEntry.t = TrajEntryTable.t;
     TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
@@ -50,3 +54,4 @@ for i = 2:200
 end
 
 Changepoints = NewCPD.LookBack();
+NewDomain.PlotChangepoints(Changepoints)
