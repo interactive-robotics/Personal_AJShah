@@ -1,5 +1,5 @@
 clear all
-datafile = 'ExampleTraj5.mat';
+datafile = 'ExampleTraj9.mat';
 
 %Define all the models in the CPD formulation
 %Model 1:

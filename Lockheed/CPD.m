@@ -1,4 +1,4 @@
-classdef CPD < handle
+ classdef CPD < handle
     
     properties
         Models
@@ -58,8 +58,8 @@ classdef CPD < handle
             for iModel = 1:size(NewCPD.Models,1)
                 NewCPD.tCurrent = NewCPD.tCurrent+1;
                 NewCPD.Models(iModel).ReceiveNewTrajEntry(TrajEntry,NewCPD.MAPEstimates,NewCPD.ModelPriors,NewCPD.Parameters.skillLength);
-                NewCPD.UpdatePMAP();
             end
+            NewCPD.UpdatePMAP();
         end
         
         function Changepoints = LookBack(NewCPD)

@@ -119,7 +119,7 @@ classdef MissionDomain < handle
             X = NewDomain.VectorizeState();
             [~,y] = ode45(@(t,x)NewDomain.StateDerivative(x,Control),[0 NewDomain.deltaT],X);
             FinalState = y(end,:);
-            
+            FinalState(3) = FinalState(3)+normrnd(0,0.05);
             %Update the state of the Domain
             NewDomain.CurrentState.t = NewDomain.CurrentState.t + NewDomain.deltaT;
             NewDomain.CurrentState.x = FinalState(1);
@@ -128,7 +128,7 @@ classdef MissionDomain < handle
             
             %Add the state to the trajectory
             TrajEntry =  NewDomain.CurrentState;
-            TrajEntry.reward = -0.1 - NewDomain.RewardGain*Control^2;
+            TrajEntry.reward = -0.02 - NewDomain.RewardGain*Control^2;
             TrajEntry.control = Control;
             NewDomain.Trajectory = [NewDomain.Trajectory; struct2table(TrajEntry)];
         end
