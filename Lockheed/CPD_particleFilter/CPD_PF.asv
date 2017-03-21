@@ -67,7 +67,7 @@ classdef CPD_PF < handle
             if nParticles >= NewCPD.Parameters.maxParticles;
                 % Use the stratified optimal resampling algorithm to
                 % resample the particles
-                NewCPD.ResampleParticles
+                ResampleParticles(NewCPD.Particles,minParticles)
             end
             
             %Obtain the most likely particle for the previous changepoint
@@ -120,24 +120,6 @@ classdef CPD_PF < handle
             indices = find(resample);
             ResampledParticles = NewCPD.Particles(indices);
             NewCPD.Particles = ResampledParticles;
-        end
-        
-        
-        function Changepoints = LookBack(NewCPD)
-            tCurr = NewCPD.iCurrent;
-            prevChangepoint = NewCPD.MAPEstimates(tCurr).tstep;
-            prevModel = NewCPD.MAPEstimates(tCurr).model;
-            Changepoints(1,1).tStep = prevChangepoint;
-            Changepoints(1,1).model = prevModel;
-            %tLookBack = tCurr;
-            
-            while prevChangepoint > 1
-                prevModel = NewCPD.MAPEstimates(prevChangepoint).model;
-                prevChangepoint = NewCPD.MAPEstimates(prevChangepoint).tStep;
-                newChangepoint.tStep = prevChangepoint;
-                newChangepoint.model = prevModel;
-                Changepoints = [Changepoints; newChangepoint];
-            end
         end
     end
 end

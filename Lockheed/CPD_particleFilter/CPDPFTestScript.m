@@ -40,7 +40,7 @@ load(datafile)
 
 Tmax = size(NewDomain.Trajectory,1);
 
-for i = 2:50
+for i = 2:Tmax
     TrajEntryTable = (NewDomain.Trajectory(i,:));
     TrajEntry.t = TrajEntryTable.t;
     TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
@@ -57,5 +57,7 @@ end
 %     TrajEntry.U = TrajEntryTable.control;
 %     NewCPD.ReceiveTrajectory(TrajEntry);
 % end
+
+Changepoints = NewCPD.LookBack();
 
 
