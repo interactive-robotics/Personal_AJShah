@@ -1,4 +1,4 @@
-classdef Particles < handle
+classdef Particle < handle
     
     % A class for objects of type particles, which will be used for the CPD
     % algorithm with particle filtering
@@ -13,7 +13,13 @@ classdef Particles < handle
         %the particle is assumed to be adhering to
         
         MAP
-        %MAP: The current scalar estimate of the a posteriori probability of changepoint. 
+        %MAP: The current scalar estimate of the a posteriori probability of changepoint.
+        
+        ModelEvidence
+        
+        Ptjq
+        % The weight of the particle in the posterior changepoint
+        % distribution
         
         MAPEstimates
         %The most likely path for the current particle
@@ -35,23 +41,28 @@ classdef Particles < handle
     end
     
     methods
-        function NewParticle = Particle(tBegin, Model, prev_Map)
+        function NewParticle = Particle(tBegin, Model, prev_MAP, MAPEstimates)
             
             NewParticle.tBegin = tBegin;
             NewParticle.Model = Model;
-            NewParticle.prev_Map = prev_MAP;
+            NewParticle.prev_MAP = prev_MAP;
             NewParticle.tCurrent = tBegin;
             NewParticle.MAP = 0;
+            NewParticle.Ptjq = 0;
+            NewParticle.ModelEvidence = 0;
             
             %Initialize the sufficient statistics to compute fit
             %probability
             BasisSize = (NewParticle.Model.Basis.order+1)^NewParticle.Model.Basis.dimension;
-            NewParticle.Statistics(tIndexMax,1).Aq = zeros(BasisSize,BasisSize);
-            NewParticle.Statistics(tIndexMax,1).zq = zeros(BasisSize,1);
-            NewParticle.Statistics(tIndexMax,1).bq = zeros(BasisSize,1);
-            NewParticle.Statistics(tIndexMax,1).tr_1q = 0;
-            NewParticle.Statistics(tIndexMax,1).sum_rq = 0;
-            NewParticle.Statistics(tIndexMax,1).tr_2q = 0;
+            NewParticle.Statistics(1,1).Aq = zeros(BasisSize,BasisSize);
+            NewParticle.Statistics(1,1).zq = zeros(BasisSize,1);
+            NewParticle.Statistics(1,1).bq = zeros(BasisSize,1);
+            NewParticle.Statistics(1,1).tr_1q = 0;
+            NewParticle.Statistics(1,1).sum_rq = 0;
+            NewParticle.Statistics(1,1).tr_2q = 0;
+            
+            %Initialize the path estimates
+            NewParticle.MAPEstimates = MAPEstimates;
             
             
         end
@@ -59,9 +70,9 @@ classdef Particles < handle
         function ReceiveTrajectory(NewParticle,TrajEntry,skillLength)
             NewParticle.tCurrent = NewParticle.tCurrent+1;
             NewParticle.UpdateStatistics(TrajEntry);
-            ModelEvidence = NewParticle.ComputeModelEvidence();
-            Ptjq = NewParticle.ComputePtjq(ModelEvidence, skillLength);
-            NewParticle.ComputeMAP(Ptjq, skillLength);
+            NewParticle.ComputeModelEvidence();
+            NewParticle.ComputePtjq(skillLength);
+            NewParticle.ComputeMAP(skillLength);
         end
         
         function UpdateStatistics(NewParticle, TrajEntry)
@@ -84,14 +95,14 @@ classdef Particles < handle
             NewParticle.Statistics.tr_2q = discount*tr_2q + TrajEntry.reward*tr_1q;            
         end
         
-        function ModelEvidence = ComputeModelEvidence(NewParticle)
+        function ComputeModelEvidence(NewParticle)
             Aq = NewParticle.Statistics.Aq;
             bq = NewParticle.Statistics.bq;
             sum_rq = NewParticle.Statistics.sum_rq;
-            delta = NewParticle.Model.Params.delta;
-            u = NewParticle.Model.Params.u;
-            v = NewParticle.Model.Params.v;
-            BasisSize = (NewParticle.Model.Basis.order+1)^NewParticle.Model.Basis.Dimension;
+            delta = NewParticle.Model.Parameters.delta;
+            u = NewParticle.Model.Parameters.u;
+            v = NewParticle.Model.Parameters.v;
+            BasisSize = (NewParticle.Model.Basis.order+1)^NewParticle.Model.Basis.dimension;
             
             D = (1/delta)*eye(BasisSize);
             invAqD = inv(Aq+D);
@@ -103,22 +114,23 @@ classdef Particles < handle
             C2 = sqrt(det(invAqD));
             C3 = (u^(v/2)/(yq + u)^((n+v)/2));
             C4 = (gamma((n+v)/2)/gamma(v/2));
-            ModelEvidence = C1*C2*C3*C4;
+            NewParticle.ModelEvidence = C1*C2*C3*C4;
             
         end
         
-        function Ptjq =  ComputePtjq(NewParticle,ModelEvidence,skillLength)
+        function ComputePtjq(NewParticle,skillLength)
             p = 1/skillLength;
             C1 = 1 - geocdf((NewParticle.tCurrent - NewParticle.tBegin - 1) , p);
-            C2 = ModelEvidence;
+            C2 = NewParticle.ModelEvidence;
             C3 = NewParticle.Model.ModelPrior;
             C4 = NewParticle.prev_MAP;
-            Ptjq = C1*C2*C3*C4;
+            NewParticle.Ptjq = C1*C2*C3*C4;
+            
         end
         
-        function ComputeMAP(NewParticle, Ptjq,  skillLength)
-            p = q/skillLength;
-            NewParticle.MAP = (Ptjq*geopdf(NewParticle.tCurrent - NewParticle.tBegin,p))/(1-geocdf(NewParticle.tCurrent-NewParticle.tBegin-1,p));
+        function ComputeMAP(NewParticle,  skillLength)
+            p = 1/skillLength;
+            NewParticle.MAP = (NewParticle.Ptjq*geopdf(NewParticle.tCurrent - NewParticle.tBegin,p))/(1-geocdf(NewParticle.tCurrent-NewParticle.tBegin-1,p));
         end
     end
 end

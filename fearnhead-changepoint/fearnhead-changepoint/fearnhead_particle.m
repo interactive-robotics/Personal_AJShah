@@ -94,7 +94,7 @@ for k = 2:sz
     
     subplot(4, 1, 2);
     plot(index(k, 1:num_particles(k)), w(1:num_particles(k)), 'go');
-    axis([0 sz 0 1]);
+    axis([0 sz 0 0.02]);
     ylabel('weights');
     
     subplot(4, 1, 3);
