@@ -110,7 +110,7 @@ classdef Particle < handle
             m = BasisSize;
             n = NewParticle.tCurrent-NewParticle.tBegin;
             
-            C1 = (pi^(-n/2)/delta^m);
+            C1 = (pi^(-n/2)/sqrt(delta^m));
             C2 = sqrt(det(invAqD));
             C3 = (u^(v/2)/(yq + u)^((n+v)/2));
             C4 = (gamma((n+v)/2)/gamma(v/2));

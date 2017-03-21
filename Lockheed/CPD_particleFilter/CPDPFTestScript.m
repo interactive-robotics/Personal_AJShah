@@ -40,7 +40,7 @@ load(datafile)
 
 Tmax = size(NewDomain.Trajectory,1);
 
-for i = 2:60
+for i = 2:50
     TrajEntryTable = (NewDomain.Trajectory(i,:));
     TrajEntry.t = TrajEntryTable.t;
     TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
@@ -49,13 +49,13 @@ for i = 2:60
     NewCPD.ReceiveTrajectory(TrajEntry);
 end
 
-for i = 60:100
-    TrajEntryTable = (NewDomain.Trajectory(i,:));
-    TrajEntry.t = TrajEntryTable.t;
-    TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
-    TrajEntry.reward = TrajEntryTable.reward;
-    TrajEntry.U = TrajEntryTable.control;
-    NewCPD.ReceiveTrajectory(TrajEntry);
-end
+% for i = 60:100
+%     TrajEntryTable = (NewDomain.Trajectory(i,:));
+%     TrajEntry.t = TrajEntryTable.t;
+%     TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
+%     TrajEntry.reward = TrajEntryTable.reward;
+%     TrajEntry.U = TrajEntryTable.control;
+%     NewCPD.ReceiveTrajectory(TrajEntry);
+% end
 
 

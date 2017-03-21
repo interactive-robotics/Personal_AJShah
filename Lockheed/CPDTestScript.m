@@ -44,7 +44,7 @@ load(datafile)
 
 Tmax = size(NewDomain.Trajectory,1);
 
-for i = 2:Tmax
+for i = 2:3 
     TrajEntryTable = (NewDomain.Trajectory(i,:));
     TrajEntry.t = TrajEntryTable.t;
     TrajEntry.X = [TrajEntryTable.x;TrajEntryTable.y;TrajEntryTable.theta];
