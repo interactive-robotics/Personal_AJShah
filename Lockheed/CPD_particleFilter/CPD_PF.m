@@ -124,7 +124,7 @@ classdef CPD_PF < handle
         
         
         function Changepoints = LookBack(NewCPD)
-            tCurr = NewCPD.iCurrent;
+            tCurr = NewCPD.iCurrent-1;
             prevChangepoint = NewCPD.MAPEstimates(tCurr).tstep;
             prevModel = NewCPD.MAPEstimates(tCurr).model;
             Changepoints(1,1).tStep = prevChangepoint;
@@ -133,7 +133,7 @@ classdef CPD_PF < handle
             
             while prevChangepoint > 1
                 prevModel = NewCPD.MAPEstimates(prevChangepoint).model;
-                prevChangepoint = NewCPD.MAPEstimates(prevChangepoint).tStep;
+                prevChangepoint = NewCPD.MAPEstimates(prevChangepoint).tstep;
                 newChangepoint.tStep = prevChangepoint;
                 newChangepoint.model = prevModel;
                 Changepoints = [Changepoints; newChangepoint];
