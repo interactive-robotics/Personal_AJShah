@@ -1,11 +1,12 @@
+close all
 clear all
-datafile = 'C:\Users\AJShah\Documents\GitHub\Personal_AJShah\Lockheed\ExampleTraj6.mat';
+datafile = 'C:\Users\AJShah\Documents\GitHub\Personal_AJShah\Lockheed\ExampleTraj1.mat';
 
 
 %Define all the models in the CPD formulation
 %Model 1:
 %Define Basis information
-Basis.order = 1;
+Basis.order = 2;
 Bounds(1).max = 5;
 Bounds(1).min = -5;
 Bounds(2).max = 5;

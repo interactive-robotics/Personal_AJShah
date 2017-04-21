@@ -72,7 +72,7 @@ classdef MissionDomain < handle
                 NewDomain.deltaT = 0.1;
                 
                 %Default Reward Gain
-                NewDomain.RewardGain = 0.5;
+                NewDomain.RewardGain = 0;
                 
             end
             
