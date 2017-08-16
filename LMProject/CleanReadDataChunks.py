@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 import pickle
 
-path = '/home/ajshah/Dropbox (MIT)/Data' #Define the path to the data folder here
+path = '/home/ajshah/Dropbox (MIT)/LM Data/Data' #Define the path to the data folder here
 
 def CreateFeatures(scenario):
     #scenario = '1A'
@@ -137,7 +137,7 @@ def CreateFeatures(scenario):
     Annotations = dict()
     for player in Playernames:
         rawData_sampled[player]['PHASE LABEL'] = ''
-        AnnotationFile = 'pilot_annotations/FlightAnnotation_'+player+'_'+scenario+'.csv'
+        AnnotationFile = path + '/' + 'pilot_annotations/FlightAnnotation_'+player+'_'+scenario+'.csv'
         Annotations[player] = pd.read_csv(AnnotationFile,header=0, index_col=False, error_bad_lines=False)
         for i in range(rawData_sampled[player].shape[0]):
             for j in range(Annotations[player].shape[0]-1):

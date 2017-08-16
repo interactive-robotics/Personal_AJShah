@@ -23,7 +23,7 @@ import numpy as np
 def GetFeatures(scenarios, FeatureClass):
     
     #Define path to the data folder
-    path = '/home/ajshah/Dropbox (MIT)/Data'
+    path = '/home/ajshah/Dropbox (MIT)/LM Data/Data'
     
     Features = pd.DataFrame()
     StartID = []
@@ -37,7 +37,7 @@ def GetFeatures(scenarios, FeatureClass):
             players = ['Cool21','Cool22']
         for player in players:
             
-            filename = FeatureClass+'/'+scenario+'_'+player+'.pkl'
+            filename = path + '/' + FeatureClass+'/'+scenario+'_'+player+'.pkl'
             data = pd.read_pickle(filename)
             
             NewFeatures = data.ix[:,data.columns!='Label']
