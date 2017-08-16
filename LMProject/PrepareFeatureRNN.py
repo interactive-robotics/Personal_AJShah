@@ -21,6 +21,10 @@ import numpy as np
 #Labels = pd.DataFrame()
 
 def GetFeatures(scenarios, FeatureClass):
+    
+    #Define the path of the data source
+    path = '/home/ajshah/Dropbox (MIT)/Data'
+    
     Features = pd.DataFrame()
     StartID = []
     EndID = []

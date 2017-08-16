@@ -10,9 +10,11 @@ import pandas as pd
 from scipy.interpolate import interp1d
 import pickle
 
+path = '/home/ajshah/Dropbox (MIT)/Data' #Define the path to the data folder here
+
 def CreateFeatures(scenario):
     #scenario = '1A'
-    filename = 'DataLogs/'+scenario+'.csv'
+    filename = path + '/' +  'DataLogs/'+scenario+'.csv'
     chunks = pd.read_csv(filename,header=0,skiprows=[1,2], index_col=False, error_bad_lines=False, chunksize=100000)
     
     # Define the players (Aircrafts)
@@ -189,7 +191,7 @@ def CreateFeatures(scenario):
     
     # Write the ownship data to the files
     for player in Playernames:
-        filename = 'OwnshipData/'+scenario+'_'+player+'.pkl'
+        filename = path + '/' + 'OwnshipData/'+scenario+'_'+player+'.pkl'
         FinalData[player].to_pickle(filename)
     
     # Generate Ownship+wingman features (only relative position)
@@ -209,7 +211,7 @@ def CreateFeatures(scenario):
         FinalWingmanFeature[player]['WingX'] = relPos[:,0]
         FinalWingmanFeature[player]['WingY'] = relPos[:,1]
         FinalWingmanFeature[player]['WingZ'] = relPos[:,2]
-        filename = 'OwnshipWingmanData/'+scenario+'_'+player+'.pkl'
+        filename = path + '/' + 'OwnshipWingmanData/'+scenario+'_'+player+'.pkl'
         FinalWingmanFeature[player].to_pickle(filename)
     return FinalData, FinalWingmanFeature, TargetLat, TargetLon, TargetAlt, Annotations, F16Data_time
 
