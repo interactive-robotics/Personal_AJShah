@@ -18,6 +18,7 @@ from keras import callbacks
 import pickle
 from itertools import product
 
+path = '/home/ajshah/Dropbox (MIT)/LM Data/Data'
 
 def TrainRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, BatchSize=100):
 #Prepare the data
@@ -85,8 +86,8 @@ def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, BatchSize=100):
         
         new_model,new_Test_acc,new_y_pred_labels,LabelDict = TrainRNN(Scenarios, [TestScenario], FeatureClass, WindowSize, BatchSize)
         
-        filename = 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.h5'
-        DatFilename = 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.pkl'
+        filename = path + '/' + 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.h5'
+        DatFilename = path + '/' + 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.pkl'
         
         new_model.save(filename)
         
