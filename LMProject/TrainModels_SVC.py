@@ -56,8 +56,9 @@ if __name__=='__main__':
 
     # Test LOOCV
     Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    #TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    TestScenarios = ['1A','2A']
-    models, TestAccs, predLabels_test = LOOCV(Scenarios, TestScenarios, 'OwnshipWingmanData')
+    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
+    #TestScenarios = ['1A','2A']
+    FeatureClass = 'OwnshipData'
+    models, TestAccs, predLabels_test = LOOCV(Scenarios, TestScenarios, 'OwnshipData')
     with open('LinearSVCResults_'+FeatureClass+'_'+'.pkl','wb') as file:
         pickle.dump({'Models':models, 'TestAccuracies':TestAccs, 'PredictedTestLabels':predLabels_test},file)
