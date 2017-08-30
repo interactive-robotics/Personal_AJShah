@@ -62,6 +62,40 @@ def TrainRNN(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
     
     return model, TestAcc, Y_test_predictions
 
+def TrainRNN2(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
+    
+    #SeqSize = 400
+    #WindowSize = 5
+    SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, FeatureClass='OwnshipData', WindowSize=WindowSize, SeqSize=SeqSize)
+    
+    input1 = Input(shape=(SeqSize,SeqX_train.shape[2]))
+    MaskedInput = Masking(mask_value=0)(input1)
+    
+    #Add dense layer to learn locally consistent behaviors
+    
+    #possible add more dense layers here
+    
+    #Stack LSTMs on top of each other
+    LSTMOut1 = LSTM(25, return_sequences = True)(MaskedInput)
+
+    # Provide LSTM output to dense classification activations
+    Dense2Out = TimeDistributed(Dense(SeqY_train.shape[2]))(LSTMOut1)
+    # Generate predictions from softmax activations
+    Predictions = TimeDistributed(Activation('softmax'))(Dense2Out)
+    
+    #Compile the model
+    model = Model(inputs = [input1], outputs = [Predictions])
+    model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.005), metrics = ['accuracy'])
+    model.fit(SeqX_train,SeqY_train, epochs = 200, validation_split=0.00, batch_size=10)
+    
+    model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.0025), metrics = ['accuracy'])
+    model.fit(SeqX_train,SeqY_train, epochs = 200, validation_split=0.00, batch_size=10)
+    
+    TestAcc = model.evaluate(SeqX_test,SeqY_test)[1]
+    Y_test_predictions = model.predict(SeqX_test)
+    
+    return model, TestAcc, Y_test_predictions
+
 def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SeqSize=100):
     models = {}
     Test_accs = []
@@ -105,17 +139,17 @@ def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], Seq
 
 
 if __name__=='__main__':
-#    scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
-#    TestScenario = ['2B']
-#    model, TestAcc, Y_test_predictions = TrainRNN(scenarios, TestScenario, FeatureClass = 'OwnshipData',WindowSize=5, SeqSize=100)
+    scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
+    TestScenario = ['2B']
+    model, TestAcc, Y_test_predictions = TrainRNN2(scenarios, TestScenario, FeatureClass = 'OwnshipData', WindowSize=10, SeqSize=500)
     
-        # Test LOOCV
-    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    FeatureClass = 'OwnshipWingmanData'
-    models, Test_accs, y_pred_labels = LOOCV(Scenarios, TestScenarios, FeatureClass=FeatureClass)
-    with open('RNNResults_'+FeatureClass+'.pkl','wb') as file:
-        pickle.dump({'Models':models,'TestAccuracies':Test_accs, 'PredictedLabels':y_pred_labels},file)
+#        # Test LOOCV
+#    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
+#    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
+#    FeatureClass = 'OwnshipWingmanData'
+#    models, Test_accs, y_pred_labels = LOOCV(Scenarios, TestScenarios, FeatureClass=FeatureClass)
+#    with open('RNNResults_'+FeatureClass+'.pkl','wb') as file:
+#        pickle.dump({'Models':models,'TestAccuracies':Test_accs, 'PredictedLabels':y_pred_labels},file)
 
 
 ##    

@@ -15,8 +15,8 @@ import numpy as np
 
 resultsPath = '/home/ajshah/Dropbox (MIT)/LM Data/Data/Results'
 dataPath = path = '/home/ajshah/Dropbox (MIT)/LM Data/Data'
-FeatureClass = 'OwnshipData'
-ResultsFile = 'LinearSVCResults_OwnshipData_.pkl'
+FeatureClass = 'OwnshipWingmanData'
+ResultsFile = 'LRResults_OwnshipWingmanData.pkl'
 
 
 #Load example dataframe of the data of the given Class
@@ -42,7 +42,7 @@ FeatureMap = data['FeatureMap']
 
 topPredictors = {}
 
-topN = 10
+topN = 20
 
 for key in Models.keys():
     for j in range(len(Models[key].classes_)):
@@ -53,3 +53,7 @@ for key in Models.keys():
         for index in TopIndices:
             TopFeatures.append(FeatureMap[index%nFeatures])
         topPredictors[(key,Models[key].classes_[j])] = TopFeatures
+
+keys = topPredictors.keys()
+for key in keys:
+    topPredictors[key] = list(set(topPredictors[key]))
