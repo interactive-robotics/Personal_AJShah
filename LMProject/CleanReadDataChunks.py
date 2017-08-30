@@ -9,8 +9,10 @@ Created on Thu Jul  6 17:04:00 2017
 import pandas as pd
 from scipy.interpolate import interp1d
 import pickle
+import numpy as np
 
 path = '/home/ajshah/Dropbox (MIT)/LM Data/Data' #Define the path to the data folder here
+SampleTime = 1
 
 
 def ExtractAircraftData(scenario):
@@ -82,6 +84,173 @@ def ExtractAircraftData(scenario):
         F16Data_time[player]['REL TIME'] = F16Data_time[player]['E:ABSOLUTE TIME'] - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
     
     return F16Data_time
+
+def ExtractWeaponsData(scenario):
+    filename = path + '/' +  'DataLogs/'+scenario+'.csv'
+    chunks = pd.read_csv(filename,header=0,skiprows=[1,2], index_col=False, error_bad_lines=False, chunksize=100000)
+    
+    # Define the players (Aircrafts)
+    Playernames = ['Cool21', 'Cool22']
+    F16Data = dict()
+    for player in Playernames:
+        F16Data[player] = pd.DataFrame()
+    
+    # Define the object name for the scenario target
+    if scenario in set(['1A','1B','1C']):
+        target = 'TU-95'
+        
+    if scenario in set(['2A','2B','2C']):
+        target = 'VEH_air_FuelTruck100LL'
+        
+    if scenario in set(['3A','3B','3C']):
+        target= 'Fan_Song_Radar'
+        
+    if scenario in set(['4A','4B','4C']):
+        target= 'T-72'
+        
+    Objects = [target,]
+    ObjectData = dict()
+    for Object in Objects:
+        ObjectData[Object] = pd.DataFrame()
+    
+    #Obtain a list of all different object types being tracked
+    NameSet = set()
+    
+    
+    
+    # Collect the data for the tracked objects
+    for chunk in chunks:
+        print(chunk.shape)
+        NewSet = set(chunk['E:TITLE'])
+        NameSet = NameSet.union(NewSet)
+        
+        for player in Playernames:
+            data_player = chunk.ix[chunk['PLAYER NAME'].fillna('none')==player,:]
+            F16Data[player] = pd.concat([F16Data[player], data_player.ix[data_player['E:TITLE']=='Lockheed Martin F-16C Weaponized',:]])
+        
+        for Object in Objects:
+    #            ObjectData[Object] = chunk.ix[chunk['E:TITLE']==Object,:]
+            ObjectData[Object] = pd.concat([ObjectData[Object], chunk.ix[chunk['E:TITLE']==Object,:]])
+    
+    # Extract the geolocation of the target using the ObjectData structure
+    # Taking only the first element as the targets are stationary in all scenarios
+    if scenario == '3B':
+        with open('Data3B.pkl','rb') as file:
+            data = pickle.load(file)
+        TargetLat = data['TargetLat']
+        TargetLon = data['TargetLon']
+        TargetAlt = data['TargetAlt']
+    else:
+        TargetLat = ObjectData[target]['PLANE LATITUDE'].iloc[0]*0.3048 #Radians
+        TargetLon = ObjectData[target]['PLANE LONGITUDE'].iloc[0]*0.3048 #Radians
+        TargetAlt = ObjectData[target]['PLANE ALTITUDE'].iloc[0]
+    
+    #Make the data monotonic in time
+    F16Data_time = dict()
+    
+    for player in Playernames:
+        F16Data[player]['DELTAS'] = pd.np.insert(pd.np.diff(F16Data[player]['E:ABSOLUTE TIME']),0,0)
+        F16Data_time[player] = F16Data[player].ix[F16Data[player]['DELTAS']>0,:]
+        F16Data_time[player]['REL TIME'] = F16Data_time[player]['E:ABSOLUTE TIME'] - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        
+    ReleaseTime = {}
+    # Define the weapon release time per scenario
+    for player in Playernames:
+        if scenario == '1A':
+            if player == 'Cool21':
+                ReleaseTime[player] = np.max(F16Data_time[player]['REL TIME'])+1
+            elif player == 'Cool22':
+                ReleaseTime[player] = 24*60 + 24.0
+        elif scenario == '1B':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579224276.620697021
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579224293.108589172
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '1C':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579224408.425827026
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579224295.620170593
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '2A':
+            if player == 'Cool21':
+                ReleaseTime[player] = 21*60 + 6.0
+            elif player =='Cool22':
+                ReleaseTime[player] = 22*60 + 4.0
+        elif scenario == '2B':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579395967.00528717
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579396070.912117004
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '2C':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579396023.216293335
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579396044.987625122
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '3A':
+            if player == 'Cool21':
+                ReleaseTime[player] = 20*60 + 37.0
+            elif player =='Cool22':
+                ReleaseTime[player] = 21*60 + 7.0
+        elif scenario == '3B':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579657019.054634094
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579657122.755172729
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '3C':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579657025.926193237
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579657001.639160156
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '4A':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579913461.028610229
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579913473.995513916
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+        elif scenario == '4C':
+            if player == 'Cool21':
+                ReleaseTime_AT = 63579913518.791900635
+            elif player == 'Cool22':
+                ReleaseTime_AT = 63579913557.838043213
+            ReleaseTime[player] = ReleaseTime_AT - F16Data_time[player]['E:ABSOLUTE TIME'].iloc[0]
+            
+    
+    
+    # Collect the relevant features
+    rawData = dict()
+    maxtimes = list()
+    
+    for player in Playernames:
+        rawData[player] = F16Data_time[player]
+        rawData[player].reset_index()
+        maxtimes.append(max(rawData[player]['REL TIME']))
+    
+    max_time = min(maxtimes)
+    
+    
+    # Sample the data given sampling time
+    rawData_sampled = dict()
+    for player in Playernames:
+        rawData_sampled[player] = pd.DataFrame()
+    
+    times = pd.np.arange(0, max_time, SampleTime)
+    
+    FinalData = dict()
+    for player in Playernames:
+        FinalData[player] = pd.DataFrame()
+        FinalData[player]['Weapons'] = (times >= ReleaseTime[player]).astype(int)
+        
+    
+    for player in Playernames:
+        filename = path + '/' + 'WeaponsData/'+scenario+'_'+player+'.pkl'
+        FinalData[player].to_pickle(filename)
+    return
 
 def ExtractCommsData(scenario):
     filename = path + '/' +  'DataLogs/'+scenario+'.csv'
@@ -175,7 +344,7 @@ def ExtractCommsData(scenario):
     rawData_sampled = dict()
     for player in Playernames:
         rawData_sampled[player] = pd.DataFrame()
-    SampleTime = 1
+    
     times = pd.np.arange(0, max_time, SampleTime)
     
     for player in Playernames:
@@ -228,6 +397,8 @@ def ExtractCommsData(scenario):
         FinalData[player].to_pickle(filename)
     
     return
+
+
 
 def CreateFeatures(scenario):
     #scenario = '1A'
@@ -333,7 +504,7 @@ def CreateFeatures(scenario):
     rawData_sampled = dict()
     for player in Playernames:
         rawData_sampled[player] = pd.DataFrame()
-    SampleTime = 1
+    
     times = pd.np.arange(0, max_time, SampleTime)
     
     for player in Playernames:
@@ -446,5 +617,6 @@ if __name__ =='__main__':
 
     #F16Data = ExtractAircraftData('4A')
     scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4C']
+#    scenarios = ['4C']
     for scenario in scenarios:
-        ExtractCommsData(scenario)
+        ExtractWeaponsData(scenario)
