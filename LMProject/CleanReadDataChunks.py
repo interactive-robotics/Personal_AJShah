@@ -11,7 +11,7 @@ from scipy.interpolate import interp1d
 import pickle
 import numpy as np
 
-path = '/home/ajshah/Dropbox (MIT)/LM Data/Data' #Define the path to the data folder here
+path = '/home/ajshah/Dropbox (MIT)/LM Data/Data2' #Define the path to the data folder here
 SampleTime = 1
 
 
@@ -248,7 +248,7 @@ def ExtractWeaponsData(scenario):
         
     
     for player in Playernames:
-        filename = path + '/' + 'WeaponsData/'+scenario+'_'+player+'.pkl'
+        filename = path + '/' + 'OwnshipWeaponsData/'+scenario+'_'+player+'.pkl'
         FinalData[player].to_pickle(filename)
     return
 
@@ -400,7 +400,7 @@ def ExtractCommsData(scenario):
 
 
 
-def CreateFeatures(scenario):
+def ExtractAircraftData(scenario):
     #scenario = '1A'
     filename = path + '/' +  'DataLogs/'+scenario+'.csv'
     chunks = pd.read_csv(filename,header=0,skiprows=[1,2], index_col=False, error_bad_lines=False, chunksize=100000)
@@ -571,16 +571,35 @@ def CreateFeatures(scenario):
         FinalData[player]['YawRate'] = -rawData_sampled[player]['ROTATION VELOCITY BODY Y']
         FinalData[player]['PitchRate'] = -rawData_sampled[player]['ROTATION VELOCITY BODY X']
         FinalData[player]['RollRate'] = rawData_sampled[player]['ROTATION VELOCITY BODY Z']
-        FinalData[player]['NextWPDist'] = rawData_sampled[player]['GPS WP DISTANCE']
-        FinalData[player]['NextWPHeading'] = rawData_sampled[player]['GPS WP BEARING']
-        FinalData[player]['NextWPIndex'] = rawData_sampled[player]['GPS FLIGHT PLAN WP INDEX']
-        FinalData[player]['Label'] = rawData_sampled[player]['PHASE LABEL']
-        
-    
+
+
     # Write the ownship data to the files
     for player in Playernames:
         filename = path + '/' + 'OwnshipData/'+scenario+'_'+player+'.pkl'
         FinalData[player].to_pickle(filename)
+    
+    # Extract tht flight plan data
+    FlightPlanData = dict()
+    for player in Playernames:
+        FlightPlanData[player] = pd.DataFrame()
+        FlightPlanData[player]['NextWPdist'] = rawData_sampled[player]['GPS WP DISTANCE']
+        FlightPlanData[player]['NextWPHeading'] = rawData_sampled[player]['GPS WP BEARING']
+        FlightPlanData[player]['NextWPIndex'] = rawData_sampled[player]['GPS FLIGHT PLAN WP INDEX']
+    
+    #Write the flight plan data
+    for player in Playernames:
+        filename = path + '/' + 'OwnshipFlightPlanData/'+scenario+'_'+player+'.pkl'
+        FinalData[player].to_pickle(filename)
+        
+    #Extract the phase labels
+    for player in Playernames:
+        LabelData = dict()
+        LabelData[player] = pd.DataFrame()
+        LabelData[player]['Label'] = rawData_sampled[player]['PHASE LABEL']
+        #Write the label data
+        filename = path + '/' + 'LabelData/'+scenario+'_'+player+'.pkl'
+        FinalData[player].to_pickle(filename)
+    
     
     
     # Generate Ownship+wingman features (only relative position)
@@ -596,11 +615,10 @@ def CreateFeatures(scenario):
         P2Pos = FinalData[OtherPlayer].loc[:,['PosX:Target','PosY:Target','PosZ:Target']]
         P1Pos = FinalData[player].loc[:,['PosX:Target','PosY:Target','PosZ:Target']]
         relPos = pd.np.array(P2Pos - P1Pos)
-        FinalWingmanFeature[player] = FinalData[player]
         FinalWingmanFeature[player]['WingX'] = relPos[:,0]
         FinalWingmanFeature[player]['WingY'] = relPos[:,1]
         FinalWingmanFeature[player]['WingZ'] = relPos[:,2]
-        filename = path + '/' + 'OwnshipWingmanData/'+scenario+'_'+player+'.pkl'
+        filename = path + '/' + 'WingmanData/'+scenario+'_'+player+'.pkl'
         FinalWingmanFeature[player].to_pickle(filename)
         
     return FinalData, FinalWingmanFeature, TargetLat, TargetLon, TargetAlt, Annotations, F16Data_time
@@ -619,4 +637,7 @@ if __name__ =='__main__':
     scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4C']
 #    scenarios = ['4C']
     for scenario in scenarios:
+        Data = ExtractAircraftData(scenario)
         ExtractWeaponsData(scenario)
+        ExtractCommsData(scenario)
+        
