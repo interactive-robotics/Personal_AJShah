@@ -74,25 +74,6 @@ def GetFeatures(scenarios, FeatureType):
 
 
 
-def CreateWindowFeatures(NumericFeatures, Labels, StartID, EndID, WindowSize):
-    #WindowSize = 4
-    WindowFeatures = pd.np.zeros([0,WindowSize*NumericFeatures.shape[1]])
-    Labels_final = pd.DataFrame()
-    
-    for i in range(len(StartID)):
-        WindowFeatures_scenario = pd.np.zeros([EndID[i] - WindowSize - StartID[i],WindowFeatures.shape[1]])
-        Labels_scenario = pd.DataFrame()
-        for (index,j) in enumerate(range(StartID[i], EndID[i]-WindowSize)):
-            FeatureSet = NumericFeatures[j:j+WindowSize,:]
-            FlatFeatureSet = FeatureSet.flatten()
-            WindowFeatures_scenario[index] = FlatFeatureSet
-            Labels_scenario = pd.concat([Labels_scenario, pd.DataFrame([Labels.iloc[j+WindowSize]])])
-            #Use np.flatten()
-        WindowFeatures = pd.np.append(WindowFeatures,WindowFeatures_scenario,axis=0)
-        Labels_final = pd.concat([Labels_final, Labels_scenario])
-    
-    return WindowFeatures, Labels_final
-
 
 
 def GetTestAndTrainData(scenarios, TestScenario, OwnshipData=True, WingmanData=False, FlightPlanData=True, WeaponsData=True, CommsData=True, preprocess = True):
@@ -206,6 +187,8 @@ def GetTestAndTrainData(scenarios, TestScenario, OwnshipData=True, WingmanData=F
 
 
 
+
+
 def GetScenarioData(Scenario, Scale, Offset, WingmanData=False, FlightPlanData = True, WeaponsData = True, CommsData = True, preprocess = True):
     
     Features = pd.DataFrame()
@@ -241,10 +224,15 @@ def GetScenarioData(Scenario, Scale, Offset, WingmanData=False, FlightPlanData =
 
 
 
-def GenerateWindowedData(Features, Labels, StartID, EndID, WindowSize=5):
+
+
+
+def GenerateWindowedData(Features, Labels, StartID, EndID, WindowSize=5, RNNMode = False):
     NumericFeatures = np.array(Features)
     WindowFeatures = pd.np.zeros([0,WindowSize*NumericFeatures.shape[1]])
     Labels_final = pd.DataFrame()
+    OutStartID = []
+    OutEndID = []
     
     for i in range(len(StartID)):
         WindowFeatures_scenario = pd.np.zeros([EndID[i] - WindowSize - StartID[i],WindowFeatures.shape[1]])
@@ -255,81 +243,45 @@ def GenerateWindowedData(Features, Labels, StartID, EndID, WindowSize=5):
             WindowFeatures_scenario[index] = FlatFeatureSet
             Labels_scenario = pd.concat([Labels_scenario, pd.DataFrame([Labels.iloc[j+WindowSize,:]])])
             #Use np.flatten()
+        
+        OutStartID.append(WindowFeatures.shape[0])
         WindowFeatures = pd.np.append(WindowFeatures,WindowFeatures_scenario,axis=0)
+        OutEndID.append(WindowFeatures.shape[0])
+        
         Labels_final = pd.concat([Labels_final, Labels_scenario])
     Labels_final[0] = pd.Categorical(Labels_final[0], categories = ['Push','Legs','OnTarget','Egress','ThreatIdentification','ThreatAvoidanceMitigation'])
     Labels_final.rename(columns={0:'Label'},inplace=True)
+    
+    if RNNMode == True:
+        return WindowFeatures, Labels_final, OutStartID, OutEndID
+        
     return WindowFeatures, Labels_final
 
-def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5, OwnshipData=True, WingmanData=False, FlightPlanData=True, WeaponsData=True, CommsData=True, preprocess = True):
+
+
+
+
+
+def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5, OwnshipData=True, WingmanData=False, FlightPlanData=True, WeaponsData=True, CommsData=True, preprocess = True, RNNMode = False):
     
     TrainingFeatures, TrainingLabels, TestFeatures, TestLabels, Offsets, Scale, TrainStartID, TrainEndID, TestStartID, TestEndID \
       = GetTestAndTrainData(scenarios, TestScenario, OwnshipData=OwnshipData, WingmanData=WingmanData, FlightPlanData=FlightPlanData, WeaponsData=WeaponsData, CommsData=CommsData, preprocess=preprocess)
       
-    WindowTrainingData, FinalTrainingLabels = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=WindowSize)
+    
+    if RNNMode==False:
+        WindowTrainingData, FinalTrainingLabels = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=WindowSize, RNNMode=False)
       
-    WindowTestData, FinalTestLabels = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=WindowSize)
+        WindowTestData, FinalTestLabels = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=WindowSize)
       
-    return WindowTrainingData, FinalTrainingLabels, WindowTestData, FinalTestLabels
+        return WindowTrainingData, FinalTrainingLabels, WindowTestData, FinalTestLabels
+    else:
+        
+        WindowTrainingData, FinalTrainingLabels, OutTrainStartID, OutTrainEndID = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=WindowSize, RNNMode=True)
+        
+        WindowTestData, FinalTestLabels, OutTestStartID, OutTestEndID = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=WindowSize, RNNMode=True)
+        
+        return WindowTrainingData, FinalTrainingLabels, WindowTestData, FinalTestLabels, OutTrainStartID, OutTrainEndID, OutTestStartID, OutTestEndID
 
-
-def GetTestAndTrainDataOwnship(scenarios, TestScenario, WindowSize=4):
-    # Remove the test scenario from the training set
-    TrainScenarios = list(set(scenarios) - set(TestScenario))
-    FeatureClass = 'OwnshipData'
-    
-    #Read the training features
-    NumericFeatures, Labels, StartID, EndID = GetFeatures(TrainScenarios,FeatureClass)
-    ScaledNumericFeatures = np.copy(NumericFeatures)
-    # Center and scale the training features
-    for i in range(17):
-        ScaledNumericFeatures[:,i] = (NumericFeatures[:,i]-np.mean(NumericFeatures[:,i]))/np.std(NumericFeatures[:,i])
-    Means = np.mean(NumericFeatures[:,0:17],axis=0)
-    Stds = np.std(NumericFeatures[:,0:17],axis=0)
-    # Create the windowed training features
-    WindowFeatures,Labels_final = CreateWindowFeatures(ScaledNumericFeatures, Labels, StartID, EndID, WindowSize)
-    Labels_final = np.array(Labels_final).flatten()
-    
-    #Read the test scenario features
-    TestNumericFeatures, TestLabels, TestStartID, TestEndID = GetFeatures(TestScenario, FeatureClass)
-    ScaledTestFeatures = np.copy(TestNumericFeatures)
-    # Transform as per the linear transform applied to training data
-    ScaledTestFeatures[:,0:17] = (TestNumericFeatures[:,0:17] - Means)/Stds
-    # Create the windowed test features
-    WindowFeatures_test, Labels_final_test = CreateWindowFeatures(ScaledTestFeatures, TestLabels, TestStartID, TestEndID, WindowSize)
-    Labels_final_test = np.array(Labels_final_test).flatten()
-    
-    return WindowFeatures, Labels_final, WindowFeatures_test, Labels_final_test
-
-
-
-
-
-def GetTestAndTrainDataOwnshipWingman(scenarios, TestScenario, WindowSize=5):
-        # Remove the test scenario from the training set
-    TrainScenarios = list(set(scenarios) - set(TestScenario))
-    FeatureClass = 'OwnshipWingmanData'
-    
-    #Read the training features
-    NumericFeatures, Labels, StartID, EndID = GetFeatures(TrainScenarios,FeatureClass)
-    ScaledNumericFeatures = np.copy(NumericFeatures)
-    
-    # Center and scale the continuos features to get mean 0 std 1
-    Means = np.mean(NumericFeatures[:,0:20],axis=0)
-    Stds = np.std(NumericFeatures[:,0:20],axis=0)
-    ScaledNumericFeatures = (ScaledNumericFeatures[:,0:20]-Means)/Stds
-    
-    WindowFeatures,Labels_final = CreateWindowFeatures(ScaledNumericFeatures, Labels, StartID, EndID, WindowSize)
-    Labels_final = np.array(Labels_final).flatten()
-    
-    TestNumericFeatures, TestLabels, TestStartID, TestEndID = GetFeatures(TestScenario, FeatureClass)
-    ScaledTestFeatures = np.copy(TestNumericFeatures)
-    ScaledTestFeatures = (TestNumericFeatures[:,0:20]-Means)/Stds
-    
-    WindowFeatures_test, Labels_final_test = CreateWindowFeatures(ScaledTestFeatures, TestLabels, TestStartID, TestEndID, WindowSize)
-    Labels_final_test = np.array(Labels_final_test).flatten()
-    
-    return WindowFeatures, Labels_final, WindowFeatures_test, Labels_final_test
 
 
 
@@ -346,8 +298,8 @@ if __name__ == '__main__':
 
     Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4C']
     #Scenarios = ['2A']
-    TestScenario = ['1B']
+    TestScenario = ['3A']
     #TrainingFeatures, TrainingLabels, TestFeatures, TestLabels, Offsets, Scale, TrainStartID, TrainEndID, TestStartID, TestEndID = GetTestAndTrainData(Scenarios, TestScenario, FlightPlanData=True, WingmanData=False, WeaponsData=False, preprocess=True)
     #TrainX, TrainY = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=5)
     #TestX, TestY = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=5)
-    TrainX, TrainY, TestX, TestY = GenerateWindowedTestAndTrainData(Scenarios, TestScenario, WindowSize=5, WingmanData=True)
+    TrainX, TrainY, TestX, TestY, TrainStartID, TrainEndID, TestStartID, TestEndID = GenerateWindowedTestAndTrainData(Scenarios, TestScenario, WindowSize=5, WingmanData=True, RNNMode=True)

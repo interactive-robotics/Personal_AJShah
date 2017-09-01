@@ -70,9 +70,11 @@ def CreateWindowFeatures(NumericFeatures, Labels, StartID, EndID, WindowSize):
             WindowFeatures_scenario[index] = FlatFeatureSet
             Labels_scenario = pd.concat([Labels_scenario, pd.DataFrame([Labels.iloc[j+WindowSize]])])
             #Use np.flatten()
+        
         OutStartID.append(WindowFeatures.shape[0])
         WindowFeatures = pd.np.append(WindowFeatures,WindowFeatures_scenario,axis=0)
         OutEndID.append(WindowFeatures.shape[0])
+        
         Labels_final = pd.concat([Labels_final, Labels_scenario])
     
     return WindowFeatures, Labels_final, OutStartID, OutEndID
