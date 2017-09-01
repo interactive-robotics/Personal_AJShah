@@ -589,7 +589,7 @@ def ExtractAircraftData(scenario):
     #Write the flight plan data
     for player in Playernames:
         filename = path + '/' + 'OwnshipFlightPlanData/'+scenario+'_'+player+'.pkl'
-        FinalData[player].to_pickle(filename)
+        FlightPlanData[player].to_pickle(filename)
         
     #Extract the phase labels
     for player in Playernames:
@@ -598,7 +598,7 @@ def ExtractAircraftData(scenario):
         LabelData[player]['Label'] = rawData_sampled[player]['PHASE LABEL']
         #Write the label data
         filename = path + '/' + 'LabelData/'+scenario+'_'+player+'.pkl'
-        FinalData[player].to_pickle(filename)
+        LabelData[player].to_pickle(filename)
     
     
     
