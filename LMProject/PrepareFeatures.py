@@ -262,25 +262,44 @@ def GenerateWindowedData(Features, Labels, StartID, EndID, WindowSize=5, RNNMode
 
 
 
-def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5, OwnshipData=True, WingmanData=False, FlightPlanData=True, WeaponsData=True, CommsData=True, preprocess = True, RNNMode = False):
+def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5,
+                                     OwnshipData=True, WingmanData=False,
+                                     FlightPlanData=True, WeaponsData=True,
+                                     CommsData=True, preprocess = True,
+                                     RNNMode = False):
     
-    TrainingFeatures, TrainingLabels, TestFeatures, TestLabels, Offsets, Scale, TrainStartID, TrainEndID, TestStartID, TestEndID \
-      = GetTestAndTrainData(scenarios, TestScenario, OwnshipData=OwnshipData, WingmanData=WingmanData, FlightPlanData=FlightPlanData, WeaponsData=WeaponsData, CommsData=CommsData, preprocess=preprocess)
+    [TrainingFeatures, TrainingLabels, TestFeatures, TestLabels, Offsets, Scale,
+     TrainStartID, TrainEndID, TestStartID, TestEndID] = GetTestAndTrainData(
+     scenarios, TestScenario, OwnshipData=OwnshipData, WingmanData=WingmanData,
+     FlightPlanData=FlightPlanData, WeaponsData=WeaponsData, CommsData=CommsData,
+     preprocess=preprocess)
       
     
     if RNNMode==False:
-        WindowTrainingData, FinalTrainingLabels = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=WindowSize, RNNMode=False)
+        WindowTrainingData, FinalTrainingLabels = GenerateWindowedData(
+                TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID,
+                WindowSize=WindowSize, RNNMode=False)
       
-        WindowTestData, FinalTestLabels = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=WindowSize)
+        WindowTestData, FinalTestLabels = GenerateWindowedData(
+                TestFeatures, TestLabels, TestStartID, TestEndID,
+                WindowSize=WindowSize)
       
-        return WindowTrainingData, FinalTrainingLabels, WindowTestData, FinalTestLabels
+        return [WindowTrainingData, FinalTrainingLabels, WindowTestData,
+                FinalTestLabels]
     else:
         
-        WindowTrainingData, FinalTrainingLabels, OutTrainStartID, OutTrainEndID = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=WindowSize, RNNMode=True)
+        [WindowTrainingData, FinalTrainingLabels, OutTrainStartID,
+         OutTrainEndID] = GenerateWindowedData(TrainingFeatures, TrainingLabels
+         , TrainStartID, TrainEndID, WindowSize=WindowSize, RNNMode=True)
         
-        WindowTestData, FinalTestLabels, OutTestStartID, OutTestEndID = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=WindowSize, RNNMode=True)
+        [WindowTestData, FinalTestLabels, OutTestStartID, 
+         OutTestEndID] = GenerateWindowedData(
+         TestFeatures, TestLabels, TestStartID, TestEndID,
+         WindowSize=WindowSize, RNNMode=True)
         
-        return WindowTrainingData, FinalTrainingLabels, WindowTestData, FinalTestLabels, OutTrainStartID, OutTrainEndID, OutTestStartID, OutTestEndID
+        return [WindowTrainingData, FinalTrainingLabels, WindowTestData,
+                FinalTestLabels, OutTrainStartID, OutTrainEndID, OutTestStartID
+                , OutTestEndID]
 
 
 
@@ -288,18 +307,8 @@ def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5, Owns
 
 
 if __name__ == '__main__':
-#    scenarios = ['4C']
-#    FeatureClass = 'OwnshipData'
-#    players = ['Cool21', 'Cool22']
-#    WindowSize=5
-#    
-#    NumericFeatures, Labels, StartID, EndID = GetFeatures(scenarios,FeatureClass)
-#    WindowFeatures, Labels_final = CreateWindowFeatures(NumericFeatures, Labels, StartID, EndID, WindowSize)
+
 
     Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4C']
-    #Scenarios = ['2A']
     TestScenario = ['3A']
-    #TrainingFeatures, TrainingLabels, TestFeatures, TestLabels, Offsets, Scale, TrainStartID, TrainEndID, TestStartID, TestEndID = GetTestAndTrainData(Scenarios, TestScenario, FlightPlanData=True, WingmanData=False, WeaponsData=False, preprocess=True)
-    #TrainX, TrainY = GenerateWindowedData(TrainingFeatures, TrainingLabels, TrainStartID, TrainEndID, WindowSize=5)
-    #TestX, TestY = GenerateWindowedData(TestFeatures, TestLabels, TestStartID, TestEndID, WindowSize=5)
     TrainX, TrainY, TestX, TestY, TrainStartID, TrainEndID, TestStartID, TestEndID = GenerateWindowedTestAndTrainData(Scenarios, TestScenario, WindowSize=5, WingmanData=True, RNNMode=True)

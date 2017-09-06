@@ -9,27 +9,41 @@ Created on Tue Jul 11 19:42:23 2017
 import numpy as np
 import pandas as pd
 from PrepareFeaturesRNN import *
+from PrepareFeatures import *
 
 scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
 TestScenario = ['4C']
 
 path = '/home/ajshah/Dropbox (MIT)/Data'
 
-def ReadRNNData(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100):
+def PrepareRNNData(scenarios, TestScenario, WindowSize=5, SeqSize = 100,
+                   OwnshipData=True, WingmanData=False, FlightPlanData=True,
+                   WeaponsData=True, CommsData=True):
     
+    [X_train, y_train, X_test, y_test, TrainStartID, TrainEndID, TestStartID,
+    TestEndID] = GenerateWindowedTestAndTrainData(
+                                                scenarios, TestScenario,
+                                                WindowSize=WindowSize,
+                                                OwnshipData=OwnshipData,
+                                                WingmanData=WingmanData,
+                                                FlightPlanData = FlightPlanData,
+                                                WeaponsData = WeaponsData,
+                                                CommsData=CommsData,
+                                                RNNMode=True)
     
-    if FeatureClass == 'OwnshipData':
-        GetData = GetTestAndTrainDataOwnship
-    elif FeatureClass == 'OwnshipWingmanData':
-        GetData = GetTestAndTrainDataOwnshipWingman
+    SeqX_train, SeqY_train, SeqX_test, SeqY_test = PrepareSequenceData(
+            X_train, y_train, X_test, y_test, TrainStartID, TrainEndID,
+            TestStartID, TestEndID, WindowSize=WindowSize, SeqSize=SeqSize)
     
-    [X_train, y_train, X_test, y_test, TrainStartID, TrainEndID, TestStartID, TestEndID] = GetData(scenarios, TestScenario, WindowSize)
+    return SeqX_train, SeqY_train, SeqX_test, SeqY_test
+
+
+def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
+                        TrainEndID, TestStartID, TestEndID, WindowSize=5,
+                        SeqSize=100):
     
-    LabelDict = np.array(['Push','Legs','OnTarget','Egress','ThreatIdentification','ThreatAvoidanceMitigation'],dtype=object)
-    y_test = np.array(pd.get_dummies(pd.Series(pd.Categorical(y_test,categories = LabelDict))))
-    y_train = np.array(pd.get_dummies(pd.Series(pd.Categorical(y_train,categories=LabelDict))))
-    
-    #SeqSize = 500
+    y_test = np.array(pd.get_dummies(y_test))
+    y_train = np.array(pd.get_dummies(y_train))
     
     SeqX_train = np.zeros((0,SeqSize, X_train.shape[1]))
     SeqY_train = np.zeros((0,SeqSize, y_train.shape[1]))
@@ -58,6 +72,7 @@ def ReadRNNData(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100
         LastSeqLabels[0,0:LastLabels.shape[0],:] = LastLabels
         SeqY_train = np.append(SeqY_train,LastSeqLabels,axis=0)
     
+    
     SeqX_test = np.zeros((0,SeqSize,X_test.shape[1]))
     SeqY_test = np.zeros((0,SeqSize,y_test.shape[1]))
     
@@ -84,11 +99,17 @@ def ReadRNNData(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100
         LastSeqLabels = np.zeros((1,SeqSize,y_train.shape[1]))
         LastSeqLabels[0,0:LastLabels.shape[0],:] = LastLabels
         SeqY_test = np.append(SeqY_test,LastSeqLabels,axis=0)
-    
+        
+        
     return SeqX_train, SeqY_train, SeqX_test, SeqY_test
 
 if __name__ == '__main__':
     scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
     TestScenario = ['4C']
-    SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, 'OwnshipData')
-    
+    #SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, 'OwnshipData')
+    XTrain, YTrain, XTest, YTest = PrepareRNNData(scenarios, TestScenario,
+                                                  WindowSize=5, SeqSize=50,
+                                                  WingmanData=False,
+                                                  FlightPlanData = False,
+                                                  WeaponsData=False,
+                                                  CommsData=False)
