@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from PrepareFeatures import *
 import pickle
+import os
 
 #Prepare the data
 

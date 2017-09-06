@@ -12,7 +12,7 @@ from sklearn.svm import SVC,LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 from PrepareFeatures import *
 import pickle
-
+import os
 #Prepare the data
 
 def CreateFeatureClass(WingmanData=True, FlightPlanData=True, WeaponsData=True, CommsData=True):

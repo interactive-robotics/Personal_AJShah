@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.svm import SVC,LinearSVC
 from PrepareFeatures import *
 import pickle
+import os
 
 #Prepare the data
 
