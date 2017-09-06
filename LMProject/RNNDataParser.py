@@ -8,7 +8,6 @@ Created on Tue Jul 11 19:42:23 2017
 
 import numpy as np
 import pandas as pd
-from PrepareFeaturesRNN import *
 from PrepareFeatures import *
 
 scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
@@ -24,7 +23,6 @@ def PrepareRNNData(scenarios, TestScenario, WindowSize=5, SeqSize = 100,
     TestEndID] = GenerateWindowedTestAndTrainData(
                                                 scenarios, TestScenario,
                                                 WindowSize=WindowSize,
-                                                OwnshipData=OwnshipData,
                                                 WingmanData=WingmanData,
                                                 FlightPlanData = FlightPlanData,
                                                 WeaponsData = WeaponsData,

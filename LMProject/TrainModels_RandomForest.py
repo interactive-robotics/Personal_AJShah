@@ -14,42 +14,101 @@ from PrepareFeatures import *
 import pickle
 
 #Prepare the data
-scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A',]
-FeatureClass = 'OwnshipData'
 
-def TrainRandomForests(scenarios, TestScenario, FeatureClass, WindowSize=5):
+def CreateFeatureClass(WingmanData=True, FlightPlanData=True, WeaponsData=True, CommsData=True):
+    
+    FeatureClass = {}
+    FeatureClass['WingmanData'] = WingmanData
+    FeatureClass['FlightPlanData'] = FlightPlanData
+    FeatureClass['WeaponsData'] = WeaponsData
+    FeatureClass['CommsData'] = CommsData
+    
+    return FeatureClass
 
+
+
+def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5):
+    
     TrainScenarios = list(set(scenarios) - set(TestScenario))
+    WingmanData = FeatureClass['WingmanData']
+    FlightPlanData = FeatureClass['FlightPlanData']
+    WeaponsData = FeatureClass['WeaponsData']
+    CommsData = FeatureClass['CommsData']
     
-    if FeatureClass == 'OwnshipData':
-        GetData = GetTestAndTrainDataOwnship
-    elif FeatureClass == 'OwnshipWingmanData':
-        GetData = GetTestAndTrainDataOwnshipWingman
+    XTrain, YTrain, XTest, YTest = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
+                                                                    WingmanData=WingmanData, FlightPlanData = FlightPlanData,
+                                                                    WeaponsData=WeaponsData, CommsData=CommsData)
+    
+    YTrain = np.array(YTrain).ravel()
+    YTest = np.array(YTest).ravel()
+    return XTrain, YTrain, XTest, YTest
 
-    [X_train, y_train, X_test, y_test] = GetData(TrainScenarios, TestScenario, WindowSize = WindowSize)
-    
+
+
+def TrainRandomForests(XTrain, YTrain):
+
     model = RandomForestClassifier(n_estimators = 5, min_samples_split = 50, min_samples_leaf = 20, verbose = True)
-    model.fit(X_train, y_train)
-    pred_train_labels = model.predict(X_train)
-    TrainAcc = np.mean(pred_train_labels == y_train)
-    pred_test_labels = model.predict(X_test)
-    TestAcc = np.mean(pred_test_labels == y_test)
     
-    return model, TrainAcc, TestAcc, pred_test_labels
+    model.fit(XTrain, YTrain)
+    pred_train_labels = model.predict(XTrain)
+    TrainAcc = np.mean(pred_train_labels == np.array(YTrain))
 
-def LOOCV(Scenarios, TestScenarios,FeatureClass, WindowSize=5):
-    models = {}
-    TestAccs = []
-    predLabels_test = {}
+    return model, TrainAcc
 
+
+
+def TrainAndEvalRandomForests(Scenarios, TestScenario, FeatureClass, WindowSize=5):
+    
+    XTrain, YTrain, XTest, YTest = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
+    
+    model, TrainAcc = TrainRandomForests(XTrain, YTrain)
+    PredLabels = model.predict(XTest)
+    TestAcc = np.mean(PredLabels == YTest)
+    
+    return model, TrainAcc, TestAcc, PredLabels
+
+
+
+def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=False, filename = 'RandomForestsResults'):
+
+    #ensure the filename is unique to prevent writeover
+    # Assumes that the filename ends in .pkl
+    i=1
+    if os.path.exists(filename+'.pkl'):
+        filenameNew = filename+'_'+str(i)
+        while os.path.exists(filenameNew+'.pkl'):
+            i=i+1
+            filenameNew = filename+'_'+str(i)
+    else:
+        filenameNew = filename
+
+    filenameNew = filenameNew+'.pkl'
+    
+    Models = {}
+    TestAccs = {}
+    PredLabelsTest = {}
+    TrainAccs = {}
+    
     for TestScenario in TestScenarios:
         
-        new_model,new_TrainAcc,new_TestAcc,new_predLabels_test = TrainRandomForests(Scenarios, [TestScenario], FeatureClass, WindowSize)
-        models[TestScenario] = new_model
-        TestAccs.append(new_TestAcc)
-        predLabels_test[TestScenario] = new_predLabels_test
+        model, TrainAcc, TestAcc, PredLabels = TrainAndEvalRandomForests(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
+        Models[TestScenario] = model
+        TestAccs[TestScenario] = TestAcc
+        TrainAccs[TestScenario] = TrainAcc
+        PredLabelsTest[TestScenario] = PredLabels
         
-    return models, TestAccs, predLabels_test
+        
+    if SaveResult == True:
+        OutData = dict()
+        OutData['TestAccuracies'] = TestAccs
+        OutData['Models'] = Models
+        OutData['PredictedTestLabels'] = PredLabelsTest
+        OutData['TrainingAccuracies'] = TrainAccs
+        OutData['FeatureClass'] = FeatureClass
+        with open(filenameNew,'wb') as file:
+            pickle.dump(OutData,file)
+
+    return OutData
 
 if __name__=='__main__':
     
@@ -58,9 +117,6 @@ if __name__=='__main__':
 #    model, TrainAcc, TestAcc, pred_test_labels = TrainRandomForests(Scenarios, TestScenario, 'OwnshipData')
     
     Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-#    TestScenarios = ['1A','2A']
-    FeatureClass = 'OwnshipData'
-    models, TestAccs, predLabels_test = LOOCV(Scenarios, TestScenarios, FeatureClass=FeatureClass)
-    with open('RandomForestsResults_'+FeatureClass+'_'+'.pkl','wb') as file:
-        pickle.dump({'Models':models, 'TestAccuracies':TestAccs, 'PredictedTestLabels':predLabels_test},file)
+    TestScenarios = ['1A']
+    FeatureClass = CreateFeatureClass(WingmanData=False)
+    OutData = LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=True)

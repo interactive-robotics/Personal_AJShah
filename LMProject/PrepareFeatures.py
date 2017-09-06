@@ -76,7 +76,7 @@ def GetFeatures(scenarios, FeatureType):
 
 
 
-def GetTestAndTrainData(scenarios, TestScenario, OwnshipData=True, WingmanData=False, FlightPlanData=True, WeaponsData=True, CommsData=True, preprocess = True):
+def GetTestAndTrainData(scenarios, TestScenario, WingmanData=False, FlightPlanData=True, WeaponsData=True, CommsData=True, preprocess = True):
     
     TrainingScenarios = list(set(scenarios) - set(TestScenario))
     
@@ -263,14 +263,14 @@ def GenerateWindowedData(Features, Labels, StartID, EndID, WindowSize=5, RNNMode
 
 
 def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5,
-                                     OwnshipData=True, WingmanData=False,
+                                     WingmanData=False,
                                      FlightPlanData=True, WeaponsData=True,
                                      CommsData=True, preprocess = True,
                                      RNNMode = False):
     
     [TrainingFeatures, TrainingLabels, TestFeatures, TestLabels, Offsets, Scale,
      TrainStartID, TrainEndID, TestStartID, TestEndID] = GetTestAndTrainData(
-     scenarios, TestScenario, OwnshipData=OwnshipData, WingmanData=WingmanData,
+     scenarios, TestScenario, WingmanData=WingmanData,
      FlightPlanData=FlightPlanData, WeaponsData=WeaponsData, CommsData=CommsData,
      preprocess=preprocess)
       
