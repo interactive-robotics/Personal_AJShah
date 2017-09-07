@@ -19,7 +19,7 @@ def PrepareRNNData(scenarios, TestScenario, WindowSize=5, SeqSize = 100,
                    OwnshipData=True, WingmanData=False, FlightPlanData=True,
                    WeaponsData=True, CommsData=True):
     
-    [X_train, y_train, X_test, y_test, TrainStartID, TrainEndID, TestStartID,
+    [X_train, y_train, X_test, y_test, Offsets, Scale, TrainStartID, TrainEndID, TestStartID,
     TestEndID] = GenerateWindowedTestAndTrainData(
                                                 scenarios, TestScenario,
                                                 WindowSize=WindowSize,
@@ -33,7 +33,7 @@ def PrepareRNNData(scenarios, TestScenario, WindowSize=5, SeqSize = 100,
             X_train, y_train, X_test, y_test, TrainStartID, TrainEndID,
             TestStartID, TestEndID, WindowSize=WindowSize, SeqSize=SeqSize)
     
-    return SeqX_train, SeqY_train, SeqX_test, SeqY_test
+    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, Offsets, Scale
 
 
 def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
     TestScenario = ['4C']
     #SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, 'OwnshipData')
-    XTrain, YTrain, XTest, YTest = PrepareRNNData(scenarios, TestScenario,
+    XTrain, YTrain, XTest, YTest, Offsets, Scale= PrepareRNNData(scenarios, TestScenario,
                                                   WindowSize=5, SeqSize=50,
                                                   WingmanData=False,
                                                   FlightPlanData = False,

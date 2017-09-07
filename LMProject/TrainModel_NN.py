@@ -17,37 +17,48 @@ from keras.optimizers import adam
 from keras import callbacks
 import pickle
 from itertools import product
+import os
 
-path = '/home/ajshah/Dropbox (MIT)/LM Data/Data'
+path = '/home/ajshah/Dropbox (MIT)/LM Data/Data2/'
 
-def TrainRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, BatchSize=100):
-#Prepare the data
+def CreateFeatureClass(WingmanData=True, FlightPlanData=True, WeaponsData=True, CommsData=True):
+    
+    FeatureClass = {}
+    FeatureClass['WingmanData'] = WingmanData
+    FeatureClass['FlightPlanData'] = FlightPlanData
+    FeatureClass['WeaponsData'] = WeaponsData
+    FeatureClass['CommsData'] = CommsData
+    
+    return FeatureClass
 
+def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5, onehot=False, returnDataFrame = False):
+    
     TrainScenarios = list(set(scenarios) - set(TestScenario))
+    WingmanData = FeatureClass['WingmanData']
+    FlightPlanData = FeatureClass['FlightPlanData']
+    WeaponsData = FeatureClass['WeaponsData']
+    CommsData = FeatureClass['CommsData']
     
-    if FeatureClass == 'OwnshipData':
-        GetData = GetTestAndTrainDataOwnship
-    elif FeatureClass == 'OwnshipWingmanData':
-        GetData = GetTestAndTrainDataOwnshipWingman
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
+                                                                    WingmanData=WingmanData, FlightPlanData = FlightPlanData,
+                                                                    WeaponsData=WeaponsData, CommsData=CommsData)
+    if returnDataFrame == True:
+        return XTrain, YTrain, XTest, YTest, Offsets, Scale
+    
+    if onehot==False:
+        YTrain = np.array(YTrain).ravel()
+        YTest = np.array(YTest).ravel()
+    else:
+        YTrain = np.array(pd.get_dummies(YTrain))
+        YTest = np.array(pd.get_dummies(YTest))
+    
+    return XTrain, YTrain, XTest, YTest, Offsets, Scale
 
-    [X_train, y_train, X_test, y_test] = GetData(TrainScenarios, TestScenario, WindowSize = WindowSize)
-    y_train= pd.Series(y_train)
-    y_train = pd.Categorical(y_train, categories = list(set(y_train)))
-    y_train = pd.Series(y_train)
-    y_test = pd.Categorical(y_test, categories = list(set(y_train)))
-    y_test = pd.Series(y_test)
-    TrainSize = y_train.shape[0]
-    y_big = y_train.append(y_test)
-    y_big = pd.get_dummies(y_big)
-    y_train_onehot = np.array(y_big.iloc[0:TrainSize,:])
-    y_test_onehot  = np.array(y_big.iloc[TrainSize:,:])
+def TrainNN(XTrain, YTrain, BatchSize=100):
     
-    
-    
-    #Define a deep neural network
-    
-    NInputFeatures = X_train.shape[1]
-    Ntargets = len(set(y_train))
+    #Define the NN architecture here
+    NInputFeatures = XTrain.shape[1]
+    Ntargets = YTrain.shape[1]
     
     NUnits = [NInputFeatures, NInputFeatures,100, 50,25]
     
@@ -64,41 +75,139 @@ def TrainRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, BatchSize=100)
     model.add(Activation('softmax'))
     
     model.compile(loss = 'categorical_crossentropy', optimizer = adam(lr=0.001), metrics = ['accuracy'])
-    model.fit(X_train, y_train_onehot, batch_size = BatchSize, epochs = 20, validation_split = 0.05)
+    History = model.fit(XTrain, YTrain, batch_size = BatchSize, epochs=20, validation_split=0.05)
     
-#    model.compile(loss = 'categorical_crossentropy', optimizer = adam(lr=0.0005), metrics = ['accuracy'])
-#    model.fit(X_train, y_train_onehot, batch_size = 50, epochs = 20, validation_split = 0.05)
-    metrics = model.evaluate(X_test, y_test_onehot)
-    Test_acc = metrics[1]
-    y_test_pred = model.predict(X_test)
-    labelDict = np.array(y_big.columns)
-    y_test_pred_int = np.argmax(y_test_pred, axis=1)
-    y_pred_labels = [labelDict[val] for val in y_test_pred_int]
+    return model, History.history
+
+def TrainAndEvalNN(Scenarios, TestScenario, FeatureClass, WindowSize=5, BatchSize=100):
     
-    return model, Test_acc, y_pred_labels, labelDict
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=5, returnDataFrame=True)
+    
+    YTrain_onehot = np.array(pd.get_dummies(YTrain))
+    YTest_onehot = np.array(pd.get_dummies(YTest))
+    
+    LabelList = YTrain['Label'].cat.categories
+    
+    
+    model, History = TrainNN(XTrain, YTrain_onehot, BatchSize=BatchSize)
+    TrainAcc = History['acc'][-1]
+    
+    metrics = model.evaluate(XTest,YTest_onehot)
+    TestAcc = metrics[1]
+    
+    PredictedLabels_onehot = model.predict(XTest)
+    
+    
+    MaxID = np.argmax(PredictedLabels_onehot,axis=1)
+    PredictedLabels = pd.DataFrame()
+    PredictedLabels['Label'] = pd.Categorical(np.array(LabelList[MaxID]),categories=LabelList)
+    
+    #TestAcc2 = np.mean(np.array(PredictedLabels['Label']) == np.array(YTest['Label']))
+    
+    return model, TrainAcc, TestAcc, PredictedLabels, Offsets, Scale
+    
 
-def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, BatchSize=100):
-    models = {}
-    Test_accs = []
-    y_pred_labels = {}
+def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, BatchSize=100, SaveResult=False, filename='NNResults',
+          dirname = 'NNModels'):
+    #Determine the filename and the directory name first
+    
+    i=1
+    if os.path.exists(path + filename+'.pkl'):
+        filenameNew = filename+'_'+str(i)
+        while os.path.exists(path + filenameNew+'.pkl'):
+            i=i+1
+            filenameNew = filename+'_'+str(i)
+    else:
+        filenameNew = filename
 
+    filenameNew = filenameNew+'.pkl'
+    if SaveResult == True:
+        open(path+filenameNew,'wb')
+    
+    i=1
+    if os.path.exists(path + dirname):
+        dirnameNew = dirname+'_'+str(i)
+        while os.path.exists(path + dirnameNew):
+            i=i+1
+            dirnameNew = dirname+'_'+str(i)
+    else:
+        dirnameNew = dirname
+    if SaveResult==True:
+        os.mkdir(path+dirnameNew)
+    
+    Models = {}
+    TrainAccs = {}
+    TestAccs = {}
+    PredLabelsTest = {}
+    
     for TestScenario in TestScenarios:
         
-        new_model,new_Test_acc,new_y_pred_labels,LabelDict = TrainRNN(Scenarios, [TestScenario], FeatureClass, WindowSize, BatchSize)
+        model, TrainAcc, TestAcc, PredLabels, Offsets, Scale = TrainAndEvalNN(Scenarios, [TestScenario], FeatureClass,
+                                                                              WindowSize=WindowSize, BatchSize=BatchSize,)
         
-        filename = path + '/' + 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.h5'
-        DatFilename = path + '/' + 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.pkl'
+        # save model in directory
+        ModelFileName = path + dirnameNew + '/' + TestScenario + '.h5'
+        if SaveResult==True:
+            model.save(ModelFileName)
         
-        new_model.save(filename)
+        #Save model metadata
+        DataFileName = path + dirnameNew + '/' + TestScenario + '.pkl'
+        ModelData = dict()
+        ModelData['WindowSize'] = WindowSize
+        ModelData['Offsets'] = Offsets
+        ModelData['Scale'] = Scale
+        ModelData['TrainAcc'] = TrainAcc
+        ModelData['TestAcc'] =TestAcc
+        ModelData['PredLabels'] = PredLabels
+        ModelData['FeatureClass'] = FeatureClass
+        if SaveResult==True:
+            with open(DataFileName,'wb') as file:
+                pickle.dump(ModelData,file)
         
-        with open(DatFilename,'wb') as file:
-            pickle.dump({'Test_accuracy':new_Test_acc, 'Test_predictions':new_y_pred_labels, 'LabelDictionary':LabelDict},file)
-            
-        models[TestScenario] = filename
-        Test_accs.append(new_Test_acc)
-        y_pred_labels[TestScenario] = new_y_pred_labels
+        Models[TestScenario] = ModelFileName[0:-3]
+        TrainAccs[TestScenario] = TrainAcc
+        TestAccs[TestScenario] = TestAcc
+        PredLabelsTest[TestScenario] = PredLabels
         
-    return models, Test_accs, y_pred_labels
+    
+    OutData = dict()
+    OutData['Models'] = Models
+    OutData['TrainingAccuracies'] = TrainAccs
+    OutData['TestAccuracies'] = TestAccs
+    OutData['PredictedTestLabels'] = PredLabelsTest
+    OutData['WindowSize'] = WindowSize
+    OutData['BatchSize'] = BatchSize
+    if SaveResult==True:
+        with open(path+filenameNew, 'wb') as file:
+            pickle.dump(OutData, file)
+
+
+    
+    return OutData
+    
+
+#def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, BatchSize=100):
+#    models = {}
+#    Test_accs = []
+#    y_pred_labels = {}
+#
+#    for TestScenario in TestScenarios:
+#        
+#        new_model,new_Test_acc,new_y_pred_labels,LabelDict = TrainRNN(Scenarios, [TestScenario], FeatureClass, WindowSize, BatchSize)
+#        
+#        filename = path + '/' + 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.h5'
+#        DatFilename = path + '/' + 'NNModels/Model_'+str(WindowSize)+'_'+str(BatchSize)+'_'+TestScenario+'.pkl'
+#        
+#        new_model.save(filename)
+#        
+#        with open(DatFilename,'wb') as file:
+#            pickle.dump({'Test_accuracy':new_Test_acc, 'Test_predictions':new_y_pred_labels, 'LabelDictionary':LabelDict},file)
+#            
+#        models[TestScenario] = filename
+#        Test_accs.append(new_Test_acc)
+#        y_pred_labels[TestScenario] = new_y_pred_labels
+#        
+#    return models, Test_accs, y_pred_labels
 
 def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], BatchSizes=[50,500]):
     TestAccs = {}
@@ -120,14 +229,22 @@ if __name__ == '__main__':
 #    model, test_acc, y_pred_labels, LabelDict = TrainRNN(Scenarios, TestScenario, 'OwnshipData')
 
     # Test LOOCV
-    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
-    FeatureClass = 'OwnshipWingmanData'
-    models, Test_accs, y_pred_labels = LOOCV(Scenarios, TestScenarios, FeatureClass=FeatureClass)
-    with open('NNResults_'+FeatureClass+'.pkl','wb') as file:
-        pickle.dump({'Models':models, 'TestAccuracies':Test_accs, 'PredictedLabels':y_pred_labels},file)
+#    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
+#    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
+#    FeatureClass = 'OwnshipWingmanData'
+#    models, Test_accs, y_pred_labels = LOOCV(Scenarios, TestScenarios, FeatureClass=FeatureClass)
+#    with open('NNResults_'+FeatureClass+'.pkl','wb') as file:
+#        pickle.dump({'Models':models, 'TestAccuracies':Test_accs, 'PredictedLabels':y_pred_labels},file)
 
 ##     #Test GridSearch
 #    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
 #    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
 #    TestAccs, MeanTestAccs = GridSearch(Scenarios, TestScenarios, 'OwnshipData')
+
+    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4C']
+    TestScenarios = ['1A']
+    FeatureClass = CreateFeatureClass(WingmanData=False)
+    #XTrain, YTrain, XTest, YTest, Offsets, Scale = GetData(Scenarios, TestScenarios, FeatureClass, WindowSize=2,returnDataFrame=True)
+    #Output = TrainAndEvalNN(Scenarios, TestScenarios, FeatureClass)
+    #model, History = TrainNN(XTrain, YTrain, BatchSize=100)
+    OutData = LOOCV(Scenarios, TestScenarios, FeatureClass, SaveResult=True)

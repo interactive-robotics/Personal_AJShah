@@ -33,13 +33,13 @@ def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5):
     WeaponsData = FeatureClass['WeaponsData']
     CommsData = FeatureClass['CommsData']
     
-    XTrain, YTrain, XTest, YTest = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
                                                                     WingmanData=WingmanData, FlightPlanData = FlightPlanData,
                                                                     WeaponsData=WeaponsData, CommsData=CommsData)
     
     YTrain = np.array(YTrain).ravel()
     YTest = np.array(YTest).ravel()
-    return XTrain, YTrain, XTest, YTest
+    return XTrain, YTrain, XTest, YTest, Offsets, Scale
 
 
 
@@ -57,13 +57,13 @@ def TrainLinearSVC(XTrain, YTrain):
 
 def TrainAndEvalLinearSVC(Scenarios, TestScenario, FeatureClass, WindowSize=5):
     
-    XTrain, YTrain, XTest, YTest = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
     
     model, TrainAcc = TrainLinearSVC(XTrain, YTrain)
     PredLabels = model.predict(XTest)
     TestAcc = np.mean(PredLabels == YTest)
     
-    return model, TrainAcc, TestAcc, PredLabels
+    return model, TrainAcc, TestAcc, PredLabels, Offsets, Scale
 
 
 
@@ -89,7 +89,7 @@ def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=False
     
     for TestScenario in TestScenarios:
         
-        model, TrainAcc, TestAcc, PredLabels = TrainAndEvalLinearSVC(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
+        model, TrainAcc, TestAcc, PredLabels, Offsets, Scale = TrainAndEvalLinearSVC(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
         Models[TestScenario] = model
         TestAccs[TestScenario] = TestAcc
         TrainAccs[TestScenario] = TrainAcc

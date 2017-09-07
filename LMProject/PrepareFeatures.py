@@ -285,7 +285,7 @@ def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5,
                 WindowSize=WindowSize)
       
         return [WindowTrainingData, FinalTrainingLabels, WindowTestData,
-                FinalTestLabels]
+                FinalTestLabels, Offsets, Scale]
     else:
         
         [WindowTrainingData, FinalTrainingLabels, OutTrainStartID,
@@ -298,7 +298,7 @@ def GenerateWindowedTestAndTrainData(scenarios, TestScenario, WindowSize=5,
          WindowSize=WindowSize, RNNMode=True)
         
         return [WindowTrainingData, FinalTrainingLabels, WindowTestData,
-                FinalTestLabels, OutTrainStartID, OutTrainEndID, OutTestStartID
+                FinalTestLabels, Offsets, Scale, OutTrainStartID, OutTrainEndID, OutTestStartID
                 , OutTestEndID]
 
 
@@ -311,4 +311,4 @@ if __name__ == '__main__':
 
     Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4C']
     TestScenario = ['3A']
-    TrainX, TrainY, TestX, TestY, TrainStartID, TrainEndID, TestStartID, TestEndID = GenerateWindowedTestAndTrainData(Scenarios, TestScenario, WindowSize=5, WingmanData=True, RNNMode=True)
+    TrainX, TrainY, TestX, TestY, Offsets, Scale, TrainStartID, TrainEndID, TestStartID, TestEndID = GenerateWindowedTestAndTrainData(Scenarios, TestScenario, WindowSize=5, WingmanData=True, RNNMode=True)

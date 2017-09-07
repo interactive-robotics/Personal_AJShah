@@ -31,13 +31,13 @@ def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5):
     WeaponsData = FeatureClass['WeaponsData']
     CommsData = FeatureClass['CommsData']
     
-    XTrain, YTrain, XTest, YTest = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
                                                                     WingmanData=WingmanData, FlightPlanData = FlightPlanData,
                                                                     WeaponsData=WeaponsData, CommsData=CommsData)
     
     YTrain = np.array(YTrain).ravel()
     YTest = np.array(YTest).ravel()
-    return XTrain, YTrain, XTest, YTest
+    return XTrain, YTrain, XTest, YTest, Offsets, Scale
 
 def TrainKernelSVC(XTrain, YTrain):
 
@@ -51,13 +51,13 @@ def TrainKernelSVC(XTrain, YTrain):
 
 def TrainAndEvalKernelSVC(Scenarios, TestScenario, FeatureClass, WindowSize=5):
     
-    XTrain, YTrain, XTest, YTest = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
     
     model, TrainAcc = TrainKernelSVC(XTrain, YTrain)
     PredLabels = model.predict(XTest)
     TestAcc = np.mean(PredLabels == YTest)
     
-    return model, TrainAcc, TestAcc, PredLabels
+    return model, TrainAcc, TestAcc, PredLabels, Offsets, Scale
 
 def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=False, filename = 'KernelSVCResults'):
 
@@ -81,7 +81,7 @@ def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=False
     
     for TestScenario in TestScenarios:
         
-        model, TrainAcc, TestAcc, PredLabels = TrainAndEvalKernelSVC(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
+        model, TrainAcc, TestAcc, PredLabels, Offsets, Scale = TrainAndEvalKernelSVC(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
         Models[TestScenario] = model
         TestAccs[TestScenario] = TestAcc
         TrainAccs[TestScenario] = TrainAcc
@@ -95,6 +95,7 @@ def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=False
         OutData['PredictedTestLabels'] = PredLabelsTest
         OutData['TrainingAccuracies'] = TrainAccs
         OutData['FeatureClass'] = FeatureClass
+        OutData['WindowSize'] = WindowSize
         with open(filenameNew,'wb') as file:
             pickle.dump(OutData,file)
 
@@ -110,6 +111,6 @@ if __name__=='__main__':
     Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
     TestScenarios = ['2A']
     FeatureClass = CreateFeatureClass(WingmanData=False)
-    #model, TrainAcc, TestAcc, PredLabels = TrainAndEvalKernelSVC(Scenarios, TestScenarios, FeatureClass, WindowSize=5)
+    #model, TrainAcc, TestAcc, PredLabels, Offsets, Scale = TrainAndEvalKernelSVC(Scenarios, TestScenarios, FeatureClass, WindowSize=5)
     
     filename =LOOCV(Scenarios, TestScenarios, FeatureClass=FeatureClass, SaveResult=True)

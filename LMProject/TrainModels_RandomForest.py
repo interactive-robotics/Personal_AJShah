@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -35,13 +36,13 @@ def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5):
     WeaponsData = FeatureClass['WeaponsData']
     CommsData = FeatureClass['CommsData']
     
-    XTrain, YTrain, XTest, YTest = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GenerateWindowedTestAndTrainData(TrainScenarios, TestScenario, WindowSize=WindowSize,
                                                                     WingmanData=WingmanData, FlightPlanData = FlightPlanData,
                                                                     WeaponsData=WeaponsData, CommsData=CommsData)
     
     YTrain = np.array(YTrain).ravel()
     YTest = np.array(YTest).ravel()
-    return XTrain, YTrain, XTest, YTest
+    return XTrain, YTrain, XTest, YTest, Offsets, Scale
 
 
 
@@ -59,13 +60,13 @@ def TrainRandomForests(XTrain, YTrain):
 
 def TrainAndEvalRandomForests(Scenarios, TestScenario, FeatureClass, WindowSize=5):
     
-    XTrain, YTrain, XTest, YTest = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
+    XTrain, YTrain, XTest, YTest, Offsets, Scale = GetData(Scenarios, TestScenario, FeatureClass, WindowSize=WindowSize)
     
     model, TrainAcc = TrainRandomForests(XTrain, YTrain)
     PredLabels = model.predict(XTest)
     TestAcc = np.mean(PredLabels == YTest)
     
-    return model, TrainAcc, TestAcc, PredLabels
+    return model, TrainAcc, TestAcc, PredLabels, Offsets, Scale
 
 
 
@@ -91,7 +92,7 @@ def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SaveResult=False
     
     for TestScenario in TestScenarios:
         
-        model, TrainAcc, TestAcc, PredLabels = TrainAndEvalRandomForests(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
+        model, TrainAcc, TestAcc, PredLabels, Offsets, Scale = TrainAndEvalRandomForests(Scenarios, [TestScenario], FeatureClass, WindowSize=WindowSize)
         Models[TestScenario] = model
         TestAccs[TestScenario] = TestAcc
         TrainAccs[TestScenario] = TrainAcc
