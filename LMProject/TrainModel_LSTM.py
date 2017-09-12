@@ -77,10 +77,10 @@ def TrainRNN(XTrain, YTrain, BatchSize=50, WindowSize=5):
     #Compile the model
     model = Model(inputs = [input1], outputs = [Predictions])
     model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.005), metrics = ['accuracy'])
-    model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
+    model.fit(XTrain,YTrain, epochs = 10, validation_split=0.00, batch_size=BatchSize)
     
     model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.0025), metrics = ['accuracy'])
-    History = model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
+    History = model.fit(XTrain,YTrain, epochs = 10, validation_split=0.00, batch_size=BatchSize)
     
     return model, History.history
 
@@ -92,15 +92,18 @@ def TrainAndEvalRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize
                                                                       SeqSize=SeqSize)
     
     model, History = TrainRNN(XTrain, YTrain)
-    TrainAcc = History['acc']
+    TrainAcc = History['acc'][-1]
     
     TestAcc = model.evaluate(XTest, YTest)[1]
     
     PredictedLabels_onehot = model.predict(XTest)
-    MaxID = np.argmax(PredictedLabels_onehot,axis=2)
+    #MaxID = np.argmax(PredictedLabels_onehot,axis=2)
     #MaxID = MaxID.flatten()
     
-    return model, TrainAcc, TestAcc, MaxID, PredictedLabels_onehot
+    return model, TrainAcc, TestAcc, PredictedLabels_onehot, Offsets, Scale, LabelList
+
+
+
 
 
 
@@ -237,9 +240,9 @@ def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], Seq
 
 if __name__=='__main__':
     FeatureClass = CreateFeatureClass()
-    #XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(['1A'],['2A'],FeatureClass)
+    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(['1A'],['2A'],FeatureClass)
     #model, History = TrainRNN(XTrain,YTrain)
-    model, TestAcc, TrainAcc, MaxID, PredictedLabels = TrainAndEvalRNN(['1A'],['2A'], FeatureClass)
+    model, TrainAcc, TestAcc, MaxID, PredictedLabels = TrainAndEvalRNN(['1A'],['2A'], FeatureClass)
     
     
     
