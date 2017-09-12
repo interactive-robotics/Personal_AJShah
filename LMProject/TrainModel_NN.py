@@ -247,4 +247,4 @@ if __name__ == '__main__':
     #XTrain, YTrain, XTest, YTest, Offsets, Scale = GetData(Scenarios, TestScenarios, FeatureClass, WindowSize=2,returnDataFrame=True)
     #Output = TrainAndEvalNN(Scenarios, TestScenarios, FeatureClass)
     #model, History = TrainNN(XTrain, YTrain, BatchSize=100)
-    OutData = LOOCV(Scenarios, TestScenarios, FeatureClass, SaveResult=True)
+    OutData = LOOCV(Scenarios, TestScenarios, FeatureClass, SaveResult=False)

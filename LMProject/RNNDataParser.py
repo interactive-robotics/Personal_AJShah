@@ -29,17 +29,17 @@ def PrepareRNNData(scenarios, TestScenario, WindowSize=5, SeqSize = 100,
                                                 CommsData=CommsData,
                                                 RNNMode=True)
     
-    SeqX_train, SeqY_train, SeqX_test, SeqY_test = PrepareSequenceData(
+    SeqX_train, SeqY_train, SeqX_test, SeqY_test, LabelList = PrepareSequenceData(
             X_train, y_train, X_test, y_test, TrainStartID, TrainEndID,
             TestStartID, TestEndID, WindowSize=WindowSize, SeqSize=SeqSize)
     
-    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, Offsets, Scale
+    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, Offsets, Scale, LabelList
 
 
 def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
                         TrainEndID, TestStartID, TestEndID, WindowSize=5,
                         SeqSize=100):
-    
+    LabelList = y_test['Label'].cat.categories
     y_test = np.array(pd.get_dummies(y_test))
     y_train = np.array(pd.get_dummies(y_train))
     
@@ -99,7 +99,7 @@ def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
         SeqY_test = np.append(SeqY_test,LastSeqLabels,axis=0)
         
         
-    return SeqX_train, SeqY_train, SeqX_test, SeqY_test
+    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, LabelList
 
 if __name__ == '__main__':
     scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']

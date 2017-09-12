@@ -23,44 +23,131 @@ from itertools import product
 import numpy as np
 
 
+def CreateFeatureClass(WingmanData=True, FlightPlanData=True, WeaponsData=True, CommsData=True):
+    
+    FeatureClass = {}
+    FeatureClass['WingmanData'] = WingmanData
+    FeatureClass['FlightPlanData'] = FlightPlanData
+    FeatureClass['WeaponsData'] = WeaponsData
+    FeatureClass['CommsData'] = CommsData
+    
+    return FeatureClass
 
-def TrainRNN(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
+
+def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100):
     
-    #SeqSize = 400
-    #WindowSize = 5
-    SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, FeatureClass='OwnshipData', WindowSize=WindowSize, SeqSize=SeqSize)
+    TrainScenarios = list(set(scenarios) - set(TestScenario))
+    WingmanData = FeatureClass['WingmanData']
+    FlightPlanData = FeatureClass['FlightPlanData']
+    WeaponsData = FeatureClass['WeaponsData']
+    CommsData = FeatureClass['CommsData']
     
-    input1 = Input(shape=(SeqSize,SeqX_train.shape[2]))
+    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = PrepareRNNData(scenarios, TestScenario, WindowSize=WindowSize, SeqSize=SeqSize,
+                                                  WingmanData=WingmanData, FlightPlanData=FlightPlanData, CommsData=CommsData,
+                                                  WeaponsData=WeaponsData)
+    
+    
+    
+    return XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList
+
+
+def TrainRNN(XTrain, YTrain, BatchSize=50, WindowSize=5):
+    
+    SeqSize = XTrain.shape[1]
+    input1 = Input(shape=(SeqSize, XTrain.shape[2]))
     MaskedInput = Masking(mask_value=0)(input1)
     
     #Add dense layer to learn locally consistent behaviors
-    DenseOut1 = TimeDistributed(Dense(3*int(SeqX_train.shape[2]/WindowSize), input_shape = (SeqSize,SeqX_train.shape[2])))(MaskedInput)
-    DenseOut2 =-TimeDistributed(Dense(int(SeqX_train.shape[2]/WindowSize), input_shape = (SeqSize,SeqX_train.shape[2])))(DenseOut1)
+    DenseOut1 = TimeDistributed(Dense(3*int(XTrain.shape[2]/WindowSize), input_shape = (SeqSize,XTrain.shape[2])))(MaskedInput)
+    DenseOut2 =-TimeDistributed(Dense(int(XTrain.shape[2]/WindowSize), input_shape = (SeqSize,XTrain.shape[2]), activation='relu'))(DenseOut1)
+    
     
     #possible add more dense layers here
     
     #Stack LSTMs on top of each other
-    LSTMOut1 = LSTM(50, return_sequences = True)(DenseOut1)
+    LSTMOut1 = LSTM(50, return_sequences = True)(DenseOut2)
     LSTMOut2 = LSTM(20, return_sequences = True)(LSTMOut1)
     LSTMOut3 = LSTM(16, return_sequences=True)(LSTMOut2)
     
     # Provide LSTM output to dense classification activations
-    Dense2Out = TimeDistributed(Dense(SeqY_train.shape[2]))(LSTMOut2)
+    Dense2Out = TimeDistributed(Dense(YTrain.shape[2]))(LSTMOut3)
     # Generate predictions from softmax activations
     Predictions = TimeDistributed(Activation('softmax'))(Dense2Out)
     
     #Compile the model
     model = Model(inputs = [input1], outputs = [Predictions])
     model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.005), metrics = ['accuracy'])
-    model.fit(SeqX_train,SeqY_train, epochs = 50, validation_split=0.00, batch_size=50)
+    model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
     
     model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.0025), metrics = ['accuracy'])
-    model.fit(SeqX_train,SeqY_train, epochs = 50, validation_split=0.00, batch_size=50)
+    model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
     
-    TestAcc = model.evaluate(SeqX_test,SeqY_test)[1]
-    Y_test_predictions = model.predict(SeqX_test)
+    return model
+
+
+
+def TrainAndEvalRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100):
     
-    return model, TestAcc, Y_test_predictions
+    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(scenarios, TestScenario, FetureClass, WindowSize=WindowSize,
+                                                                      SeqSize=SeqSize)
+    
+    model, History = TrainRNN(XTrain, YTrain)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#def TrainRNN(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
+#    
+#    #SeqSize = 400
+#    #WindowSize = 5
+#    SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, FeatureClass='OwnshipData', WindowSize=WindowSize, SeqSize=SeqSize)
+#    
+#    input1 = Input(shape=(SeqSize,SeqX_train.shape[2]))
+#    MaskedInput = Masking(mask_value=0)(input1)
+#    
+#    #Add dense layer to learn locally consistent behaviors
+#    DenseOut1 = TimeDistributed(Dense(3*int(SeqX_train.shape[2]/WindowSize), input_shape = (SeqSize,SeqX_train.shape[2])))(MaskedInput)
+#    DenseOut2 =-TimeDistributed(Dense(int(SeqX_train.shape[2]/WindowSize), input_shape = (SeqSize,SeqX_train.shape[2])))(DenseOut1)
+#    
+#    #possible add more dense layers here
+#    
+#    #Stack LSTMs on top of each other
+#    LSTMOut1 = LSTM(50, return_sequences = True)(DenseOut1)
+#    LSTMOut2 = LSTM(20, return_sequences = True)(LSTMOut1)
+#    LSTMOut3 = LSTM(16, return_sequences=True)(LSTMOut2)
+#    
+#    # Provide LSTM output to dense classification activations
+#    Dense2Out = TimeDistributed(Dense(SeqY_train.shape[2]))(LSTMOut2)
+#    # Generate predictions from softmax activations
+#    Predictions = TimeDistributed(Activation('softmax'))(Dense2Out)
+#    
+#    #Compile the model
+#    model = Model(inputs = [input1], outputs = [Predictions])
+#    model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.005), metrics = ['accuracy'])
+#    model.fit(SeqX_train,SeqY_train, epochs = 50, validation_split=0.00, batch_size=50)
+#    
+#    model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.0025), metrics = ['accuracy'])
+#    model.fit(SeqX_train,SeqY_train, epochs = 50, validation_split=0.00, batch_size=50)
+#    
+#    TestAcc = model.evaluate(SeqX_test,SeqY_test)[1]
+#    Y_test_predictions = model.predict(SeqX_test)
+#    
+#    return model, TestAcc, Y_test_predictions
 
 def TrainRNN2(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
     
@@ -139,10 +226,13 @@ def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], Seq
 
 
 if __name__=='__main__':
-    scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
-    TestScenario = ['2B']
-    model, TestAcc, Y_test_predictions = TrainRNN2(scenarios, TestScenario, FeatureClass = 'OwnshipData', WindowSize=10, SeqSize=500)
-    
+    FeatureClass = CreateFeatureClass()
+    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(['1A'],['2A'],FeatureClass)
+    model, History = TrainRNN(XTrain,YTrain)
+#    scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
+#    TestScenario = ['2B']
+#    model, TestAcc, Y_test_predictions = TrainRNN2(scenarios, TestScenario, FeatureClass = 'OwnshipData', WindowSize=10, SeqSize=500)
+#    
 #        # Test LOOCV
 #    Scenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
 #    TestScenarios = ['1A','1B','1C','2A','2B','2C','3A','3B', '3C','4A','4C']
