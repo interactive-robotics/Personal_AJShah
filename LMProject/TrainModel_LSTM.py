@@ -59,7 +59,7 @@ def TrainRNN(XTrain, YTrain, BatchSize=50, WindowSize=5):
     
     #Add dense layer to learn locally consistent behaviors
     DenseOut1 = TimeDistributed(Dense(3*int(XTrain.shape[2]/WindowSize), input_shape = (SeqSize,XTrain.shape[2])))(MaskedInput)
-    DenseOut2 =-TimeDistributed(Dense(int(XTrain.shape[2]/WindowSize), input_shape = (SeqSize,XTrain.shape[2]), activation='relu'))(DenseOut1)
+    DenseOut2 = TimeDistributed(Dense(int(XTrain.shape[2]/WindowSize), input_shape = (SeqSize,XTrain.shape[2]), activation='relu'))(DenseOut1)
     
     
     #possible add more dense layers here
@@ -80,18 +80,28 @@ def TrainRNN(XTrain, YTrain, BatchSize=50, WindowSize=5):
     model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
     
     model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.0025), metrics = ['accuracy'])
-    model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
+    History = model.fit(XTrain,YTrain, epochs = 50, validation_split=0.00, batch_size=BatchSize)
     
-    return model
+    return model, History.history
 
 
 
 def TrainAndEvalRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100):
     
-    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(scenarios, TestScenario, FetureClass, WindowSize=WindowSize,
+    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(scenarios, TestScenario, FeatureClass, WindowSize=WindowSize,
                                                                       SeqSize=SeqSize)
     
     model, History = TrainRNN(XTrain, YTrain)
+    TrainAcc = History['acc']
+    
+    TestAcc = model.evaluate(XTest, YTest)[1]
+    
+    PredictedLabels_onehot = model.predict(XTest)
+    MaxID = np.argmax(PredictedLabels_onehot,axis=2)
+    #MaxID = MaxID.flatten()
+    
+    return model, TrainAcc, TestAcc, MaxID, PredictedLabels_onehot
+
 
 
 
@@ -227,8 +237,13 @@ def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], Seq
 
 if __name__=='__main__':
     FeatureClass = CreateFeatureClass()
-    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(['1A'],['2A'],FeatureClass)
-    model, History = TrainRNN(XTrain,YTrain)
+    #XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(['1A'],['2A'],FeatureClass)
+    #model, History = TrainRNN(XTrain,YTrain)
+    model, TestAcc, TrainAcc, MaxID, PredictedLabels = TrainAndEvalRNN(['1A'],['2A'], FeatureClass)
+    
+    
+    
+    
 #    scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
 #    TestScenario = ['2B']
 #    model, TestAcc, Y_test_predictions = TrainRNN2(scenarios, TestScenario, FeatureClass = 'OwnshipData', WindowSize=10, SeqSize=500)
