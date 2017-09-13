@@ -29,11 +29,11 @@ def PrepareRNNData(scenarios, TestScenario, WindowSize=5, SeqSize = 100,
                                                 CommsData=CommsData,
                                                 RNNMode=True)
     
-    SeqX_train, SeqY_train, SeqX_test, SeqY_test, LabelList = PrepareSequenceData(
+    SeqX_train, SeqY_train, SeqX_test, SeqY_test, TrainSeqLen, TestSeqLen, LabelList = PrepareSequenceData(
             X_train, y_train, X_test, y_test, TrainStartID, TrainEndID,
             TestStartID, TestEndID, WindowSize=WindowSize, SeqSize=SeqSize)
     
-    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, Offsets, Scale, LabelList
+    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, TrainSeqLen, TestSeqLen, Offsets, Scale, LabelList
 
 
 def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
@@ -42,6 +42,8 @@ def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
     LabelList = y_test['Label'].cat.categories
     y_test = np.array(pd.get_dummies(y_test))
     y_train = np.array(pd.get_dummies(y_train))
+    TrainSeqLen = []
+    TestSeqLen = []
     
     SeqX_train = np.zeros((0,SeqSize, X_train.shape[1]))
     SeqY_train = np.zeros((0,SeqSize, y_train.shape[1]))
@@ -59,13 +61,15 @@ def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
             newLabels = y_train[dataChops[j]:dataChops[j+1],:]
             newLabels = np.reshape(newLabels,(1,*newLabels.shape))
             SeqY_train = np.append(SeqY_train, newLabels,axis=0)
+            TrainSeqLen.append(SeqSize)
         
         LastData = ScenarioData[dataChops[-1]:,:]
+        TrainSeqLen.append(LastData.shape[0])
         LastSeqData = np.zeros((1,SeqSize,X_train.shape[1]))
         LastSeqData[0,0:LastData.shape[0],:] = LastData
         SeqX_train = np.append(SeqX_train,LastSeqData, axis=0)
         
-        LastLabels = ScenarioLabels[dataChops[-1],:]
+        LastLabels = ScenarioLabels[dataChops[-1]:,:]
         LastSeqLabels = np.zeros((1,SeqSize,y_train.shape[1]))
         LastSeqLabels[0,0:LastLabels.shape[0],:] = LastLabels
         SeqY_train = np.append(SeqY_train,LastSeqLabels,axis=0)
@@ -87,25 +91,28 @@ def PrepareSequenceData(X_train, y_train, X_test, y_test, TrainStartID,
             newLabels = y_test[dataChops[j]:dataChops[j+1],:]
             newLabels = np.reshape(newLabels,(1,*newLabels.shape))
             SeqY_test = np.append(SeqY_test, newLabels,axis=0)
+            TestSeqLen.append(SeqSize)
         
         LastData = ScenarioData[dataChops[-1]:,:]
+        TestSeqLen.append(LastData.shape[0])
         LastSeqData = np.zeros((1,SeqSize,X_train.shape[1]))
         LastSeqData[0,0:LastData.shape[0],:] = LastData
         SeqX_test = np.append(SeqX_test,LastSeqData, axis=0)
         
-        LastLabels = ScenarioLabels[dataChops[-1],:]
+        LastLabels = ScenarioLabels[dataChops[-1]:,:]
         LastSeqLabels = np.zeros((1,SeqSize,y_train.shape[1]))
         LastSeqLabels[0,0:LastLabels.shape[0],:] = LastLabels
         SeqY_test = np.append(SeqY_test,LastSeqLabels,axis=0)
         
         
-    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, LabelList
+    return SeqX_train, SeqY_train, SeqX_test, SeqY_test, TrainSeqLen, TestSeqLen, LabelList
 
 if __name__ == '__main__':
     scenarios = ['1A','1B','1C', '2A','2B','2C', '3A','3B','3C', '4A','4C']
-    TestScenario = ['4C']
+    scenarios = ['4C']
+    TestScenario = ['2A']
     #SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, 'OwnshipData')
-    XTrain, YTrain, XTest, YTest, Offsets, Scale= PrepareRNNData(scenarios, TestScenario,
+    XTrain, YTrain, XTest, YTest, TrainSeqLen, TestSeqLen, Offsets, Scale, LabelList= PrepareRNNData(scenarios, TestScenario,
                                                   WindowSize=5, SeqSize=50,
                                                   WingmanData=False,
                                                   FlightPlanData = False,

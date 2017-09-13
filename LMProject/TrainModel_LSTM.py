@@ -22,6 +22,7 @@ import pickle
 from itertools import product
 import numpy as np
 
+path = '/home/ajshah/Dropbox (MIT)/LM Data/Data2/'
 
 def CreateFeatureClass(WingmanData=True, FlightPlanData=True, WeaponsData=True, CommsData=True):
     
@@ -42,13 +43,13 @@ def GetData(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100):
     WeaponsData = FeatureClass['WeaponsData']
     CommsData = FeatureClass['CommsData']
     
-    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = PrepareRNNData(scenarios, TestScenario, WindowSize=WindowSize, SeqSize=SeqSize,
+    XTrain, YTrain, XTest, YTest, TrainSeqLen, TestSeqLen, Offsets, Scale, LabelList = PrepareRNNData(scenarios, TestScenario, WindowSize=WindowSize, SeqSize=SeqSize,
                                                   WingmanData=WingmanData, FlightPlanData=FlightPlanData, CommsData=CommsData,
                                                   WeaponsData=WeaponsData)
     
     
     
-    return XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList
+    return XTrain, YTrain, XTest, YTest, TrainSeqLen, TestSeqLen, Offsets, Scale, LabelList
 
 
 def TrainRNN(XTrain, YTrain, BatchSize=50, WindowSize=5):
@@ -88,7 +89,7 @@ def TrainRNN(XTrain, YTrain, BatchSize=50, WindowSize=5):
 
 def TrainAndEvalRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize=100):
     
-    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(scenarios, TestScenario, FeatureClass, WindowSize=WindowSize,
+    XTrain, YTrain, XTest, YTest, TrainSeqLen, TestSeqLen, Offsets, Scale, LabelList = GetData(scenarios, TestScenario, FeatureClass, WindowSize=WindowSize,
                                                                       SeqSize=SeqSize)
     
     model, History = TrainRNN(XTrain, YTrain)
@@ -100,67 +101,111 @@ def TrainAndEvalRNN(scenarios, TestScenario, FeatureClass, WindowSize=5, SeqSize
     #MaxID = np.argmax(PredictedLabels_onehot,axis=2)
     #MaxID = MaxID.flatten()
     
-    return model, TrainAcc, TestAcc, PredictedLabels_onehot, Offsets, Scale, LabelList
+    return model, TrainAcc, TestAcc, PredictedLabels_onehot, TestSeqLen, Offsets, Scale, LabelList
+
+
+
+def GatherPredictions(PredictedLabels_onehot, SeqLen, LabelList):
+    MaxID_tensor = np.argmax(PredictedLabels_onehot, axis=2)
+    MaxID = np.empty(shape = (0), dtype=np.int32)
+    unitsadded = []
+    for i in range(len(SeqLen)):
+        MaxID_Seq = MaxID_tensor[i][0:SeqLen[i]]
+        unitsadded.append(MaxID_Seq.shape)
+        MaxID = np.append(MaxID, MaxID_Seq)
+    PredictedLabels = pd.DataFrame()
+    PredictedLabels['Label'] = pd.Categorical(LabelList[MaxID], categories = LabelList)
+    
+    return PredictedLabels
+
+
+
+def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SeqSize=100, SaveResult=False, filename='RNNResults',
+          dirname = 'RNNModels'):
+    #Determine the filename and the directory name first
+    #path = '/home/ajshah/Dropbox (MIT)/LM Data/Data2/Results'
+    
+    i=1
+    if os.path.exists(path + 'Results/' + filename+'.pkl'):
+        filenameNew = filename+'_'+str(i)
+        while os.path.exists(path + 'Results/' + filenameNew+'.pkl'):
+            i=i+1
+            filenameNew = filename+'_'+str(i)
+    else:
+        filenameNew = filename
+
+    filenameNew = filenameNew+'.pkl'
+    if SaveResult == True:
+        open(path+ 'Results/' + filenameNew,'wb')
+    
+    i=1
+    if os.path.exists(path + 'Results/' + dirname):
+        dirnameNew = dirname+'_'+str(i)
+        while os.path.exists(path +'Results/' + dirnameNew):
+            i=i+1
+            dirnameNew = dirname+'_'+str(i)
+    else:
+        dirnameNew = dirname
+    if SaveResult==True:
+        os.mkdir(path+ 'Results/' + dirnameNew)
+    
+    Models = {}
+    TrainAccs = {}
+    TestAccs = {}
+    PredLabelsTest = {}
+    
+    for TestScenario in TestScenarios:
+        
+        model, TrainAcc, TestAcc, PredLabels, TestSeqLen, Offsets, Scale, LabelList = TrainAndEvalRNN(Scenarios, [TestScenario], FeatureClass,
+                                                                              WindowSize=WindowSize, SeqSize=SeqSize)
+        
+        # save model in directory
+        ModelFileName = path + 'Results/' + dirnameNew + '/' + TestScenario + '.h5'
+        if SaveResult==True:
+            model.save(ModelFileName)
+        
+        #Save model metadata
+        DataFileName = path +'Results/' + dirnameNew + '/' + TestScenario + '.pkl'
+        ModelData = dict()
+        ModelData['WindowSize'] = WindowSize
+        ModelData['SeqSize'] = SeqSize
+        ModelData['Offsets'] = Offsets
+        ModelData['Scale'] = Scale
+        ModelData['TrainAcc'] = TrainAcc
+        ModelData['TestAcc'] =TestAcc
+        ModelData['PredLabels'] = PredLabels
+        ModelData['FeatureClass'] = FeatureClass
+        ModelData['LabelList'] = LabelList
+        if SaveResult==True:
+            with open(DataFileName,'wb') as file:
+                pickle.dump(ModelData,file)
+        
+        Models[TestScenario] = ModelFileName[0:-3]
+        TrainAccs[TestScenario] = TrainAcc
+        TestAccs[TestScenario] = TestAcc
+        PredLabelsTest[TestScenario] = PredLabels
+        
+    
+    OutData = dict()
+    OutData['Models'] = Models
+    OutData['TrainingAccuracies'] = TrainAccs
+    OutData['TestAccuracies'] = TestAccs
+    OutData['PredictedTestLabels'] = PredLabelsTest
+    OutData['WindowSize'] = WindowSize
+    #OutData['BatchSize'] = BatchSize
+    if SaveResult==True:
+        with open(path + 'Results/' + filenameNew, 'wb') as file:
+            pickle.dump(OutData, file)
+
+
+    
+    return OutData
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#def TrainRNN(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
-#    
-#    #SeqSize = 400
-#    #WindowSize = 5
-#    SeqX_train, SeqY_train, SeqX_test, SeqY_test = ReadRNNData(scenarios, TestScenario, FeatureClass='OwnshipData', WindowSize=WindowSize, SeqSize=SeqSize)
-#    
-#    input1 = Input(shape=(SeqSize,SeqX_train.shape[2]))
-#    MaskedInput = Masking(mask_value=0)(input1)
-#    
-#    #Add dense layer to learn locally consistent behaviors
-#    DenseOut1 = TimeDistributed(Dense(3*int(SeqX_train.shape[2]/WindowSize), input_shape = (SeqSize,SeqX_train.shape[2])))(MaskedInput)
-#    DenseOut2 =-TimeDistributed(Dense(int(SeqX_train.shape[2]/WindowSize), input_shape = (SeqSize,SeqX_train.shape[2])))(DenseOut1)
-#    
-#    #possible add more dense layers here
-#    
-#    #Stack LSTMs on top of each other
-#    LSTMOut1 = LSTM(50, return_sequences = True)(DenseOut1)
-#    LSTMOut2 = LSTM(20, return_sequences = True)(LSTMOut1)
-#    LSTMOut3 = LSTM(16, return_sequences=True)(LSTMOut2)
-#    
-#    # Provide LSTM output to dense classification activations
-#    Dense2Out = TimeDistributed(Dense(SeqY_train.shape[2]))(LSTMOut2)
-#    # Generate predictions from softmax activations
-#    Predictions = TimeDistributed(Activation('softmax'))(Dense2Out)
-#    
-#    #Compile the model
-#    model = Model(inputs = [input1], outputs = [Predictions])
-#    model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.005), metrics = ['accuracy'])
-#    model.fit(SeqX_train,SeqY_train, epochs = 50, validation_split=0.00, batch_size=50)
-#    
-#    model.compile(loss = 'categorical_crossentropy',optimizer = adam(lr=0.0025), metrics = ['accuracy'])
-#    model.fit(SeqX_train,SeqY_train, epochs = 50, validation_split=0.00, batch_size=50)
-#    
-#    TestAcc = model.evaluate(SeqX_test,SeqY_test)[1]
-#    Y_test_predictions = model.predict(SeqX_test)
-#    
-#    return model, TestAcc, Y_test_predictions
 
 def TrainRNN2(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
     
@@ -196,34 +241,7 @@ def TrainRNN2(scenarios, TestScenatio, FeatureClass, WindowSize=5, SeqSize=100):
     
     return model, TestAcc, Y_test_predictions
 
-def LOOCV(Scenarios, TestScenarios, FeatureClass, WindowSize=5, SeqSize=100):
-    models = {}
-    Test_accs = []
-    y_pred_labels = {}
 
-    for TestScenario in TestScenarios:
-        
-        new_model,new_Test_acc,new_y_pred_labels,= TrainRNN(Scenarios, [TestScenario], FeatureClass, WindowSize, SeqSize)
-        
-        filename = 'RNNModels/Model_'+str(WindowSize)+'_'+str(SeqSize)+'_'+TestScenario+'.h5'
-        DatFilename = 'RNNModels/Model_'+str(WindowSize)+'_'+str(SeqSize)+'_'+TestScenario+'.pkl'
-        
-        new_model.save(filename)
-        
-        LabelDict = np.array(['Push','Legs','OnTarget','Egress','ThreatIdentification','ThreatAvoidanceMitigation'],dtype=object)
-        
-        with open(DatFilename,'wb') as file:
-            pickle.dump({'Test_accuracy':new_Test_acc, 'Test_predictions':new_y_pred_labels, 'LabelDictionary':LabelDict},file)
-            
-        models[TestScenario] = filename
-        Test_accs.append(new_Test_acc)
-        y_pred_labels[TestScenario] = new_y_pred_labels
-        
-        
-        #with open('RNNresults.pkl','wb') as file:
-            #pickle.dump({'models':models, 'TestAccuracies':Test_accs, 'PredictedLabels':y_pred_labels, 'LabelDictionary':LabelDict},file)
-        
-    return models, Test_accs, y_pred_labels
 
 def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], SeqSizes=[50,100,200]):
     TestAccs = {}
@@ -240,10 +258,19 @@ def GridSearch(Scenarios, TestScenarios, FeatureClass, WindowSizes=[2,5,10], Seq
 
 if __name__=='__main__':
     FeatureClass = CreateFeatureClass()
-    XTrain, YTrain, XTest, YTest, Offsets, Scale, LabelList = GetData(['1A'],['2A'],FeatureClass)
-    #model, History = TrainRNN(XTrain,YTrain)
-    model, TrainAcc, TestAcc, MaxID, PredictedLabels = TrainAndEvalRNN(['1A'],['2A'], FeatureClass)
+    Scenarios = ['1A','1B','2A']
+    TestScenarios = ['4C','4A']
     
+    OutData = LOOCV(Scenarios, TestScenarios, FeatureClass, SaveResult=True)
+    
+    
+    
+#    XTrain, YTrain, XTest, YTest, TrainSeqLen, TestSeqLen, Offsets, Scale, LabelList = GetData(Scenarios,TestScenario,FeatureClass, SeqSize=500)
+#    model, TrainAcc, TestAcc, PredictedLabels, Offsets, Scale, LabelList = TrainAndEvalRNN(Scenarios,TestScenario, FeatureClass,SeqSize=500)
+#    PredictedLabels = GatherPredictions(PredictedLabels, TestSeqLen, LabelList)
+#    TrueLabels = GatherPredictions(YTest, TestSeqLen, LabelList)
+#    Accuracy = np.mean(np.array(PredictedLabels['Label']) == np.array(TrueLabels['Label']))
+#    
     
     
     
