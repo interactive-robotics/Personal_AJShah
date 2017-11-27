@@ -105,6 +105,8 @@ classdef MissionDomain < handle
         end
         
         function XDot = StateDerivative(NewDomain,X,Control)
+            
+            
             XDot(1,1) = NewDomain.Speed*cos(X(3));
             XDot(2,1) = NewDomain.Speed*sin(X(3));
             XDot(3,1) = Control;            
@@ -162,8 +164,8 @@ classdef MissionDomain < handle
             axis equal
             xlim([NewDomain.Bounds.Xmin NewDomain.Bounds.Xmax]);
             ylim([NewDomain.Bounds.Ymin NewDomain.Bounds.Ymax]);
-            viscircles(centers, radii);
-            plot(centers(:,1),centers(:,2),'ro');
+            viscircles(centers, radii,'Color',[0.4660    0.6740    0.1880]);
+            plot(centers(:,1),centers(:,2),'o','Color',[0.4660    0.6740    0.1880]);
             size = min([(NewDomain.Bounds.Xmax - NewDomain.Bounds.Xmin) (NewDomain.Bounds.Ymax - NewDomain.Bounds.Ymin)])/100;
             
             %Plot the start state
@@ -171,8 +173,11 @@ classdef MissionDomain < handle
             plot(NewDomain.StartState.x,NewDomain.StartState.y,'ko');
             
             %plot the trajectory so far
-            plot(NewDomain.Trajectory.x(2:end), NewDomain.Trajectory.y(2:end),'bo');
+            plot(NewDomain.Trajectory.x(2:end), NewDomain.Trajectory.y(2:end),'b.-');
             %quiver(NewDomain.Trajectory.x(2:end),NewDomain.Trajectory.y(2:end),size*cos(NewDomain.Trajectory.theta(2:end)),size*sin(NewDomain.Trajectory.theta(2:end)),'Color','b')
+            
+            box on
+            grid on
             
         end
         
@@ -195,7 +200,7 @@ classdef MissionDomain < handle
         function PlotChangepoints(NewDomain,Changepoints)
             NewDomain.PlotDomain()
             tsteps = [Changepoints(:).tStep];
-            plot([NewDomain.Trajectory.x(tsteps)],[NewDomain.Trajectory.y(tsteps)],'rx','MarkerSize',12);
+            plot([NewDomain.Trajectory.x(tsteps)],[NewDomain.Trajectory.y(tsteps)],'rx','MarkerSize',12,'LineWidth',1.5);
         end
         
             

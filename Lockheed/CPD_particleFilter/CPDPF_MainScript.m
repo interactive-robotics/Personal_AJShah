@@ -1,6 +1,7 @@
 close all
 clear all
-datafile = 'C:\Users\AJShah\Documents\GitHub\Personal_AJShah\Lockheed\ExampleTraj1.mat';
+datafile = 'ExampleTraj3.mat'
+%datafile = 'C:\Users\AJShah\Documents\GitHub\Personal_AJShah\Lockheed\ExampleTraj2.mat';
 
 
 %Define all the models in the CPD formulation
