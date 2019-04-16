@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr 12 18:39:17 2019
+
+@author: ajshah
+"""
+
+from Constants import *
+import FormulaTools as ft
+
+if __name__ =='__main__':
+    
+    Formula, Probs = ImportCandidateFormulas()
+    

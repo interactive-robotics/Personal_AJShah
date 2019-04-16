@@ -20,9 +20,9 @@ SampleDataPath = '/home/ajshah/Github/SpecificationInference/Project_LMMIT/Speci
 BinaryOperators = set(['and','or','imp','U','wU','R'])
 UnaryOperators = set(['not','X','F','G'])
 
-def ImportSampleData(i):
+def ImportSampleData(PathToData, i=10):
     
-    RawDataFile = os.path.join(SampleDataPath,'SimDomain','CustomDomainData1',f'Predicates_{i}.json')
+    RawDataFile = os.path.join(PathToData,f'Predicates_{i}.json')
     RawData = json.load(open(RawDataFile,'r'))
     
     Signal = {}
@@ -31,10 +31,19 @@ def ImportSampleData(i):
         Signal[f'W{i}'] = RawData['WaypointPredicates'][i]
     
     for i in range(len(RawData['ThreatPredicates'])):
-        Signal[f'T{i}'] = [not val for val in RawData['ThreatPredicates'][i]]
+        Signal[f'T{i}'] = [val for val in RawData['ThreatPredicates'][i]]
     
     for i in range(len(RawData['PositionPredicates'])):
         Signal[f'P{i}'] = [not val for val in RawData['PositionPredicates'][i]]
     
     Signal['length'] = len(list(Signal.values())[0])
     return Signal
+
+
+def ImportCandidateFormulas():
+    
+    ResultsFile = 'ThreatData_OutputDist_Sampler5_Custom_5.json'
+    Data = json.load(open(ResultsFile,'r'))
+    Formulas = Data['support']
+    Probs = Data['probs']
+    return Formulas, Probs
