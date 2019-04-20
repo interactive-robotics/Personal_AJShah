@@ -47,3 +47,19 @@ def ImportCandidateFormulas():
     Formulas = Data['support']
     Probs = Data['probs']
     return Formulas, Probs
+
+def ImportBSIData(path):
+    RawData = json.load(open(path,'r'))
+    Signal = {}
+    
+    for i in range(len(RawData['WaypointPredicates'])):
+        Signal[f'W{i}'] = RawData['WaypointPredicates'][i]
+    
+    for i in range(len(RawData['ThreatPredicates'])):
+        Signal[f'T{i}'] = RawData['ThreatPredicates'][i]
+        
+    for i in range(len(RawData['PositionPredicates'])):
+        Signal[f'P{i}'] = [not val for val in RawData['PositionPredicates'][i]]
+    
+    Signal['length'] = len(list(Signal.values())[0])
+    return Signal
