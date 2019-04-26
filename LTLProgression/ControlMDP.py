@@ -24,6 +24,9 @@ class ControlMDP():
     
     def create_observations(self, state=None):
         raise NotImplementedError
+        
+    def is_terminal(self, state=None):
+        return False
 
 
 
@@ -77,7 +80,7 @@ class SyntheticMDP(ControlMDP):
                 #reset all values to False and set threat i to true
                 threats, waypoints = self.decompose_state(self.reset_initial_state(stateful=False))
                 threats[threat_index] = True
-                new_state = MDP.create_state(threats, waypoints)
+                new_state = self.create_state(threats, waypoints)
         else:
             waypoint_index = int(action[1::])
             if binomial(1, self.failure_prob):
@@ -87,7 +90,7 @@ class SyntheticMDP(ControlMDP):
                 threats, waypoints = self.decompose_state(self.reset_initial_state(stateful=False))
                 if self.accessibility[waypoint_index]:
                     waypoints[waypoint_index] = True
-                new_state = MDP.create_state(threats, waypoints)
+                new_state = self.create_state(threats, waypoints)
         
         self.state = new_state
         return new_state

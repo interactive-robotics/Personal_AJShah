@@ -51,7 +51,10 @@ class SpecificationFSM():
         
         idx = np.argsort(probs)[::-1]
         probs = np.array(probs)[idx]
-        formulas = np.array(formulas)[idx]
+        sorted_formulas = np.empty((len(idx),), dtype=object)
+        for i in range(len(idx)):
+            sorted_formulas[i] = formulas[idx[i]]
+        formulas = sorted_formulas
         
         if reward_type not in set(['map','min_regret','max_cover','chance_constrained']):
             raise Exception('Unknown reward formulation')
@@ -63,7 +66,9 @@ class SpecificationFSM():
             idx = 1
             while np.sum(probs[0:idx]) <= 1-risk_level:
                 idx = idx+1
-            sel_formulas = np.array(formulas[0:idx])
+            sel_formulas = np.empty((idx,), dtype=object)
+            for i in range(idx):
+                sel_formulas[i] = formulas[i]
             sel_rewards = np.array(probs[0:idx])
         elif reward_type == 'max_cover':
             sel_formulas = formulas
