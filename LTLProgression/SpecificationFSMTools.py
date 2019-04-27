@@ -146,7 +146,7 @@ def CreateReward(probs):
     #This should return a function of the state that will generate the reward for entering that state. The max reward is 1
     #The minimum possible reward is -1
     
-    def Reward(state):
+    def Reward(state, prev_state = None):
         
         if len(probs) >= len(state):
             #Select the probabilisties of the states being considered
@@ -155,7 +155,8 @@ def CreateReward(probs):
             #Check if the state is a reward giving state
             if IsTerminalState(state):
                 #select the non-falsified formula
-                verified_states = np.array([1 if formula != '[false]' else -1 for formula in state])
+                if prev_state is None:
+                    verified_states = np.array([1 if formula != '[false]' else -1 for formula in state])
                 return np.sum((np.multiply(verified_states, sel_probs)))
             else:
                 return 0
