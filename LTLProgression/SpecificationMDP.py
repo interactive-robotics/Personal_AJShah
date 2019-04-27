@@ -54,12 +54,12 @@ class SpecificationMDP():
         specifcation_state, control_state = self.decompose_state(state)
         return self.control_mdp.get_actions(control_state)
     
-    def reward_function(self, state=None):
+    def reward_function(self, state=None, force_terminal=False):
         if state==None: state = self.state
         specification_state, _ = self.decompose_state(state)
-        return self.specification_fsm.reward_function(specification_state)
+        return self.specification_fsm.reward_function(specification_state, force_terminal=force_terminal)
     
-    def transition(self, state, action):
+    def transition(self, state, action, force_terminal=False):
         
         if not action in self.get_actions(state): raise Exception('Invalid action for this state')
         
@@ -70,7 +70,7 @@ class SpecificationMDP():
         new_specification_state = self.specification_fsm.transition_function(specification_state, trace_slice)
         
         new_state = self.create_state(new_specification_state, new_control_state)
-        reward = self.reward_function(new_state)
+        reward = self.reward_function(new_state, force_terminal)
         
         #update the MDP state
         self.state = new_state

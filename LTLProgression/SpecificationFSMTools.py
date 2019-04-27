@@ -146,7 +146,7 @@ def CreateReward(probs):
     #This should return a function of the state that will generate the reward for entering that state. The max reward is 1
     #The minimum possible reward is -1
     
-    def Reward(state, prev_state = None):
+    def Reward(state, prev_state = None, force_terminal=False):
         
         if len(probs) >= len(state):
             #Select the probabilisties of the states being considered
@@ -157,7 +157,15 @@ def CreateReward(probs):
                 #select the non-falsified formula
                 if prev_state is None:
                     verified_states = np.array([1 if formula != '[false]' else -1 for formula in state])
+                else:
+                    verified_states = np.array([1 if formula != '[false]' else -1 for formula in state])
+                    raise NotImplementedError
                 return np.sum((np.multiply(verified_states, sel_probs)))
+            
+            elif force_terminal:
+                verified_states = np.array([1 if (IsSafe(json.loads(formula))[0] and formula!='[false]') else -1 for formula in state])
+                return np.sum(np.multiply(verified_states, sel_probs))
+            
             else:
                 return 0
         else:
@@ -174,7 +182,7 @@ def CreateReward_min_regret(probs):
     #The minimum possible reward is -1
     '''Deprecated: Use CreateReward instead'''
     
-    def Reward(state):
+    def Reward(state, force_terminal=False):
         
         if len(probs) >= len(state):
             #Select the probabilisties of the states being considered
@@ -184,6 +192,9 @@ def CreateReward_min_regret(probs):
             if IsTerminalState(state):
                 #select the non-falsified formula
                 verified_states = np.array([1 if formula != '[false]' else -1 for formula in state])
+                return np.sum((np.multiply(verified_states, sel_probs)))
+            elif force_terminal:
+                verified_states = np.array([1 if (IsSafe(json.loads(formula))[0] and formula!='[false]') else -5 for formula in state])
                 return np.sum((np.multiply(verified_states, sel_probs)))
             else:
                 return 0
@@ -236,7 +247,7 @@ def VisualizeProgressionStates(progression_states, edge_tuples, RewardFun, singl
         if colormap == 'terminal':
             colors[progression_states[node]] = 1 if node in terminal_states else 0
         elif colormap == 'reward':
-            colors[progression_states[node]] = RewardFun(node)
+            colors[progression_states[node]] = RewardFun(node, force_terminal=True)
         else:
             colors[progression_states[node]] = 0 #All nodes have the same color
     for edge in edge_tuples:
@@ -281,7 +292,7 @@ if __name__ == '__main__':
     ProgressedFormulas_synth = np.array([ProgressSingleTimeStep(formula, TraceSlice) for formula in Formulas_synth])
     
     SMDP = SpecificationFSM(ProgressedFormulas_synth, Prob, reward_type = 'chance_constrained', risk_level = 0.2)
-    G,colors = SMDP.visualize(colormap = 'terminal')
+    G,colors = SMDP.visualize(colormap = 'reward')
 
 
 

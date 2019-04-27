@@ -33,7 +33,7 @@ class ExplorerAgent():
     def learn(self, old_state, action, new_state, reward):
         return None
     
-    def explore(self, episode_limit = 100, action_limit = 10000, verbose = False):
+    def explore(self, episode_limit = 100, action_limit = 10000, episodic_action_limit = 20, verbose = False):
         #initialize the the specification MDP
         self.MDP.initialize_state()
         
@@ -42,6 +42,7 @@ class ExplorerAgent():
         self.add_to_visited(self.MDP.state)
         episode = 0
         action_count = 0
+        episode_action_count = 0
         episode_trajectory = []
         
         while not stop:
@@ -52,10 +53,14 @@ class ExplorerAgent():
             #select the polci according to the exploration policy
             old_state = self.MDP.state
             action = self.policy(self.MDP.state)
-            new_state, reward = self.MDP.transition(old_state, action)
+            episode_action_count = episode_action_count + 1
+            force_terminal = True if episode_action_count >= episodic_action_limit else False
+            #print(force_terminal)
+            new_state, reward = self.MDP.transition(old_state, action, force_terminal)
             
             #increment action count and update the exploration record
             action_count = action_count + 1
+            
             episode_trajectory.append((old_state, action, new_state, reward))
             
             #update the exploration graph
@@ -68,8 +73,8 @@ class ExplorerAgent():
             #check stop condition for action count
             stop = action_count >= action_limit
             
-            #Now check for terminal conditions to reset episode:
-            if self.MDP.is_terminal():
+            #Now check for terminal conditions or episodic action limit reached to reset episode:
+            if self.MDP.is_terminal() or force_terminal:
                 #record the episode initialize the episodic trajectory
                 self.episodic_record.append(episode_trajectory)
                 episode_trajectory = []
@@ -77,7 +82,7 @@ class ExplorerAgent():
                 
                 #reset the MDP
                 self.MDP.initialize_state()
-                
+                episode_action_count = 0
                 #check for stop condition
                 stop = stop or episode >= episode_limit
         self.episodic_record.append(episode_trajectory)
@@ -86,7 +91,7 @@ class ExplorerAgent():
     def add_to_visited(self, state):
         if state not in self.visited:
             self.visited = self.visited | {state}
-            self.exploration_graph.add_node(state, name=len(self.exploration_graph.nodes))
+            self.exploration_graph.add_node(state, name=str(len(self.exploration_graph.nodes)))
     
     @property
     def node2id(self):
@@ -108,14 +113,14 @@ class ExplorerAgent():
         
         pos = nx.drawing.nx_agraph.graphviz_layout(self.G, prog=prog)
         if coloring == 'reward':
-            colors = [self.MDP.reward_function(node) for node in self.exploration_graph.nodes()]
+            colors = [self.MDP.reward_function(node, force_terminal=True) for node in self.exploration_graph.nodes()]
         else:
             colors=None
         #start drawing
         
         if colors is not None:
             nx.draw_networkx(self.G, pos, with_labels = False, 
-                             node_color = colors, cmap = 'coolwarm_r', vmin=-1.2, vmax = 1.2)
+                             node_color = colors, cmap = 'coolwarm_r', vmin=-np.min(colors), vmax = np.max(colors))
             nx.draw_networkx_labels(self.G, pos, self.node2id)
             nx.draw_networkx_edge_labels(self.G, pos, self.edges2actions)
         return colors
@@ -145,7 +150,7 @@ class QLearningAgent(ExplorerAgent):
         
         self.Q = {}
         self.gamma = gamma
-        self.eps = 0.3
+        self.eps = 0.5
         self.learning_rate_schedule = self.default_learning_rate_schedule if learning_rate_schedule is None else learning_rate_schedule
         self.default_alpha = default_alpha
         super().__init__(MDP, input_policy=input_policy)
@@ -154,14 +159,19 @@ class QLearningAgent(ExplorerAgent):
         #reverify that state is not in visited list
         if state not in self.visited:
             self.visited = self.visited | {state}
-            self.visited = self.visited | {state}
-            self.exploration_graph.add_node(state, name=len(self.exploration_graph.nodes))
+            self.exploration_graph.add_node(state, name=str(len(self.exploration_graph.nodes)))
             actions = self.MDP.get_actions(state)
             for a in actions:
                 self.Q[(state, a)] = -0.5
+        
 
     def get_max_Q_action(self, state):
         actions = self.MDP.get_actions(state)
+        
+        if state not in self.visited:
+            for a in actions:
+                self.Q[(state, a)] = -0.5
+        
         QValues = np.array([self.Q[(state, a)] for a in actions])
         max_Q = np.max(QValues)
         selected_action = actions[np.argmax(QValues)]
@@ -185,7 +195,7 @@ class QLearningAgent(ExplorerAgent):
         oldQ = self.Q[(old_state, action)]
         
         Q_to_go, _, _ = self.get_max_Q_action(new_state)
-        targetQ = reward + self.gamma*(reward + Q_to_go)
+        targetQ = reward + self.gamma*(Q_to_go)
         
         updatedQ = (1-self.alpha)*oldQ + self.alpha*targetQ
         self.Q[(old_state, action)] = updatedQ
@@ -210,6 +220,22 @@ class QLearningAgent(ExplorerAgent):
             maxQ, action, _ = self.get_max_Q_action(state)
             return action
         return policy
+    
+    def visualize_exploration(self, coloring = 'reward', prog='dot'):
+        
+        pos = nx.drawing.nx_agraph.graphviz_layout(self.G, prog=prog)
+        if coloring == 'reward':
+            colors = [self.MDP.reward_function(node, force_terminal=True) for node in self.exploration_graph.nodes()]
+        else:
+            colors=None
+        #start drawing
+        
+        if colors is not None:
+            nx.draw_networkx(self.G, pos, with_labels = False, 
+                             node_color = colors, cmap = 'coolwarm_r', vmin=-1.2, vmax = 1.2)
+            nx.draw_networkx_labels(self.G, pos, self.node2id)
+            nx.draw_networkx_edge_labels(self.G, pos, self.edges2actions)
+        return colors
         
 
 if __name__ == '__main__':
@@ -243,23 +269,15 @@ if __name__ == '__main__':
     print('Initializing q-learning with random exploration')
     q_learning_agent = QLearningAgent(MDP)
     #initialize with a random policy
-    q_learning_agent.policy = random_exploration_policy
-    q_learning_agent.explore(episode_limit = 10000, verbose=True, action_limit = 20000)
-    
-    learned_policy = q_learning_agent.learned_policy
-    explorer = ExplorerAgent(MDP, input_policy = learned_policy)
-    explorer.explore(episode_limit = 10)
-    plt.figure()
-    explorer.visualize_exploration()
     
     print('refining learned policy')
-    q_learning_agent.policy = q_learning_agent.default_policy
-    q_learning_agent.explore(episode_limit = 100)
+    #q_learning_agent.policy = q_learning_agent.default_policy
+    q_learning_agent.explore(episode_limit = 10000, action_limit=20000, verbose=True)
     learned_policy = q_learning_agent.learned_policy
     
     print('Testing learned policy')
     explorer = ExplorerAgent(MDP, input_policy = learned_policy)
-    explorer.explore(episode_limit = 10)
+    explorer.explore(episode_limit = 100)
     plt.figure()
     explorer.visualize_exploration()
 
