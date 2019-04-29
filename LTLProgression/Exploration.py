@@ -185,7 +185,7 @@ class QLearningAgent(ExplorerAgent):
         oldQ = self.Q[(old_state, action)]
         
         Q_to_go, _, _ = self.get_max_Q_action(new_state)
-        targetQ = reward + self.gamma*(reward + Q_to_go)
+        targetQ = reward + self.gamma*(Q_to_go)
         
         updatedQ = (1-self.alpha)*oldQ + self.alpha*targetQ
         self.Q[(old_state, action)] = updatedQ
