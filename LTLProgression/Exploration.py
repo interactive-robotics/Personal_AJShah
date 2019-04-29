@@ -10,6 +10,8 @@ from SpecificationMDP import *
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.special import softmax
+
 
 class ExplorerAgent():
     
@@ -20,6 +22,7 @@ class ExplorerAgent():
         self.episodic_record = []
         self.policy = self.default_policy if input_policy is None else input_policy
         self.visited = set()
+        self.Q_init = 0.2
     
     
     def default_policy(self, state = None):
@@ -44,6 +47,7 @@ class ExplorerAgent():
         action_count = 0
         episode_action_count = 0
         episode_trajectory = []
+        
         
         while not stop:
             
@@ -85,7 +89,7 @@ class ExplorerAgent():
                 episode_action_count = 0
                 #check for stop condition
                 stop = stop or episode >= episode_limit
-        self.episodic_record.append(episode_trajectory)
+        if len(episode_trajectory) > 0: self.episodic_record.append(episode_trajectory) 
         return action_count, episode
     
     def add_to_visited(self, state):
@@ -120,7 +124,7 @@ class ExplorerAgent():
         
         if colors is not None:
             nx.draw_networkx(self.G, pos, with_labels = False, 
-                             node_color = colors, cmap = 'coolwarm_r', vmin=-np.min(colors), vmax = np.max(colors))
+                             node_color = colors, cmap = 'coolwarm_r', vmin=np.min(colors), vmax = np.max(colors))
             nx.draw_networkx_labels(self.G, pos, self.node2id)
             nx.draw_networkx_edge_labels(self.G, pos, self.edges2actions)
         return colors
@@ -150,7 +154,7 @@ class QLearningAgent(ExplorerAgent):
         
         self.Q = {}
         self.gamma = gamma
-        self.eps = 0.5
+        self.eps = 0.2
         self.learning_rate_schedule = self.default_learning_rate_schedule if learning_rate_schedule is None else learning_rate_schedule
         self.default_alpha = default_alpha
         super().__init__(MDP, input_policy=input_policy)
@@ -162,7 +166,7 @@ class QLearningAgent(ExplorerAgent):
             self.exploration_graph.add_node(state, name=str(len(self.exploration_graph.nodes)))
             actions = self.MDP.get_actions(state)
             for a in actions:
-                self.Q[(state, a)] = -0.5
+                self.Q[(state, a)] = self.Q_init
         
 
     def get_max_Q_action(self, state):
@@ -170,7 +174,7 @@ class QLearningAgent(ExplorerAgent):
         
         if state not in self.visited:
             for a in actions:
-                self.Q[(state, a)] = -0.5
+                self.Q[(state, a)] = self.Q_init
         
         QValues = np.array([self.Q[(state, a)] for a in actions])
         max_Q = np.max(QValues)
@@ -221,20 +225,34 @@ class QLearningAgent(ExplorerAgent):
             return action
         return policy
     
+    @property
+    def learned_softmax_policy(self):
+        
+        def policy(state):
+            _,_, Q_values = self.get_max_Q_action(state)
+            actions = self.MDP.get_actions(state)
+            #probs = softmax(Q_values)
+            action = np.random.choice(actions, p = softmax(Q_values))
+            return action
+    
     def visualize_exploration(self, coloring = 'reward', prog='dot'):
         
         pos = nx.drawing.nx_agraph.graphviz_layout(self.G, prog=prog)
         if coloring == 'reward':
             colors = [self.MDP.reward_function(node, force_terminal=True) for node in self.exploration_graph.nodes()]
+        elif coloring == 'Q':
+            colors = [self.get_max_Q_action(node)[0] for node in self.exploration_graph.nodes()]
         else:
             colors=None
         #start drawing
         
         if colors is not None:
             nx.draw_networkx(self.G, pos, with_labels = False, 
-                             node_color = colors, cmap = 'coolwarm_r', vmin=-1.2, vmax = 1.2)
-            nx.draw_networkx_labels(self.G, pos, self.node2id)
-            nx.draw_networkx_edge_labels(self.G, pos, self.edges2actions)
+                             node_color = colors, cmap = 'coolwarm_r', vmin=np.min(colors), vmax = np.max(colors))
+        else:
+            nx.draw_networkx(self.G, pos, with_labels = False)
+        nx.draw_networkx_labels(self.G, pos, self.node2id)
+        nx.draw_networkx_edge_labels(self.G, pos, self.edges2actions)
         return colors
         
 
@@ -272,14 +290,19 @@ if __name__ == '__main__':
     
     print('refining learned policy')
     #q_learning_agent.policy = q_learning_agent.default_policy
-    q_learning_agent.explore(episode_limit = 10000, action_limit=20000, verbose=True)
+    q_learning_agent.explore(episode_limit = 10000, action_limit=50000, verbose=True)
     learned_policy = q_learning_agent.learned_policy
     
     print('Testing learned policy')
     explorer = ExplorerAgent(MDP, input_policy = learned_policy)
     explorer.explore(episode_limit = 100)
     plt.figure()
-    explorer.visualize_exploration()
+    #explorer.visualize_exploration(prog='twopi', coloring='Q')
+    
+    plt.figure()
+    explorer2 = ExplorerAgent(MDP, input_policy=q_learning_agent.learned_softmax_policy)
+    explorer2.explore(episode_limit=100)
+    #explorer2.visualize_exploration(prog='twopi', coloring = 'Q')
 
 
 
