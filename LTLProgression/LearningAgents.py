@@ -234,7 +234,11 @@ if __name__ == '__main__':
 #    explorer4.visualize_exploration(prog = 'twopi')
 #    
     '''testing counterfactual q value updates'''
+    import time
     cf_q_agent = QLearningAgent(MDP, counterfactual_updates=True, default_alpha = 0.5)
+    start = time.time()
     cf_q_agent.explore(episode_limit = 100, action_limit=20000,  verbose = True)
+    end = time.time()
+    print('Elapsed time: ', end-start)
     #cf_q_agent.visualize_exploration(prog='twopi')
 
