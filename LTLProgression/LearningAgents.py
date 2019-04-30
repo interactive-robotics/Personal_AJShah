@@ -10,6 +10,7 @@ from Exploration import *
 from scipy.special import softmax
 from scipy.special import logsumexp
 from utils import *
+from joblib import Parallel, delayed
 
 
 class QLearningAgent(ExplorerAgent):
@@ -78,22 +79,52 @@ class QLearningAgent(ExplorerAgent):
         
         #Collect all specification states
         cf_record = []
-        for cf_spec_state in self.MDP.specification_fsm.states2id.keys():
-            if not IsTerminalState(cf_spec_state):
-                old_cf_state = self.MDP.create_state(cf_spec_state, old_control_state)
-                self.add_to_visited(old_cf_state)
-                new_cf_spec_state, cf_reward = self.MDP.transition_specification_state(old_cf_state, new_control_state)
-                new_cf_state = self.MDP.create_state(new_cf_spec_state, new_control_state)
-                self.add_to_visited(new_cf_state)
-                self.exploration_graph.add_edge(old_cf_state, new_cf_state, action = action)
-                cf_record.append((old_cf_state, action, new_cf_state, cf_reward))
+        
+        transitions = Parallel(n_jobs=8,require='sharedmem')(delayed(self.create_cf_record)(old_control_state, new_control_state, cf_spec_state) for cf_spec_state in self.MDP.specification_fsm.states2id.keys())
+        
+        for transition in transitions:
+            self.add_to_visited(transition[0])
+            self.add_to_visited(transition[1])
+            self.exploration_graph.add_edge(transition[0], transition[1], action=action)
+            cf_record.append((transition[0], action, transition[1], transition[2]))
+        
+#        for cf_spec_state in self.MDP.specification_fsm.states2id.keys():
+#            if not IsTerminalState(cf_spec_state):
+#                old_cf_state = self.MDP.create_state(cf_spec_state, old_control_state)
+#                self.add_to_visited(old_cf_state)
+#                new_cf_spec_state, cf_reward = self.MDP.transition_specification_state(old_cf_state, new_control_state)
+#                new_cf_state = self.MDP.create_state(new_cf_spec_state, new_control_state)
+#                self.add_to_visited(new_cf_state)
+#                self.exploration_graph.add_edge(old_cf_state, new_cf_state, action = action)
+#                cf_record.append((old_cf_state, action, new_cf_state, cf_reward))
             
             
         # For each counterfactual state.Q values need to be retrieved. This will be slow but can be vectorized for speed up
-        for record in cf_record:
-            self.standard_learn(*record)
+        #Q_updater = lambda record: self.Q_update(*record)
+        QUpdated = Parallel(n_jobs = 8, require='sharedmem')(delayed(self.Q_updater)(record) for record in cf_record)
         
+        for (i, record) in enumerate(cf_record):
+            self.Q[(record[0],record[1])] = QUpdated[i]
         
+    def create_cf_record(self, old_control_state, new_control_state, cf_spec_state):
+        old_cf_state = self.MDP.create_state(cf_spec_state, old_control_state)
+        new_cf_spec_state, cf_reward = self.MDP.transition_specification_state(old_cf_state, new_control_state)
+        new_cf_state = self.MDP.create_state(new_cf_spec_state, new_control_state)
+        return old_cf_state, new_cf_state, cf_reward
+        
+    def Q_updater(self, record):
+        (old_state, action, new_state, reward) = record
+        oldQ = self.Q[(old_state, action)]
+        
+        if self.soft_bellman:
+            Q_to_go, _, _ = self.get_softmax_Q_action(new_state)
+        else:
+            Q_to_go,_ ,_ = self.get_max_Q_action(new_state)
+        
+        targetQ = reward + self.gamma*Q_to_go
+        
+        updatedQ = (1-self.alpha)*oldQ + self.alpha*targetQ
+        return updatedQ
         
     @property
     def learned_policy(self):
