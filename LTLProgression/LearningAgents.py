@@ -191,7 +191,7 @@ class QLearningAgent(ExplorerAgent):
 if __name__ == '__main__':
     #This should behave just like the vanilla RL agent we had defined in Exploration.py
     
-    MDP = CreateSampleMDP()
+    MDP = CreateSpecMDP('ExampleSpecs2.json', 5, 5)
     
     '''testing regular q learning'''
 #    print('Testing vanilla q-learning agent')
@@ -237,7 +237,7 @@ if __name__ == '__main__':
     import time
     cf_q_agent = QLearningAgent(MDP, counterfactual_updates=True, default_alpha = 0.5)
     start = time.time()
-    cf_q_agent.explore(episode_limit = 100, action_limit=20000,  verbose = True)
+    cf_q_agent.explore(episode_limit = 500, action_limit=20000,  verbose = True)
     end = time.time()
     print('Elapsed time: ', end-start)
     #cf_q_agent.visualize_exploration(prog='twopi')

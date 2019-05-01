@@ -79,9 +79,9 @@ class SpecificationFSM():
         return formulas, probs, sel_formulas, sel_rewards
     
     
-    def visualize(self, colormap = 'reward'):
+    def visualize(self, colormap = 'reward', prog='twopi'):
         return VisualizeProgressionStates(self.states2id, self.edges, self.reward_function, 
-                                          colormap = colormap, terminal_states = self.terminal_states)
+                                          colormap = colormap, terminal_states = self.terminal_states, prog = prog)
     
     
 
@@ -238,7 +238,7 @@ def FindAllProgressions_single_formula(formula):
 
 
 def VisualizeProgressionStates(progression_states, edge_tuples, RewardFun, single_formula = False, terminal_states = [], 
-                               colormap='reward'):
+                               colormap='reward', prog = 'dot'):
     
     G = nx.DiGraph()
     colors = {}
@@ -255,7 +255,7 @@ def VisualizeProgressionStates(progression_states, edge_tuples, RewardFun, singl
         G.add_edge(progression_states[e[0]], progression_states[e[1]])
         
     colors = [colors[node] for node in G.nodes()]
-    pos = nx.drawing.nx_agraph.graphviz_layout(G, prog='dot')
+    pos = nx.drawing.nx_agraph.graphviz_layout(G, prog=prog)
     nx.draw_networkx(G, pos, with_label=True, node_color = colors, cmap = 'coolwarm_r', vmin=-1.2, vmax=1.2)
     return G, colors
 

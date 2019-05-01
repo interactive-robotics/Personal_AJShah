@@ -24,5 +24,30 @@ def CreateSampleMDP():
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
 
+def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None):
+    
+    if accessibility == None: accessibility = [True]*n_waypoints
+    
+    control_mdp = SyntheticMDP(n_threats, n_waypoints, accessibility)
+    
+    Data = json.load(open(PathToSpec,'r'))
+    Formulas = Data['support']
+    Probs = Data['probs']
+    
+    TraceSlice = {}
+    for i in range(n_threats):
+        TraceSlice[f'T{i}'] = False
+    for i in range(n_waypoints):
+        TraceSlice[f'W{i}'] = False
+        TraceSlice[f'P{i}'] = accessibility[i]
+    
+    ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in Formulas]
+    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type='min_regret')
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP
+    
+
 if __name__ == '__main__':
-    MDP = CreateSampleMDP()
+    MDP= CreateSpecMDP('ExampleSpecs2.json',5,5)
+    MDP.specification_fsm.visualize(prog = 'twopi')
+    
