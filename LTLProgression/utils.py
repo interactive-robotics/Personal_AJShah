@@ -33,6 +33,10 @@ def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None):
     Data = json.load(open(PathToSpec,'r'))
     Formulas = Data['support']
     Probs = Data['probs']
+    import matplotlib.pyplot as plt
+    plt.bar(range(len(Probs)), np.sort(Probs)[::-1])
+    f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(Probs),0)[0:i+1], 0)
+    plt.plot(range(len(Probs)), list(map(f, range(len(Probs)))))
     
     TraceSlice = {}
     for i in range(n_threats):
@@ -47,7 +51,73 @@ def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None):
     return MDP
     
 
-if __name__ == '__main__':
-    MDP= CreateSpecMDP('ExampleSpecs2.json',5,5)
-    MDP.specification_fsm.visualize(prog = 'twopi')
+def Globally(p):
+    if type(p) == list:
+        return ['G', p]
+    else:
+        return ['G',['not',[p]]]
+
+def Eventually(p):
+    return ['F',[p]]
+
+def Order(p1, p2):
+    return ['U',['not',[p2]],[p1]]
+
+def CreateSpecMDP1(reward_type = 'min_regret', risk_level = '0.1'):
+    control_mdp = SyntheticMDP(1,3)
     
+    Formulas = []
+    Formulas.append(['and', Globally('T0'), Eventually('W0'), Eventually('W1'), Eventually('W2'), Order('W0','W1'), Order('W0','W2'), Order('W1','W2')])
+    Formulas.append(['and', Globally('T0'), Eventually('W0'), Eventually('W1'), Eventually('W2')])
+    Formulas.append(['and', Globally('T0'), Eventually('W0')])
+    
+    Probs = [0.8, 0.15, 0.05]
+    specification_fsm = SpecificationFSM(Formulas, Probs, reward_type = reward_type, risk_level=risk_level)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP, specification_fsm, control_mdp
+
+def CreateSpecMDP2(reward_type = 'min_regret', risk_level = '0.1'):
+    control_mdp = SyntheticMDP(1,3)
+    
+    Formulas = []
+    Formulas.append(['and', Globally('T0'), Eventually('W0'), Eventually('W1'), Eventually('W2'), Order('W0','W1'), Order('W0','W2'), Order('W1','W2')])
+    Formulas.append(['and', Globally('T0'), Eventually('W0'), Eventually('W1'), Eventually('W2')])
+    Formulas.append(['and', Globally('T0'), Eventually('W0')])
+    
+    Probs = [0.05, 0.15, 0.8]
+    specification_fsm = SpecificationFSM(Formulas, Probs, reward_type = reward_type, risk_level=risk_level)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP, specification_fsm, control_mdp
+
+def CreateSpecMDP3(reward_type = 'min_regret', risk_level = '0.1'):
+    control_mdp = SyntheticMDP(1,3)
+    
+    Formulas = []
+    Formulas.append(['and', Globally('T0'), Eventually('W0')])
+    Formulas.append(['and', Globally('T0'), Eventually('W1')])
+    Formulas.append(['and', Globally('T0'), Eventually('W2')])
+    
+    Probs = [0.4, 0.35, 0.25]
+    specification_fsm = SpecificationFSM(Formulas, Probs, reward_type = reward_type, risk_level=risk_level)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP, specification_fsm, control_mdp
+
+def CreateSpecMDP4(reward_type = 'min_regret', risk_level = '0.1'):
+    control_mdp = SyntheticMDP(1,3)
+    
+    Formulas = []
+    Formulas.append(['and', Globally('T0'), Eventually('W0'), Globally(['not',['W2']])])
+    Formulas.append(['and', Globally('T0'), Eventually('W1'), Globally(['not',['W2']])])
+    Formulas.append(['and', Globally('T0'), Eventually('W2')])
+    
+    Probs = [0.05, 0.15, 0.8]
+    specification_fsm = SpecificationFSM(Formulas, Probs, reward_type = reward_type, risk_level=risk_level)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP, specification_fsm, control_mdp
+
+if __name__ == '__main__':
+    a=1
+    MDP= CreateSpecMDP('ExampleSpecs2.json',5,5)
+    #MDP.specification_fsm.visualize(prog = 'twopi')
+#    MDP, fsm, control_mdp = CreateSpecMDP3(reward_type = 'chance_constrained', risk_level=0.61)
+#    fsm.visualize()
