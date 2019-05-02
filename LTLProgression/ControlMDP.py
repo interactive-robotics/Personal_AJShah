@@ -7,6 +7,7 @@ Created on Wed Apr 24 17:33:44 2019
 """
 
 from numpy.random import binomial
+import numpy as np
 
 class ControlMDP():
     
@@ -128,14 +129,14 @@ class TableMDP(ControlMDP):
             0: "DinnerPlate",
             1: "SmallPlate",
             2: "Bowl",
-            #  3: "Knife",
-            #  4: "Fork",
-            #  5: "Spoon",
-            #  6: "Mug",
-            #  7: "Glass"
+            3: "Knife",
+            4: "Fork",
+            5: "Spoon",
+            6: "Mug",
+            7: "Glass"
         }
         self.num_objs = len(self.objId_2_objName)
-        assert (self.objId_2_objName.keys() == range(self.num_objs))
+        #assert (set(self.objId_2_objName.keys()) == set(range(self.num_objs)))
         self.num_steps = num_steps
 
         self.failure_prob = failure_prob

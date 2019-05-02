@@ -8,6 +8,7 @@ Created on Mon Apr 29 18:48:37 2019
 
 import Constants
 from SpecificationMDP import *
+from ControlMDP import *
 
 def CreateSampleMDP():
     PathToDataFile = ''
@@ -115,9 +116,32 @@ def CreateSpecMDP4(reward_type = 'min_regret', risk_level = '0.1'):
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP, specification_fsm, control_mdp
 
+def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, num_steps = 1):
+    
+    control_mdp = TableMDP(failure_prob, num_steps)
+    
+    Data = json.load(open('DinnerTable_OutputDist_Sampler4_Custom_30.json','r'))
+    Formulas, Probs = Data['support'],Data['probs']
+    
+    n_threats = 1
+    n_waypoints = 8
+    accessibility = [True]*n_waypoints
+    TraceSlice = {}
+    for i in range(n_threats):
+        TraceSlice[f'T{i}'] = False
+    for i in range(n_waypoints):
+        TraceSlice[f'W{i}'] = False
+        TraceSlice[f'P{i}'] = accessibility[i]
+        
+    ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in Formulas]
+    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type = reward_type)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP
+    
+
 if __name__ == '__main__':
     a=1
-    MDP= CreateSpecMDP('ExampleSpecs2.json',5,5)
+    MDP= CreateDinnerMDP()
     #MDP.specification_fsm.visualize(prog = 'twopi')
 #    MDP, fsm, control_mdp = CreateSpecMDP3(reward_type = 'chance_constrained', risk_level=0.61)
 #    fsm.visualize()
