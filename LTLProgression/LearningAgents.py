@@ -24,7 +24,7 @@ class QLearningAgent(ExplorerAgent):
         #At this point it should be initiated with a random exploration policy and will be overridden in this function
         self.Q = {}
         self.gamma = gamma
-        self.eps = 0.2
+        self.eps = 0.4
         self.learning_rate_schedule = self.default_learning_rate_schedule if learning_rate_schedule is None else learning_rate_schedule
         self.default_alpha = default_alpha
         self.soft_bellman = soft_bellman
