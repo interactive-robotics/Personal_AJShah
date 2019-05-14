@@ -98,7 +98,7 @@ def CreateSpecMDP3(reward_type = 'min_regret', risk_level = '0.1'):
     Formulas.append(['and', Globally('T0'), Eventually('W1')])
     Formulas.append(['and', Globally('T0'), Eventually('W2')])
     
-    Probs = [0.4, 0.35, 0.25]
+    Probs = [0.4, 0.25, 0.35]
     specification_fsm = SpecificationFSM(Formulas, Probs, reward_type = reward_type, risk_level=risk_level)
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP, specification_fsm, control_mdp
