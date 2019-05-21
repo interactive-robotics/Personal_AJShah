@@ -116,7 +116,7 @@ def CreateSpecMDP4(reward_type = 'min_regret', risk_level = '0.1'):
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP, specification_fsm, control_mdp
 
-def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, num_steps = 1):
+def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, risk_level = 0.2, num_steps = 1):
     
     control_mdp = TableMDP(failure_prob, num_steps)
     
@@ -134,7 +134,7 @@ def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, num_steps = 
         TraceSlice[f'P{i}'] = accessibility[i]
         
     ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in Formulas]
-    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type = reward_type)
+    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type = reward_type, risk_level = risk_level)
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
     
