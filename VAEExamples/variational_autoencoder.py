@@ -127,7 +127,7 @@ x_test = x_test.astype('float32') / 255
 input_shape = (original_dim, )
 intermediate_dim = 512
 batch_size = 128
-latent_dim = 2
+latent_dim = 5
 epochs = 50
 
 # VAE model = encoder + decoder
@@ -159,6 +159,7 @@ plot_model(decoder, to_file='vae_mlp_decoder.png', show_shapes=True)
 # instantiate VAE model
 outputs = decoder(encoder(inputs)[2])
 vae = Model(inputs, outputs, name='vae_mlp')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
