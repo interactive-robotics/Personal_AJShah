@@ -6,7 +6,7 @@ Created on Mon Apr 29 18:48:37 2019
 @author: ajshah
 """
 
-import puns.Constants
+import puns.Constants as Constants
 from puns.SpecificationMDP import *
 from puns.ControlMDP import *
 

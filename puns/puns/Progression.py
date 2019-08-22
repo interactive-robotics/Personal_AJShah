@@ -7,7 +7,7 @@ Created on Tue Mar 12 10:53:40 2019
 """
 
 
-import puns.Constants
+import puns.Constants as Constants
 from collections import deque
 from puns.FormulaTools import *
 from puns.ProgressOperators import *

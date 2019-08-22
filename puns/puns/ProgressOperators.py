@@ -6,7 +6,7 @@ Created on Thu Mar 14 11:48:37 2019
 @author: ajshah
 """
 
-import puns.Constants
+import puns.Constants as Constants
 from puns.FormulaTools import *
 
 
