@@ -9,6 +9,8 @@ Created on Mon Apr 29 18:48:37 2019
 import puns.Constants as Constants
 from puns.SpecificationMDP import *
 from puns.ControlMDP import *
+from puns.Exploration import ExplorerAgent
+
 
 def CreateSampleMDP():
     PathToDataFile = ''
@@ -25,7 +27,7 @@ def CreateSampleMDP():
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
 
-def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None):
+def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None, reward_type = 'min_regret', risk_level = 0.1):
 
     if accessibility == None: accessibility = [True]*n_waypoints
 
@@ -47,7 +49,7 @@ def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None):
         TraceSlice[f'P{i}'] = accessibility[i]
 
     ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in Formulas]
-    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type='min_regret')
+    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type=reward_type, risk_level=risk_level)
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
 
@@ -137,6 +139,37 @@ def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, num_steps = 
     specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type = reward_type)
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
+
+def RecordLearningCurve(MDP, Learner, max_episodes = 10000, steps = 10, temp = 0.01, verbose = False):
+    episodes = 0
+    mean_rewards = []
+    rewards = []
+    std_rewards = []
+    mean_episode_length = []
+    ep = []
+
+    for i in range(0,max_episodes,steps):
+
+        if verbose:
+            print(f'\r Training and evaluating with {i} episodes        ', end = '')
+
+        episodes = episodes + steps
+        ep.append(episodes)
+        Learner.explore(episode_limit = steps, verbose = False)
+        evaluator = ExplorerAgent(MDP, input_policy = Learner.create_learned_softmax_policy(temp))
+        evaluator.explore(episode_limit = 50)
+        r = [record[-1][3] for record in evaluator.episodic_record]
+        l = [len(record) for record in evaluator.episodic_record]
+
+        rewards.append(r)
+        mean_rewards.append(np.mean(r))
+        std_rewards.append(np.std(r))
+        mean_episode_length.append(np.mean(l))
+
+        #print(mean_rewards[-1])
+
+
+    return rewards, mean_rewards, std_rewards, mean_episode_length, ep
 
 
 if __name__ == '__main__':

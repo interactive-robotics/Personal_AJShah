@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Aug 28 11:50:47 2019
+
+@author: ajshah
+"""
+
+import json
+from os import listdir
+import os
+import pandas as pd
+import numpy as np
+import params
+import networkx as nx
+from copy import deepcopy
+import matplotlib.pyplot as plt
+from functools import reduce
+from puns.utils import CreateSpecMDP
+from puns.SpecificationMDP import *
+from puns.LearningAgents import QLearningAgent
+from puns.Exploration import ExplorerAgent
+
+
+def read_raw_data(dir):
+    filenames = listdir(dir)
+    Trajs = []
+    for filename in filenames:
+        Trajs.append(json.load(open(os.path.join(dir, filename),'r')))
+    return Trajs
+
+def write_data(dir, data):
+    for (i, traj) in enumerate(data):
+        json.dump(traj, open(os.path.join(dir, f'Predicates_{i}.json'),'w'))
+
+def compress_data(raw_data):
+    compressed_data = []
+    for traj in raw_data:
+        compressed_data.append(compress_traj(traj))
+    return compressed_data
+
+def compress_traj(traj):
+    n_waypoints = len(traj['WaypointPredicates'])
+    n_positions = n_waypoints
+    n_threats = len(traj['ThreatPredicates']) if 'ThreatPredicates' in traj.keys() else 0
+
+    df1 = np.array(traj['WaypointPredicates']).transpose()
+    df2 = np.array(traj['PositionPredicates']).transpose()
+
+
+    if n_threats > 0:
+
+        df3 = np.array(traj['ThreatPredicates']).transpose()
+        datamatrix = np.concatenate([df1, df2, df3], axis = 1)
+    else:
+        datamatrix = np.concatenate([df1, df2], axis = 1)
+
+
+    dataframe = pd.DataFrame(datamatrix)
+    dataframe.drop_duplicates(inplace = True)
+    compressed_datamatrix = np.array(dataframe)
+
+    compressed_waypoints = compressed_datamatrix[:,0:n_waypoints].transpose().tolist()
+    compressed_positions = compressed_datamatrix[:, n_waypoints : n_waypoints + n_positions].transpose().tolist()
+
+    compressed_traj = {}
+    compressed_traj['WaypointPredicates'] = compressed_waypoints
+    compressed_traj['PositionPredicates'] = compressed_positions
+    if n_threats > 0:
+        compressed_traj['ThreatPredicates'] = compressed_datamatrix[:,-n_threats:].transpose().tolist()
+
+    return compressed_traj
+
+def sort_formulas(formulas, probs):
+    idx = np.argsort(probs)[::-1]
+    probs = np.array(probs)[idx]
+    sorted_formulas = np.empty((len(idx),), dtype=object)
+    for i in range(len(idx)):
+        sorted_formulas[i] = formulas[idx[i]]
+    formulas = sorted_formulas
+    return sorted_formulas, probs
+
+def identify_desired_state(specification_fsm:SpecificationFSM):
+    rewards = [specification_fsm.reward_function(state) for state in specification_fsm.terminal_states]
+    desired_state = specification_fsm.terminal_states[np.argmin(np.abs(rewards))]
+    path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
+    bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
+    return desired_state, bread_crumb_states
+
+def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state, breadcrumb_states):
+    spec_fsm2 = deepcopy(specification_fsm)
+
+    def Reward(state, prev_state = None, force_terminal=False):
+
+        if force_terminal:
+            if state == desired_state:
+                return 1
+            else:
+                return -1
+        else:
+            if state == desired_state:
+                return 1
+            elif spec_fsm2.states2id[state] in breadcrumb_states:
+                return 0
+            else:
+                return -1
+
+    spec_fsm2.reward_function = Reward
+    return spec_fsm2
+
+
+
+
+if __name__ == '__main__':
+
+    ''' Filter the trajectories while retaining only the time stamps with changes '''
+    #Import the traj Data
+    raw_data = read_raw_data(params.raw_data_path)
+
+    #Compress data
+    compressed_data = compress_data(raw_data)
+
+    #Write the compressed data to file
+    write_data(params.compressed_data_path, compressed_data)
+
+    ''' Perform Specification inference on the compressed data '''
+    inference_path = 'bsi_batch.js'
+    print('Executing Bayesian Specification Inference')
+    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.nSamples}  --nBurn {params.nBurn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.output_path}\' --nTraj {params.nTraj}'
+    returnval = os.system(infer_command)
+    if returnval:
+        Exception('Inference Error')
+
+    '''Read specification and plot the formula probabilities'''
+    specification = json.load(open(os.path.join(params.output_path, 'batch_posterior.json'),'r'))
+    formulas = specification['support']
+    probs = specification['probs']
+
+    plt.bar(range(len(probs)), np.sort(probs)[::-1])
+    f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(probs),0)[0:i+1], 0)
+    plt.plot(range(len(probs)), list(map(f, range(len(probs)))))
+
+    ''' Compile an instance of PUNS and plan with 10000 training episode '''
+    print('Compiling PUnS instance')
+    MDP = CreateSpecMDP(os.path.join(params.output_path,'batch_posterior.json'), 0, 5)
+    QAgent = QLearningAgent(MDP)
+    print('Training PuNS instance')
+    #QAgent.explore(episode_limit = 10000, action_limit = 100000, verbose=True)
+
+    print('Evaluating trained agent')
+    #eval_agent = ExplorerAgent(MDP, input_policy = QAgent.create_learned_softmax_policy(0.01))
+    #eval_agent.explore(episode_limit=100)
+    #col = eval_agent.visualize_exploration(prog='neato')
+
+    print('Getting desired state for most informative query')
+    desired_state, bread_crumb_states = identify_desired_state(MDP.specification_fsm)
