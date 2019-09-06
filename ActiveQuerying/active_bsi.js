@@ -35,7 +35,7 @@ var GlobalAnd = function(formulas) {
 // Given an array, returns a subset of it, by including each element w.p. 1/2.
 var SubsetSampler = function(A) {
   var SS = function(i, B) {
-    return ((i == A.length) ? B : SS(i+1, (flip(0.5) ? B : B.concat(A[i]))));
+    return ((i == A.length) ? B : SS(i+1, (flip(0.8) ? B : B.concat(A[i]))));
   }
   return SS(0,[]);
 }
@@ -244,7 +244,7 @@ var LTL_Sampler1 = function(nThreats, nWaypoints) {
 // Samples a subset of threats, a subset of waypoints and a subset of ordering
 var LTL_Sampler4 = function(nThreats, nWaypoints) {
   /* Generate the random choices */
-  var subs = DivideIntoSubsets(nWaypoints, 0.65); //Subsets for orderings
+  var subs = DivideIntoSubsets(nWaypoints, 0.7); //Subsets for orderings
   var Threats = SubsetSampler(_.range(nThreats)); //Threat choices
   var Waypoints = SubsetSampler(_.range(nWaypoints)) // Waypoint choices
   //console.log(subs);
@@ -339,52 +339,48 @@ var ComplexityFactorConstant = function(nT, nW, nO){
 }
 
 // makeModelQuery for a single JSON object "data".
-var makeModelQuery = function(data) {
-  var num_t = data.hasOwnProperty('ThreatPredicates') ? data.ThreatPredicates.length : 0;
-  var num_w = data.WaypointPredicates.length;
+var makeModelQuery = function(data, sampler, ComplexityMeasure, support, probs) {
+  var num_t = data.Data.hasOwnProperty('ThreatPredicates') ? data.ThreatPredicates.length : 0;
+  var num_w = data.Data.WaypointPredicates.length;
   return function() {
-    var word = GenerateWord(data);
-    var Formula = LTL_Sampler2(num_t, num_w);
+    var word = GenerateWord(data.Data);
     var listofatoms = LTL_AtomsGen(num_t, num_w);
-    var complexity = ComplexityMeasure(Formula.nThreats, Formula.nWaypoints, Formula.nOrderings);
-    factor(SatChecker(word, Formula.formula, listofatoms) ? complexity : -4);
-    return Formula.formula;
+
+    var getFormula = function(){
+      var flipval = flip(1e-10)
+      //console.log(flipval)
+      if (flipval){
+        //console.log('sampling from posterior')
+        return sampler(num_t, num_w).formula
+      } else{
+        //console.log('sampling from prior')
+        return categorical({ps: probs, vs: support})
+      }
+    }
+    var Formula = getFormula();
+    //console.log(Formula)
+    var complexity = ComplexityMeasure(Formula.length-1,0,0)
+
+    var determineVal = function(word, Formula, listofatoms){
+      if (data.Label == true){
+        var val = SatChecker(word, Formula, listofatoms) == true ? complexity : -4*Math.log(2)*(num_t + num_w + 0.5*(num_w)*(num_w-1))
+        return val
+      } else{
+        var val = SatChecker(word, Formula, listofatoms) == false ? complexity - Math.log(Math.pow(2,Formula.length-1)-1) : -4*Math.log(2)*(num_t + num_w + 0.5*(num_w)*(num_w-1))
+        return val
+      }
+    }
+
+    var val = determineVal(word, Formula, listofatoms)
+    console.log(val)
+    factor(val)
+    return Formula
   }
 }
 
 // makeModelQuery for multiple files.
-var makeModelQueryFull = function(FullData, sampler, ComplexityMeasure){
-  var num_t = FullData[0].Data.hasOwnProperty('ThreatPredicates') ? FullData[0].ThreatPredicates.length : 0;
-  var num_w = FullData[0].Data.WaypointPredicates.length;
-  return function(){
-    var Formula = sampler(num_t, num_w);
-    var complexity = ComplexityMeasure(Formula.nThreats, Formula.nWaypoints, Formula.nOrderings);
-    var listofatoms = LTL_AtomsGen(num_t, num_w);
 
-    var SatCheckerTrajectory = function(data){
-      var word = GenerateWord(data.Data);
-      //factor(SatChecker(word, Formula.formula, listofatoms) ? complexity : -5);
-      //var val = SatChecker(word, Formula.formula, listofatoms) ? complexity : -10
 
-      var determineVal = function(word, Formula, listofatoms){
-        if (data.Label == true){
-          var val = SatChecker(word, Formula.formula, listofatoms)==data.Label ? complexity : -4*Math.log(2)*(num_t + num_w + 0.5*(num_w)*(num_w-1))
-          return val
-        } else{
-            var val = SatChecker(word, Formula.formula, listofatoms)==data.Label ? 0 : -4*Math.log(2)*(num_t + num_w + 0.5*(num_w)*(num_w-1))
-            return val
-        }
-      }
-      var val = determineVal(word, Formula, listofatoms)
-      //console.log(val)
-      //console.log(SatChecker(word, Formula.formula, listofatoms))
-      factor(val)
-    }
-
-    map(SatCheckerTrajectory, FullData)
-    return Formula.formula;
-  }
-}
 
 
 /********** Data Import **********/
@@ -398,16 +394,16 @@ var makeModelQueryFull = function(FullData, sampler, ComplexityMeasure){
 
 //var filenames = fs.filenames('Data/')
 //console.log(filenames)
-var GetData = function(dir, nTraj){
-  var filenames = fs.filenames(dir)
-  var n = (nTraj <= filenames.length) ? nTraj : filenames.length
-  console.log(filenames.slice(0,n))
+var GetData = function(dir, nQuery){
+  var filename = dir + '/query_' + nQuery + '.json'
+  return json.read(filename)
+}
 
-  var GetFileData = function(filename){
-    return json.read(dir + '/' + filename)
-  }
-
-  return map(GetFileData, filenames.slice(0,n))
+var GetDist = function(dir){
+  var distData = json.read(dir)
+  return distData
+  //console.log(distData.support[0].length)
+  //console.log(distData.support[0])
 }
 
 /********** Testing Data IO **********/
@@ -416,74 +412,48 @@ var GetData = function(dir, nTraj){
 
 /********* Inference Code *********/
 
+
+
+//console.log(dist.support)
+
 var Complexity = ComplexityFactorCustom
 var dataPath = argv.dataPath
 var outPath = argv.outPath
 var nBurn = argv.nBurn
 var nSamples = argv.nSamples
-var nTraj = argv.nTraj
-console.log(dataPath)
-var DemoData = GetData(dataPath, nTraj)
-console.log(DemoData)
+var nQuery = argv.nQuery
 
-// DO Inference
+var data = GetData(dataPath, nQuery)
+var dist = GetDist(outPath + '/batch_posterior.json')
 
-console.log('Number of demo examples: ')
-console.log(DemoData.length)
-console.log(nSamples)
-var model = makeModelQueryFull(DemoData, LTL_Sampler4, Complexity)
-var dist = Infer({method:'MCMC', samples:nSamples, burn:nBurn, verbose:true}, model)
-var filename = outPath + '/batch_posterior.json'
+console.log(data)
+
+var model = makeModelQuery(data, LTL_Sampler4, Complexity, dist.support, dist.probs)
+var out_dist = Infer({method:'MCMC', samples:nSamples, burn:nBurn, verbose:true}, model)
+//var out_dist = Infer({model:model, method:'enumerate', maxExecutions:5000})
+var filename =  outPath + '/batch_posterior.json'
+var filename_old = outPath + '/old_posterior.json'
+json.write(filename, out_dist)
 json.write(filename, dist)
 
-
-
 //
-// var GetRunData = function(nTraj,Data){
-//   var filenames = map(function(i){return 'Predicates_'+ i}, _.range(1,nTraj+1))
-//   var path = 'SimDomain/' + Data + '/';
-//
-//   var GetData = function(path,filename){
-//     var data = json.read(path + filename + '.json');
-//     return data;
-//   }
-//
-// var FullData = map(function(filename){return GetData(path,filename);},filenames)
-// return FullData
-// }
-
-
-
-
-/********* Inference Code ********/
-
-
-//run sims for Custom complexity
 // var Complexity = ComplexityFactorCustom
-// var ComplexityStr = 'Custom'
-// var Data = argv.Data
-// var nTraj = argv.nTraj
-//
+// var dataPath = argv.dataPath
+// var outPath = argv.outPath
 // var nBurn = argv.nBurn
 // var nSamples = argv.nSamples
-
-
-//Get Data
-// var FullData = GetRunData(nTraj,Data)
-//console.log(FullData)
-
-//Do Inference
-
-
-
-
-// console.log(nTraj)
-// console.log(Data)
-// console.log(Complexity)
-// var model = makeModelQueryFull(FullData, LTL_Sampler5, Complexity)
-// //var dist = Infer({method:'enumerate'}, model)
+// var nTraj = argv.nTraj
+// console.log(dataPath)
+// var DemoData = GetData(dataPath, nTraj)
+// console.log(Demo)
+//
+// // DO Inference
+//
+// console.log('Number of demo examples: ')
+// console.log(DemoData.length)
+// console.log(nSamples)
+// var model = makeModelQueryFull(DemoData, LTL_Sampler4, Complexity)
 // var dist = Infer({method:'MCMC', samples:nSamples, burn:nBurn, verbose:true}, model)
-// //var sampleFormula = sample(dist)
-// var ComplexityStr = 'Custom'
-// var filename = Data + '_OutputDist_Sampler5_'+ComplexityStr+'_'+nTraj+'.json'
-// json.write(filename,dist)
+// var filename = outPath + '/batch_posterior.json'
+// json.write(filename, dist)
+//

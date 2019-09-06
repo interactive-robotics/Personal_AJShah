@@ -36,7 +36,11 @@ def write_data(dir, data):
 def compress_data(raw_data):
     compressed_data = []
     for traj in raw_data:
-        compressed_data.append(compress_traj(traj))
+        compressed_traj = compress_traj((traj))
+        new_data = {}
+        new_data['Data'] = compressed_traj
+        new_data['Label'] = True
+        compressed_data.append(new_data)
     return compressed_data
 
 def compress_traj(traj):
@@ -107,6 +111,58 @@ def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state,
 
     spec_fsm2.reward_function = Reward
     return spec_fsm2
+
+def create_active_query(MDP, verbose = True):
+        #spec_fsm2 = deepcopy(MDP.specification_fsm)
+    desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm)
+    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+    MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
+    agent = QLearningAgent(MDP2)
+    agent.explore(episode_limit = 5000, action_limit = 1000000, verbose = verbose)
+    eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
+    eval_agent.explore(episode_limit = 1)
+    _ = eval_agent.visualize_exploration()
+    episode_record = eval_agent.episodic_record[0]
+    trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
+    return trace_slices
+
+def create_query_demo(trace_slices):
+    n_waypoints = len([k for k in trace_slices[0].keys() if 'W' in k])
+    n_threats = len([k for k in trace_slices[0].keys() if 'T' in k])
+
+    new_traj = {}
+    new_traj['WaypointPredicates'] = []
+    for i in range(n_waypoints):
+        new_traj['WaypointPredicates'].append([k[f'W{i}'] for k in trace_slices])
+    if n_threats > 0:
+        new_traj['ThreatPredicates'] = []
+        for i in range(n_threats):
+            new_traj['ThreatPredicates'].append([k[f'T{i}'] for k in trace_slices])
+
+    new_traj['PositionPredicates'] = []
+    ScenarioLength = len(new_traj['WaypointPredicates'][0])
+    for i in range(len(new_traj['WaypointPredicates'])):
+        new_traj['PositionPredicates'].append(np.zeros((ScenarioLength)).astype(bool).tolist())
+    return new_traj
+
+def write_demo_query_data(new_traj, label, dir,  query_number = None):
+    if query_number == None:
+        i = 1
+        while os.path.exists(os.path.join(dir, f'query_{i}.json')):
+            i=i+1
+        query_number = i
+
+    filename = f'query_{query_number}.json'
+
+    new_data = {}
+    new_data['Data'] = new_traj
+    new_data['Label'] = label
+    print(f'Writing file: {filename}')
+    json.dump(new_data, open(os.path.join(dir, filename),'w'))
+
+
+
+
 
 
 
