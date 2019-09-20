@@ -11,7 +11,7 @@ from os import listdir
 import os
 import pandas as pd
 import numpy as np
-import params
+import active_params as params
 import networkx as nx
 from copy import deepcopy
 import matplotlib.pyplot as plt
@@ -112,21 +112,56 @@ def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state,
     spec_fsm2.reward_function = Reward
     return spec_fsm2
 
+def create_random_query(MDP, verbose=True):
+
+    ''' Creates a randomly generated query obtained by randomly sampling
+    control MDP actions till a terminal state is reached'''
+
+    #Generate a random demonstration
+    MDP2 = deepcopy(MDP)
+    random_agent = ExplorerAgent(MDP2)
+    random_agent.explore(episode_limit = 1)
+    _ = random_agent.visualize_exploration()
+
+    # Create the proposition trace for the generated demonstration
+    episode_record = random_agent.episodic_record[0]
+    trace_slices = [MDP2.control_mdp.create_observations(record[0][1]) for record in episode_record]
+    trace_slices.append(MDP2.control_mdp.create_observations(episode_record[-1][2][1]))
+
+    return {'trace': trace_slices, 'agent': random_agent}
+
+
 def create_active_query(MDP, verbose = True):
-        #spec_fsm2 = deepcopy(MDP.specification_fsm)
+    ''' A query generated as per the most informative heuristic based on the
+    identified final state'''
+
+    # Identify desired final state and recompile reward
     desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm)
     spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+
+    # Re-define MDP and learning agent
     MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
     agent = QLearningAgent(MDP2)
+
+    # Train learning agent to produce a query
     agent.explore(episode_limit = 5000, action_limit = 1000000, verbose = verbose)
     eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
+
+    # Generate a query with the trained agent and visualize query
     eval_agent.explore(episode_limit = 1)
     _ = eval_agent.visualize_exploration()
+
+    # Create proposition trace slices
     episode_record = eval_agent.episodic_record[0]
     trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
-    return trace_slices
+    trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
+
+    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
 
 def create_query_demo(trace_slices):
+    ''' Reformats the generated demonstration into a form readable by the webppl
+     active query code'''
+
     n_waypoints = len([k for k in trace_slices[0].keys() if 'W' in k])
     n_threats = len([k for k in trace_slices[0].keys() if 'T' in k])
 
@@ -146,6 +181,8 @@ def create_query_demo(trace_slices):
     return new_traj
 
 def write_demo_query_data(new_traj, label, dir,  query_number = None):
+    '''Write the demo query along with the user provided label'''
+
     if query_number == None:
         i = 1
         while os.path.exists(os.path.join(dir, f'query_{i}.json')):

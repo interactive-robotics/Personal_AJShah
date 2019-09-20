@@ -434,7 +434,7 @@ var out_dist = Infer({method:'MCMC', samples:nSamples, burn:nBurn, verbose:true}
 var filename =  outPath + '/batch_posterior.json'
 var filename_old = outPath + '/old_posterior.json'
 json.write(filename, out_dist)
-json.write(filename, dist)
+json.write(filename_old, dist)
 
 //
 // var Complexity = ComplexityFactorCustom

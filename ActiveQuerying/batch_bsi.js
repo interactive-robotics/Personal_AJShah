@@ -201,50 +201,13 @@ var SatChecker = function (word, formula, listofatoms) {
 /********** Custom LTL Formula Generator **********/
 
 
-//Sampler 1, Avoids all threats and generates a random permutation of the waypoints
-var LTL_Sampler1 = function(nThreats, nWaypoints) {
-
-  /* Generate the random choices */
-  var rp = RandPerm(nWaypoints, true);
-  var Threats = SubsetSampler(_.range(nThreats)); //Threat choices
-  var Waypoints = SubsetSampler(_.range(nWaypoints)) // Waypoint choices
-  //console.log(subs);
-
-  /*** Generate Threats ***/
-
-  var ThreatAvoid = (Threats.length==0) ? [['true']] :
-  [['G', GlobalAnd(map(function(i) {return ['not', ['T' + i]];} , Threats))]];
-
-  /*** Eventually Waypoints ***/
-  var FinallyWaypoints = (Waypoints.length==0) ? [['true']] :
-  map(function(i) {return ['imp', ['P'+i] , ['F', ['W' + i]]];} , Waypoints)
-
-  /*** Generate Orderings ***/
-
-  //console.log(rp)
-  var Order = OrderSubset(rp);
-  var OrderWaypointsFormula = Order.formulaList;
-  var OrderWaypointsList = Order.orderings;
-
-  /*** Combine and return ***/
-  return {
-    nThreats: Threats.length,
-    threats: Threats,
-    nWaypoints: Waypoints.length,
-    Waypoints: Waypoints,
-    nOrderings: OrderWaypointsList.length,
-    orderings: OrderWaypointsList,
-    formula: GlobalAnd(mergeArray([ThreatAvoid, FinallyWaypoints, OrderWaypointsFormula]))
-  };
-}
-
 
 
 
 // Samples a subset of threats, a subset of waypoints and a subset of ordering
 var LTL_Sampler4 = function(nThreats, nWaypoints) {
   /* Generate the random choices */
-  var subs = DivideIntoSubsets(nWaypoints, 0.65); //Subsets for orderings
+  var subs = DivideIntoSubsets(nWaypoints, 0.7); //Subsets for orderings
   var Threats = SubsetSampler(_.range(nThreats)); //Threat choices
   var Waypoints = SubsetSampler(_.range(nWaypoints)) // Waypoint choices
   //console.log(subs);
@@ -275,36 +238,6 @@ var LTL_Sampler4 = function(nThreats, nWaypoints) {
 }
 
 
-var LTL_Sampler5 = function(nThreats, nWaypoints){
-
-  /* Generate the random choices */
-  var forest = DivideIntoTrees(nWaypoints); // Generating waypoint ordered structure
-  var WaypointOrderings = ForestToOrderings(forest);
-  var Threats = SubsetSampler(_.range(nThreats)); //Threat choices
-  var Waypoints = SubsetSampler(_.range(nWaypoints)) // Waypoint choices
-
-  /* Globally avoid threats */
-  var ThreatAvoid = (Threats.length==0) ? [['true']] :
-  [['G', GlobalAnd(map(function(i) {return ['not', ['T' + i]];} , Threats))]];
-
-  /* Eventually Waypoints */
-  var FinallyWaypoints = (Waypoints.length==0) ? [['true']] :
-  map(function(i) {return ['imp', ['P'+i] , ['F', ['W' + i]]];} , Waypoints);
-
-  /*Generate Ordering constraints */
-  var OrderWaypointsFormula = (map(function(x){return AbeforeB(x[0],x[1])}, WaypointOrderings));
-
-  /* Combine and return */
-  return {
-    nThreats: Threats.length,
-    threats: Threats,
-    nWaypoints: Waypoints.length,
-    Waypoints: Waypoints,
-    nOrderings: WaypointOrderings.length,
-    Orderings: WaypointOrderings,
-    formula: GlobalAnd(mergeArray([ThreatAvoid, FinallyWaypoints, OrderWaypointsFormula]))
-  };
-}
 
 
 
