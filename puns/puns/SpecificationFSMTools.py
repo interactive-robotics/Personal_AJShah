@@ -163,7 +163,7 @@ def CreateReward(probs):
                 return np.sum((np.multiply(verified_states, sel_probs)))
 
             elif force_terminal:
-                verified_states = np.array([1 if (IsSafe(json.loads(formula))[0] and formula!='[false]') else -1 for formula in state])
+                verified_states = np.array([1 if (IsSafe(json.loads(formula))[0] and formula!='[false]') or formula == '[true]' else -1 for formula in state])
                 return np.sum(np.multiply(verified_states, sel_probs))
 
             else:

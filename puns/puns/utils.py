@@ -37,9 +37,9 @@ def CreateSpecMDP(PathToSpec, n_threats, n_waypoints, accessibility=None, reward
     Formulas = Data['support']
     Probs = Data['probs']
     import matplotlib.pyplot as plt
-    plt.bar(range(len(Probs)), np.sort(Probs)[::-1])
-    f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(Probs),0)[0:i+1], 0)
-    plt.plot(range(len(Probs)), list(map(f, range(len(Probs)))))
+    # plt.bar(range(len(Probs)), np.sort(Probs)[::-1])
+    # f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(Probs),0)[0:i+1], 0)
+    # plt.plot(range(len(Probs)), list(map(f, range(len(Probs)))))
 
     TraceSlice = {}
     for i in range(n_threats):
