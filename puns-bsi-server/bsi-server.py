@@ -53,14 +53,19 @@ def batch_bsi(data):
     return dist
 
 def active_bsi(data):
-    '''data must be a dict with keys  'old_dist', 'demos',  '''
+    '''data must be a dict with keys  'prior_dist', 'demos',  '''
     #clear existing demonstrations and filenames
-    clear_demonstrations()
-    clear_distributions()
+    clear_demonstrations(params)
+    clear_distributions(params)
 
     #Write the query to a demo files
-    new_traj = data['demos']['trace']
+    new_traj = create_query_demo(data['demos']['trace'])
     write_demo_query_data(new_traj, data['demos']['label'], params.compressed_data_path,  query_number = 1)
+
+    #Save the prior distributions
+
+    with open(os.path.join(params.distributions_path,'batch_posterior.json'),'w') as file:
+        json.dump(data['prior_dist'], file)
 
     # Run the inference command
     infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nQuery 1'
@@ -72,57 +77,53 @@ def active_bsi(data):
 
     return dist
 
-if __name__ == '__main__':
-    #print(dir(params))
+def process_request(data):
+    data = decode_data(data)
+    if type(data) == dict:
+        if data['request_type'] == 'Batch':
+            print('Batch request received \n')
+            dist = batch_bsi(data)
+            #print('distribution computed')
+        elif data['request_type'] == 'Active':
+            print('Active Request Recieved')
+            dist = active_bsi(data)
+    return dist
+
+def single_socket_server():
 
     while True:
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
             s.bind((HOST,PORT1))
             s.listen()
-            print('Waiting for Requests \n')
+            print('Waiting for BSI Requests')
             conn,addr = s.accept()
+
             with conn:
-                print('Recieving data from: ', addr, '\n')
-                data = b""
+                print('Receiving data from: ', addr)
+                raw_data = b''
                 while True:
-                    #print('receiving')
-                    newdata = conn.recv(1024)
-                    data += newdata
-                    if not newdata:
-                        print('no new data')
-                        break
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-            #s.listen()
-        #print('data received')
-        
-        
-        data = decode_data(data)
-        #print(data)
-        if type(data) == dict:
-            if data['request_type'] == 'Batch':
-                print('Batch request received \n')
-                dist = batch_bsi(data)
-                #print('distribution computed')
-            elif data['request_type'] == 'Active':
-                dist = active_bsi(data)
-        
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            #print('Waiting to send data')
-            s.bind((HOST,PORT1))
-            s.listen()
-            conn,addr = s.accept()
-            print('\nSending Distribution \n')
-            with conn:
+                    newdata = conn.recv(4096)
+                    raw_data += newdata
+                    print(newdata[-4::])
+                    if newdata[-4::] == b'DONE': break
+                rec_data = raw_data[:-4]
+
+                dist = process_request(rec_data)
+
+                print('Distribution Computed')
+                print('Sending Data \n')
+
                 conn.sendall(dill.dumps(dist))
-                #echo = b''
-                #newdata = conn.recv(16)
-            s.close()
-        #print('Data sent\n')
-        #print('Done')
-        time.sleep(0.5)
-        
-        
+
+        print('Request Completed \n\n')
+
+
+
+
+
+if __name__ == '__main__':
+    #print(dir(params))
+
+    single_socket_server()
