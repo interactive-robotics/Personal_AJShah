@@ -7,8 +7,8 @@ Created on Tue Mar 12 10:53:40 2019
 """
 
 import sys
-sys.path.append('/home/ajshah/Github/Project_LMMIT/Phase2Models')
-from CreatePropositions import *
+#sys.path.append('/home/ajshah/Github/Project_LMMIT/Phase2Models')
+#from CreatePropositions import *
 import os,json
 
 Operators = set(['and','or','imp','not','X','U','wU','R','G','F'])

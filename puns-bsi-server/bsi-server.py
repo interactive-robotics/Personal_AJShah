@@ -6,7 +6,7 @@ import auto_eval_params as params
 import os
 import time
 
-HOST = 'ajshah.mit.edu'
+HOST = 'localhost'
 PORT1 = 10050
 #PORT2 = 10000
 
@@ -106,7 +106,7 @@ def single_socket_server():
                 while True:
                     newdata = conn.recv(4096)
                     raw_data += newdata
-                    print(newdata[-4::])
+                    #print(newdata[-4::])
                     if newdata[-4::] == b'DONE': break
                 rec_data = raw_data[:-4]
 
