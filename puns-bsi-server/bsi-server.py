@@ -6,7 +6,7 @@ import auto_eval_params as params
 import os
 import time
 
-HOST = 'localhost'
+HOST = 'ajshah.mit.edu'
 PORT1 = 10050
 #PORT2 = 10000
 
@@ -89,7 +89,7 @@ def process_request(data):
             dist = active_bsi(data)
     return dist
 
-def single_socket_server():
+def bsi_server():
 
     while True:
 
@@ -126,4 +126,4 @@ def single_socket_server():
 if __name__ == '__main__':
     #print(dir(params))
 
-    single_socket_server()
+    bsi_server()

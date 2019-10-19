@@ -145,3 +145,4 @@ if __name__ == '__main__':
 
     send_data = create_sample_active_query()
     dist = send_sample_active_query()
+    dist = send_sample_batch_query()
