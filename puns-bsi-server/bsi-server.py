@@ -6,7 +6,7 @@ import auto_eval_params as params
 import os
 import time
 
-HOST = 'localhost'
+HOST = 'ajshah.mit.edu'
 PORT1 = 10050
 #PORT2 = 10000
 
