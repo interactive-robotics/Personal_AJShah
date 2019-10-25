@@ -23,6 +23,8 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+puns-bsi-server/Received_Agent.pkl
+puns-bsi-client/Received_Agent.pkl
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
