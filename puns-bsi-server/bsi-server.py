@@ -5,6 +5,8 @@ from DemoScript import *
 import auto_eval_params as params
 import os
 import time
+from puns.Exploration import ExplorerAgent
+from puns.LearningAgents import QLearningAgent
 
 HOST = 'ajshah.mit.edu'
 PORT1 = 10050

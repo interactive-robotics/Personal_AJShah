@@ -262,7 +262,7 @@ def create_active_query(MDP, verbose = True, non_terminal=True):
     trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
     trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
 
-    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
+    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state, 'learned_agent': agent}
 
 def create_query_demo(trace_slices):
     ''' Reformats the generated demonstration into a form readable by the webppl
@@ -362,3 +362,5 @@ if __name__ == '__main__':
 
     print('Getting desired state for most informative query')
     desired_state, bread_crumb_states = identify_desired_state(MDP.specification_fsm)
+    
+    query = create_active_query(MDP)
