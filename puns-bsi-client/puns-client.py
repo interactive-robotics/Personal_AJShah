@@ -14,7 +14,7 @@ import json
 #import auto_eval_params as params
 import os
 import time
-from puns.utils import CreateSampleMDP
+from puns.utils import CreateSampleMDP, CreateSpecMDP
 from puns.Exploration import ExplorerAgent
 from puns.LearningAgents import QLearningAgent
 
