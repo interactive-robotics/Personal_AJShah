@@ -2,6 +2,8 @@ import socket
 import dill
 import json
 from DemoScript import *
+from puns.SpecificationFSMTools import SpecificationFSM, CreateReward
+from puns.SpecificationMDP import SpecificationMDP
 import auto_eval_params as params
 import os
 import time
@@ -10,15 +12,22 @@ HOST = 'ajshah.mit.edu'
 PORT = 10020
 
 def decode_data(data):
-    try:
-        data = dill.loads(data)
-    except:
-        print('data not readable by dill: ', data)
-        print('No action taken')
+    #try:
+    data = dill.loads(data)
+    # except:
+    #     print('data not readable by dill: ', data)
+    #     print('No action taken')
     return data
 
 def train_puns(data):
     MDP = data['MDP']
+    MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
+#    print('Recompiling MDP')
+#    control_mdp = MDP.control_mdp
+#    formulas = MDP.specification_fsm._formulas
+#    probs = MDP.specification_fsm._partial_rewards
+#    spec_fsm = SpecificationFSM(formulas, probs)
+#    MDP = SpecificationMDP(spec_fsm, control_mdp)
 
     agent = QLearningAgent(MDP)
     print('Training Min regret agent')
@@ -29,12 +38,28 @@ def train_puns(data):
 
 def active_query(data):
     MDP = data['MDP']
+    MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
+#
+#    print('Recompiling MDP')
+#    control_mdp = MDP.control_mdp
+#    formulas = MDP.specification_fsm._formulas
+#    probs = MDP.specification_fsm._partial_rewards
+#    spec_fsm = SpecificationFSM(formulas, probs)
+#    MDP = SpecificationMDP(spec_fsm, control_mdp)
+
     print('Training an Active query agent')
     query = create_active_query(MDP, verbose = True)
     return query['agent']
 
 def random_query(data):
     MDP = data['MDP']
+    MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
+#    print('Recompiling MDP')
+#    control_mdp = MDP.control_mdp
+#    formulas = MDP.specification_fsm._formulas
+#    probs = MDP.specification_fsm._partial_rewards
+#    spec_fsm = SpecificationFSM(formulas, probs)
+#    MDP = SpecificationMDP(spec_fsm, control_mdp)
     print('Training a Random query agent')
     query = create_random_query(MDP)
     return query['agent']
@@ -86,6 +111,7 @@ def run_puns_server():
                 print('\nSending Agent')
                 print(agent.__module__)
                 conn.sendall(dill.dumps(agent))
+                del agent
         print('Request Completed \n\n')
 
 
