@@ -26,6 +26,7 @@ var/
 puns-bsi-server/Received_Agent.pkl
 puns-bsi-client/Received_Agent.pkl
 puns-bsi-client/Agents/Received_Agent.pkl
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
