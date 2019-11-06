@@ -1,16 +1,41 @@
 import puns
-from puns.utils import CreateSpecMDP,CreateDinnerMDP
+from puns.utils import CreateSmallDinnerMDP,CreateDinnerMDP, CreateSmallDinnerMDP
+from puns.ControlMDP import SmallTableMDP
 from PUnSClient import *
 from BSIClient import *
 from utils import *
 from DemoScript import *
+
+def create_dinner_demonstrations(formula, nDemo):
+
+
+    specification_fsm = SpecificationFSM(formulas=[formula], probs = [1])
+    control_mdp = SmallTableMDP(0,5)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+
+    q_agent = QLearningAgent(MDP)
+    print('Training ground truth demonstrator')
+    q_agent.explore(episode_limit = 5000, verbose=True, action_limit = 1000000)
+    eval_agent = ExplorerAgent(MDP, input_policy=q_agent.create_learned_softmax_policy(0.005))
+    print('\n')
+    eval_agent.explore(episode_limit = nDemo)
+    demos = []
+    for record in eval_agent.episodic_record:
+            new_demo = {}
+            trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
+            trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+
+            new_demo['trace'] = trace_slices
+            new_demo['label'] = True
+            demos.append(new_demo)
+    return demos
 
 def automated_server_trial_active(n_demo = 2, n_query = 3, formula = None):
 
     if not formula:
         formula = sample_ground_truth()
 
-    demos = create_demonstrations(formula, n_demo)
+    demos = create_dinner_demonstrations(formula, n_demo)
 
     send_data = create_batch_message([d['trace'] for d in demos])
     dist = request_bsi_query(send_data)
@@ -21,7 +46,7 @@ def automated_server_trial_active(n_demo = 2, n_query = 3, formula = None):
     #Create MDP from the initial distribution
     n_form = len(dist['probs'])
     print(f'Initial Batch distributions has {n_form} formulas')
-    MDP = CreateSpecMDP(specfile, 0, 5)
+    MDP = CreateSmallDinnerMDP(specfile)
 
     # Request queries
     for i in range(n_query):
@@ -47,11 +72,11 @@ def automated_server_trial_active(n_demo = 2, n_query = 3, formula = None):
             json.dump(dist, file)
 
         #Updating the MDP
-        MDP = CreateSpecMDP(specfile, 0,5)
+        MDP = CreateSmallDinnerMDP(specfile)
 
     #The final distribution should have been written at this waypoints
 
-    MDP = CreateSpecMDP(specfile, 0,5)
+    MDP = CreateSmallDinnerMDP(specfile)
     puns_request = create_puns_message(MDP, 'Puns')
     agent = send_puns_request(puns_request)
     print('Final Agent saved')
@@ -73,7 +98,7 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
     # create an MDP from the initial distribution
     n_form = len(dist['probs'])
     print(f'Initial distribution has {n_form} formulas')
-    MDP = CreateSpecMDP(specfile, 0, 5)
+    MDP = CreateSmallDinnerMDP(specfile)
 
     # Request querying Agent
     for i in range(n_query):
@@ -98,7 +123,7 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
         with open(specfile,'w') as file:
             json.dump(dist, file)
 
-        MDP = CreateSpecMDP(specfile, 0,5)
+        MDP = CreateSmallDinnerMDP(specfile)
 
     #The final distribution should have been written at this point
 

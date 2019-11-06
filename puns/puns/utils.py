@@ -140,6 +140,30 @@ def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, num_steps = 
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
 
+def CreateSmallDinnerMDP(specfile, reward_type = 'min_regret', failure_prob = 0.2, num_steps = 1):
+
+    control_mdp = SmallTableMDP(failure_prob, num_steps)
+
+    with open(specfile, 'r') as file:
+        Data = json.load(file)
+    Formulas, Probs = Data['support'],Data['probs']
+
+    n_threats = 0
+    n_waypoints = 5
+    accessibility = [True]*n_waypoints
+    TraceSlice = {}
+    for i in range(n_threats):
+        TraceSlice[f'T{i}'] = False
+    for i in range(n_waypoints):
+        TraceSlice[f'W{i}'] = False
+        TraceSlice[f'P{i}'] = accessibility[i]
+
+    ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in Formulas]
+    specification_fsm = SpecificationFSM(ProgressedFormulas, Probs, reward_type = reward_type)
+    MDP = SpecificationMDP(specification_fsm, control_mdp)
+    return MDP
+
+
 def RecordLearningCurve(MDP, Learner, max_episodes = 10000, steps = 10, temp = 0.01, verbose = False):
     episodes = 0
     mean_rewards = []

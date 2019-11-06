@@ -46,7 +46,7 @@ def plot_bar_plots(all_data):
             
             plt.figure(figsize=[12,9])
             #sns.boxplot(data = all_data, x = 'n_data', y = 'Similarity', hue = 'type')
-            sns.barplot(data = all_data, x = 'n_data', y = 'Similarity' , hue = 'type', estimator = np.mean, capsize=0.05, ci = 95, alpha = 0.85)
+            sns.barplot(data = all_data, x = 'n_data', y = 'Similarity' , hue = 'type', estimator = np.median, capsize=0.05, ci = 95, alpha = 0.85)
             plt.title('Median Posterior Similarity')
             plt.xlabel('Number of task executions')
             plt.legend(loc='upper left')
