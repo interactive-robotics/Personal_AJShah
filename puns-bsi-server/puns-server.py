@@ -34,7 +34,7 @@ def train_puns(data):
     agent.explore(episode_limit = 5000, action_limit = 100000, verbose = True)
 
     eval_agent = ExplorerAgent(MDP, input_policy=agent.create_learned_softmax_policy(0.01))
-    return agent
+    return eval_agent
 
 def active_query(data):
     MDP = data['MDP']
