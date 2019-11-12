@@ -1,10 +1,11 @@
 import puns
-from puns.utils import CreateSmallDinnerMDP,CreateDinnerMDP, CreateSmallDinnerMDP
+from puns.utils import CreateSmallDinnerMDP,CreateDinnerMDP, CreateSmallDinnerMDP, Eventually, Order
 from puns.ControlMDP import SmallTableMDP
 from PUnSClient import *
 from BSIClient import *
 from utils import *
 from DemoScript import *
+import dill
 
 def create_dinner_demonstrations(formula, nDemo):
 
@@ -88,7 +89,7 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
     if not formula:
         formula = sample_ground_truth()
 
-    demos = create_demonstrations(formula, n_demo)
+    demos = create_dinner_demonstrations(formula, n_demo)
 
     send_data = create_batch_message([d['trace'] for d in demos])
     dist = request_bsi_query(send_data)
@@ -134,7 +135,68 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
     print('Final Agent saved')
     return
 
+def real_active_trial(nQuery=3):
+
+    formula = ['and']
+    for i in range(5):
+        formula.append(Eventually(f'W{i}'))
+    formula.append(Order('W0','W1'))
+    formula.append(Order('W0','W2'))
+    formula.append(Order('W1','W2'))
+    
+    demos = create_dinner_demonstrations(formula, 2)
+    send_data = create_batch_message([d['trace'] for d in demos])
+    dist = request_bsi_query(send_data)
+    specfile = 'Distributions/dist.json'
+    with open(specfile,'w') as file:
+        json.dump(dist, file)
+
+    #Create MDP from the initial distribution
+    n_form = len(dist['probs'])
+    print(f'Initial Batch distributions has {n_form} formulas')
+    MDP = CreateSmallDinnerMDP(specfile)
+
+    for i in range(nQuery):
+
+        #Get the active query agent
+
+        puns_request = create_puns_message(MDP, 'Active')
+        agent = send_puns_request(puns_request)
+        #Lets assume that the demonstration has been written to './logs/query.pkl'
+        
+
+        text_label = input()
+        label = True if lower(text_label)=='true' else False
+
+        with open('logs/query.pkl','rb') as file:
+            trace_slice = dill.load(file)
+        prior_dist = {'formulas': MDP.specification_fsm._formulas,
+        'probs': MDP.specification_fsm._partial_rewards}
+        update_message = create_active_message(trace_slices, label, prior_dist)
+        dist = request_bsi_query(update_message)
+        n_form = len(dist['support'])
+        print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
+        with open(specfile,'w') as file:
+            json.dump(dist, file)
+
+        #Update the MDP definition
+        MDP = CreateSmallDinnerMDP(specfile)
+
+
+
+
+
+
+
+
+
+    return formula
+
+
+
 
 if __name__ == '__main__':
-    automated_server_trial_active(n_demo = 2)
+    #automated_server_trial_active(n_demo = 2)
     #automated_server_trial_random(n_demo = 2)
+    #print(real_active_trial())
+    a=1
