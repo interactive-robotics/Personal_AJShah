@@ -80,6 +80,7 @@ def automated_server_trial_active(n_demo = 2, n_query = 3, formula = None):
     puns_request = create_puns_message(MDP, 'Puns')
     agent = send_puns_request(puns_request)
     print('Final Agent saved')
+    print(formula)
     return
 
 def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
@@ -135,5 +136,5 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
 
 
 if __name__ == '__main__':
-    #automated_server_trial_active(n_demo = 2)
-    automated_server_trial_random(n_demo = 2)
+    automated_server_trial_active(n_demo = 2)
+    #automated_server_trial_random(n_demo = 2)
