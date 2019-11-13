@@ -31,7 +31,7 @@ def train_puns(data):
 
     agent = QLearningAgent(MDP)
     print('Training Min regret agent')
-    agent.explore(episode_limit = 5000, action_limit = 100000, verbose = True)
+    agent.explore(episode_limit = 10000, action_limit = 100000, verbose = True)
 
     eval_agent = ExplorerAgent(MDP, input_policy=agent.create_learned_softmax_policy(0.01))
     return eval_agent
