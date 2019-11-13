@@ -140,7 +140,7 @@ def CreateDinnerMDP(reward_type = 'min_regret', failure_prob = 0.2, num_steps = 
     MDP = SpecificationMDP(specification_fsm, control_mdp)
     return MDP
 
-def CreateSmallDinnerMDP(specfile, reward_type = 'min_regret', failure_prob = 0.2, num_steps = 1):
+def CreateSmallDinnerMDP(specfile, reward_type = 'min_regret', failure_prob = 0.0, num_steps = 1):
 
     control_mdp = SmallTableMDP(failure_prob, num_steps)
 

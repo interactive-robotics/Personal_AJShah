@@ -263,7 +263,7 @@ class TableMDP(ControlMDP):
             order=self.ndarray_style)
 
 class SmallTableMDP(ControlMDP):
-    def __init__(self, failure_prob=0.2, num_steps=1):
+    def __init__(self, failure_prob=0.0, num_steps=1):
         ControlMDP.__init__(self)
 
         # State space:

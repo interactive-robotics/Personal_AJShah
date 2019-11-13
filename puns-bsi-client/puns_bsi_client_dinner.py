@@ -6,18 +6,20 @@ from BSIClient import *
 from utils import *
 from DemoScript import *
 import dill
+import os
+import inputs
 
 def create_dinner_demonstrations(formula, nDemo):
 
 
     specification_fsm = SpecificationFSM(formulas=[formula], probs = [1])
-    control_mdp = SmallTableMDP(0,5)
+    control_mdp = SmallTableMDP()
     MDP = SpecificationMDP(specification_fsm, control_mdp)
 
     q_agent = QLearningAgent(MDP)
     print('Training ground truth demonstrator')
     q_agent.explore(episode_limit = 5000, verbose=True, action_limit = 1000000)
-    eval_agent = ExplorerAgent(MDP, input_policy=q_agent.create_learned_softmax_policy(0.005))
+    eval_agent = ExplorerAgent(MDP, input_policy=q_agent.create_learned_softmax_policy(0.05))
     print('\n')
     eval_agent.explore(episode_limit = nDemo)
     demos = []
@@ -135,7 +137,31 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
     print('Final Agent saved')
     return
 
-def real_active_trial(nQuery=3):
+def get_label_from_joystick():
+
+    if not inputs.devices.gamepads: Exception('Please connect joystick')
+    print('Press Start to provide label')
+
+    #Look for start button
+    while True:
+        event = inputs.get_gamepad()[-1]
+        if event.code == 'BTN_START' and event.state == 0:
+            print('Provide your label now: ')
+            break
+    while True:
+        event = inputs.get_gamepad()[-1]
+        if event.code == 'BTN_TR' and event.state == 0:
+            label = True
+            break
+        if event.code == 'BTN_TL' and event.state == 0:
+            label = False
+            break
+    print(f'Your provided label is {label}')
+    return label
+
+
+
+def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
 
     formula = ['and']
     for i in range(5):
@@ -144,7 +170,9 @@ def real_active_trial(nQuery=3):
     formula.append(Order('W0','W2'))
     formula.append(Order('W1','W2'))
     
-    demos = create_dinner_demonstrations(formula, 2)
+    demos = create_dinner_demonstrations(formula, n_demo)
+    print(demos)
+
     send_data = create_batch_message([d['trace'] for d in demos])
     dist = request_bsi_query(send_data)
     specfile = 'Distributions/dist.json'
@@ -164,12 +192,17 @@ def real_active_trial(nQuery=3):
         agent = send_puns_request(puns_request)
         #Lets assume that the demonstration has been written to './logs/query.pkl'
         
+        print('\nPerforming query demonstration. The robot is uncertain about this task execution')
+        returnval = os.system('python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py')
 
-        text_label = input()
-        label = True if lower(text_label)=='true' else False
+
+        print('\nWhat is your label?')
+        # text_label = input()
+
+        label = get_label_from_joystick()
 
         with open('logs/query.pkl','rb') as file:
-            trace_slice = dill.load(file)
+            trace_slices = dill.load(file)
         prior_dist = {'formulas': MDP.specification_fsm._formulas,
         'probs': MDP.specification_fsm._partial_rewards}
         update_message = create_active_message(trace_slices, label, prior_dist)
@@ -182,21 +215,23 @@ def real_active_trial(nQuery=3):
         #Update the MDP definition
         MDP = CreateSmallDinnerMDP(specfile)
 
+    puns_request = create_puns_message(MDP, 'Puns')
+    #agent = send_puns_request(puns_request)
+    agent = send_puns_request(puns_request)
+    print('Final Agent saved')
 
+    print('\n Now showing what the robot has learned\n')
+    for i in range(n_postdemo):
+        print(f'Starting {i+1} of {n_postdemo} demonstration')
+        returnval = os.system('python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py')
 
-
-
-
-
-
-
-    return formula
-
+    return
 
 
 
 if __name__ == '__main__':
     #automated_server_trial_active(n_demo = 2)
     #automated_server_trial_random(n_demo = 2)
-    #print(real_active_trial())
-    a=1
+    real_active_trial()
+    #get_label_from_joystick()
+    
