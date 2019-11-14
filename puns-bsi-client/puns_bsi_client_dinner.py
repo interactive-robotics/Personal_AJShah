@@ -9,6 +9,16 @@ import dill
 import os
 import inputs
 
+TEXT_HOST = 'localhost'
+TEXT_PORT = 20000
+
+def send_text(text):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((TEXT_HOST,TEXT_PORT))
+
+        #print('Sending Demonstration Data')
+        s.sendall(text.encode())
+
 def create_dinner_demonstrations(formula, nDemo):
 
 
@@ -140,13 +150,13 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
 def get_label_from_joystick():
 
     if not inputs.devices.gamepads: Exception('Please connect joystick')
-    print('Press Start to provide label')
+    #send_text('Press Start to provide label')
 
     #Look for start button
     while True:
         event = inputs.get_gamepad()[-1]
         if event.code == 'BTN_START' and event.state == 0:
-            print('Provide your label now: ')
+            send_text('Provide your label now: ')
             break
     while True:
         event = inputs.get_gamepad()[-1]
@@ -156,8 +166,25 @@ def get_label_from_joystick():
         if event.code == 'BTN_TL' and event.state == 0:
             label = False
             break
-    print(f'Your provided label is {label}')
+    #send_text(f'Your provided label is {label}')
     return label
+
+def get_label_with_confirmation():
+    send_text('Press Start to provide label')
+    label1 = get_label_from_joystick()
+    send_text(f'Provided label: {label1} \n\n Press start \n Confirm label {label1}')
+    plt.pause(0.2)
+    #send_text('Provide the same label again to continue')
+    label2 = get_label_from_joystick()
+
+    if label1 == label2:
+        send_text(f'Label {label1} confirmed')
+        plt.pause(0.2)
+        return label1
+    else:
+        send_text('There was a label mismatch! Try Again when prompted')
+        plt.pause(5)
+        return get_label_with_confirmation()
 
 
 
@@ -169,7 +196,7 @@ def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
     formula.append(Order('W0','W1'))
     formula.append(Order('W0','W2'))
     formula.append(Order('W1','W2'))
-    
+
     demos = create_dinner_demonstrations(formula, n_demo)
     print(demos)
 
@@ -191,15 +218,17 @@ def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
         puns_request = create_puns_message(MDP, 'Active')
         agent = send_puns_request(puns_request)
         #Lets assume that the demonstration has been written to './logs/query.pkl'
-        
-        print('\nPerforming query demonstration. The robot is uncertain about this task execution')
+
+        send_text('Performing query demonstration. The robot is uncertain about this task execution')
         returnval = os.system('python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py')
 
 
-        print('\nWhat is your label?')
+        send_text('\nWhat is your label?')
         # text_label = input()
 
         label = get_label_from_joystick()
+        new_text = f'Your confirmed label is {True}'
+        send_text(new_text)
 
         with open('logs/query.pkl','rb') as file:
             trace_slices = dill.load(file)
@@ -232,6 +261,10 @@ def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
 if __name__ == '__main__':
     #automated_server_trial_active(n_demo = 2)
     #automated_server_trial_random(n_demo = 2)
-    real_active_trial()
+    #real_active_trial()
     #get_label_from_joystick()
+    send_text('Well hello')
+    plt.pause(0.1)
+    get_label_with_confirmation()
+    
     
