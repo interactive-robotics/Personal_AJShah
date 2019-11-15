@@ -8,9 +8,88 @@ from DemoScript import *
 import dill
 import os
 import inputs
+import shutil
+
 
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
+
+def clear_demonstrations():
+    demofiles = [os.path.join('demos', f) for f in os.listdir('demos')]
+    for f in demofiles:
+        os.remove(f)
+
+def clear_logs():
+    logfiles = [os.path.join('logs',f) for f in os.listdir('logs')]
+    for f in logfiles:
+        os.remove(f)
+
+def record_subject_data(subject_id, execution_type):
+    subjectpath = f'/home/shen/TableSetup_SubjectData/subject_{subject_id}_{execution_type}'
+    if os.path.exists(subjectpath):
+        print(f'Data for subject {subject_id} already exists. Please provide alternate subject number. Provide the same subject number to override')
+        a = input()
+        try:
+            a  = int(a)
+            if a == subject_id: print('Overwriting data')
+        except:
+            print('No subject id given exiting the function. Please run this again')
+            return
+        subject_id = a
+
+    subjectpath = f'/home/shen/TableSetup_SubjectData/subject_{subject_id}_{execution_type}'
+    try:
+        shutil.rmtree(subjectpath)
+    except:
+        pass
+    
+
+    os.mkdir(subjectpath)
+
+    #Copy over the final distribution
+    os.mkdir(os.path.join(subjectpath, 'Distributions'))
+    files = os.listdir('Distributions')
+    for f in files:
+        shutil.copyfile( os.path.join('Distributions', f) , os.path.join(subjectpath, 'Distributions',f))
+
+    #Copy the logs
+    os.mkdir(os.path.join(subjectpath, 'logs'))
+    files = os.listdir('logs')
+    for f in files:
+        shutil.copyfile(os.path.join('logs', f), os.path.join(subjectpath, 'logs',f))
+
+    #Copy the human demonstration logs
+    os.mkdir(os.path.join(subjectpath, 'demos'))
+    files = os.listdir('demos')
+    for f in files:
+        shutil.copyfile(os.path.join('demos',f), os.path.join(subjectpath,'demos',f))
+
+    #Copy the final agent
+    os.mkdir(os.path.join(subjectpath, 'Agents'))
+    shutil.copyfile(os.path.join('Agents','Received_Agent.pkl'), os.path.join(subjectpath,'Agents','Final_Agent.pkl'))
+
+
+
+def parse_demonstration(demo_id = 0):
+    
+    demofile = f'demos/demo_{demo_id}.txt'
+
+    if os.path.exists(demofile):
+        with open(demofile,'r') as file:
+            lines = file.readlines()
+        
+        state_tuples = [tuple(json.loads(line)) for line in lines]
+        cmdp = SmallTableMDP()
+        trace_slices = [cmdp.create_observations(t) for t in state_tuples]
+        return trace_slices
+
+    else:
+        print(f'Record demonstration {demo_id}')
+        print('Press Enter when demonstration is recorded')
+        input()
+        return parse_demonstration(demo_id)
+
+
 
 def send_text(text):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -188,7 +267,7 @@ def get_label_with_confirmation():
 
 
 
-def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
+def active_trial_sim_demo(nQuery=3, n_postdemo = 3, n_demo = 2):
 
     formula = ['and']
     for i in range(5):
@@ -224,10 +303,11 @@ def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
 
 
         send_text('\nWhat is your label?')
+        plt.pause(1)
         # text_label = input()
 
-        label = get_label_from_joystick()
-        new_text = f'Your confirmed label is {True}'
+        label = get_label_with_confirmation()
+        new_text = f'Your confirmed label is {label}'
         send_text(new_text)
 
         with open('logs/query.pkl','rb') as file:
@@ -249,10 +329,88 @@ def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
     agent = send_puns_request(puns_request)
     print('Final Agent saved')
 
-    print('\n Now showing what the robot has learned\n')
+    send_text('\n Now showing what the robot has learned\n')
+    plt.pause(2)
     for i in range(n_postdemo):
-        print(f'Starting {i+1} of {n_postdemo} demonstration')
+        send_text(f'Starting {i+1} of {n_postdemo} demonstration')
         returnval = os.system('python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py')
+
+    return
+
+def active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
+
+    clear_demonstrations()
+
+    send_text(f'You must demonstrate how to set the table {n_demo} times')
+    plt.pause(3)
+
+    demos = []
+    for i in range(n_demo):
+        send_text(f'Collect demo {i+1} of {n_demo} \n\n Please wait for experimenter')
+        print('Press ENTER once complete')
+        trace = parse_demonstration(i)
+        new_demo = {}
+        new_demo['trace'] = trace
+        new_demo['label'] = True
+        demos.append(new_demo)
+
+    send_data = create_batch_message([d['trace'] for d in demos])
+    dist = request_bsi_query(send_data)
+    specfile = 'Distributions/dist.json'
+    with open(specfile,'w') as file:
+        json.dump(dist, file)
+
+    #Create MDP from the initial distribution
+    n_form = len(dist['probs'])
+    print(f'Initial Batch distributions has {n_form} formulas')
+    MDP = CreateSmallDinnerMDP(specfile)
+
+    for i in range(nQuery):
+
+        #Get the active query agent
+
+        puns_request = create_puns_message(MDP, 'Active')
+        agent = send_puns_request(puns_request)
+        #Lets assume that the demonstration has been written to './logs/query.pkl'
+
+        send_text('Performing query demonstration. The robot is uncertain about this task execution')
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
+        returnval = os.system(command)
+
+
+        send_text('\nWhat is your label?')
+        plt.pause(1)
+        # text_label = input()
+
+        label = get_label_with_confirmation()
+        new_text = f'Your confirmed label is {label}'
+        send_text(new_text)
+
+        with open(f'logs/query_{i}.pkl','rb') as file:
+            trace_slices = dill.load(file)
+        prior_dist = {'formulas': MDP.specification_fsm._formulas,
+        'probs': MDP.specification_fsm._partial_rewards}
+        update_message = create_active_message(trace_slices, label, prior_dist)
+        dist = request_bsi_query(update_message)
+        n_form = len(dist['support'])
+        print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
+        with open(specfile,'w') as file:
+            json.dump(dist, file)
+
+        #Update the MDP definition
+        MDP = CreateSmallDinnerMDP(specfile)
+
+    puns_request = create_puns_message(MDP, 'Puns')
+    #agent = send_puns_request(puns_request)
+    agent = send_puns_request(puns_request)
+    print('Final Agent saved')
+
+    send_text('\n Now showing what the robot has learned\n')
+    plt.pause(2)
+    for i in range(n_postdemo):
+        send_text(f'Starting {i+1} of {n_postdemo} demonstration')
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+        returnval = os.system(command)
 
     return
 
@@ -261,10 +419,16 @@ def real_active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
 if __name__ == '__main__':
     #automated_server_trial_active(n_demo = 2)
     #automated_server_trial_random(n_demo = 2)
+    #send_text('Well Hello!')
+    #plt.pause(3)
     #real_active_trial()
     #get_label_from_joystick()
-    send_text('Well hello')
-    plt.pause(0.1)
+    #send_text('Well hello')
+    #plt.pause(0.1)
+    send_text('Testing the joystick module')
+    plt.pause(4)
     get_label_with_confirmation()
+    #active_trial(nQuery = 2, n_demo = 3, n_postdemo = 1)
+    record_subject_data(0, 'Active')
     
     

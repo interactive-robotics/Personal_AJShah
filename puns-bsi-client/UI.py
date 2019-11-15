@@ -25,7 +25,7 @@ def show_text(text):
     ax.clear()
     plt.text(0.5, 0.5, text, fontsize = 32, verticalalignment = 'center', 
              horizontalalignment = 'center', wrap = True )
-    plt.show()
+    plt.show(block=False)
     plt.pause(0.01)
     
 def listen_server():
@@ -48,6 +48,6 @@ def listen_server():
                 show_text(rec_data)
 
 if __name__=='__main__':
-    
+    show_text('Welcome!')
     listen_server()
     
