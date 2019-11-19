@@ -14,6 +14,204 @@ import shutil
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
 
+def active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
+
+    clear_demonstrations()
+
+    send_text(f'You must demonstrate how to set the table {n_demo} times')
+    plt.pause(3)
+
+    demos = []
+    for i in range(n_demo):
+        send_text(f'Collect demo {i+1} of {n_demo} \n\n Please wait for experimenter')
+        print('Press ENTER once complete')
+        trace = parse_demonstration(i)
+        new_demo = {}
+        new_demo['trace'] = trace
+        new_demo['label'] = True
+        demos.append(new_demo)
+
+    send_data = create_batch_message([d['trace'] for d in demos])
+    dist = request_bsi_query(send_data)
+    specfile = 'Distributions/dist.json'
+    with open(specfile,'w') as file:
+        json.dump(dist, file)
+
+    #Create MDP from the initial distribution
+    n_form = len(dist['probs'])
+    print(f'Initial Batch distributions has {n_form} formulas')
+    MDP = CreateSmallDinnerMDP(specfile)
+
+    for i in range(nQuery):
+
+        #Get the active query agent
+
+        puns_request = create_puns_message(MDP, 'Active')
+        agent = send_puns_request(puns_request)
+        #Lets assume that the demonstration has been written to './logs/query.pkl'
+
+        send_text('Performing query demonstration. The robot is uncertain about this task execution')
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
+        returnval = os.system(command)
+
+
+        send_text('\nWhat is your label?')
+        plt.pause(1)
+        # text_label = input()
+
+        label = get_label_with_confirmation()
+        new_text = f'Your confirmed label is {label}'
+        send_text(new_text)
+
+        with open(f'logs/query_{i}.pkl','rb') as file:
+            trace_slices = dill.load(file)
+        prior_dist = {'formulas': MDP.specification_fsm._formulas,
+        'probs': MDP.specification_fsm._partial_rewards}
+        update_message = create_active_message(trace_slices, label, prior_dist)
+        dist = request_bsi_query(update_message)
+        n_form = len(dist['support'])
+        print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
+        with open(specfile,'w') as file:
+            json.dump(dist, file)
+
+        #Update the MDP definition
+        MDP = CreateSmallDinnerMDP(specfile)
+
+    puns_request = create_puns_message(MDP, 'Puns')
+    #agent = send_puns_request(puns_request)
+    agent = send_puns_request(puns_request)
+    print('Final Agent saved')
+
+    send_text('\n Now showing what the robot has learned\n')
+    plt.pause(2)
+    for i in range(n_postdemo):
+        send_text(f'Starting {i+1} of {n_postdemo} demonstration')
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+        returnval = os.system(command)
+
+    return
+
+def random_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
+
+        clear_demonstrations()
+
+        send_text(f'You must demonstrate how to set the table {n_demo} times')
+        plt.pause(3)
+
+        demos = []
+        for i in range(n_demo):
+            send_text(f'Collect demo {i+1} of {n_demo} \n\n Please wait for experimenter')
+            print('Press ENTER once complete')
+            trace = parse_demonstration(i)
+            new_demo = {}
+            new_demo['trace'] = trace
+            new_demo['label'] = True
+            demos.append(new_demo)
+
+        send_data = create_batch_message([d['trace'] for d in demos])
+        dist = request_bsi_query(send_data)
+        specfile = 'Distributions/dist.json'
+        with open(specfile,'w') as file:
+            json.dump(dist, file)
+
+        #Create MDP from the initial distribution
+        n_form = len(dist['probs'])
+        print(f'Initial Batch distributions has {n_form} formulas')
+        MDP = CreateSmallDinnerMDP(specfile)
+
+        for i in range(nQuery):
+
+            #Get the active query agent
+
+            puns_request = create_puns_message(MDP, 'Random')
+            agent = send_puns_request(puns_request)
+            #Lets assume that the demonstration has been written to './logs/query.pkl'
+
+            send_text('Performing query demonstration. The robot is uncertain about this task execution')
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
+            returnval = os.system(command)
+
+
+            send_text('\nWhat is your label?')
+            plt.pause(1)
+            # text_label = input()
+
+            label = get_label_with_confirmation()
+            new_text = f'Your confirmed label is {label}'
+            send_text(new_text)
+
+            with open(f'logs/query_{i}.pkl','rb') as file:
+                trace_slices = dill.load(file)
+            prior_dist = {'formulas': MDP.specification_fsm._formulas,
+            'probs': MDP.specification_fsm._partial_rewards}
+            update_message = create_active_message(trace_slices, label, prior_dist)
+            dist = request_bsi_query(update_message)
+            n_form = len(dist['support'])
+            print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
+            with open(specfile,'w') as file:
+                json.dump(dist, file)
+
+            #Update the MDP definition
+            MDP = CreateSmallDinnerMDP(specfile)
+
+        puns_request = create_puns_message(MDP, 'Puns')
+        #agent = send_puns_request(puns_request)
+        agent = send_puns_request(puns_request)
+        print('Final Agent saved')
+
+        send_text('\n Now showing what the robot has learned\n')
+        plt.pause(2)
+        for i in range(n_postdemo):
+            send_text(f'Starting {i+1} of {n_postdemo} demonstration')
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+            returnval = os.system(command)
+
+        return
+
+def batch_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
+
+        clear_demonstrations()
+
+        send_text(f'You must demonstrate how to set the table {n_demo} times')
+        plt.pause(3)
+
+        n_demo = n_demo + nQuery
+        demos = []
+        for i in range(n_demo):
+            send_text(f'Collect demo {i+1} of {n_demo} \n\n Please wait for experimenter')
+            print('Press ENTER once complete')
+            trace = parse_demonstration(i)
+            new_demo = {}
+            new_demo['trace'] = trace
+            new_demo['label'] = True
+            demos.append(new_demo)
+
+        send_data = create_batch_message([d['trace'] for d in demos])
+        dist = request_bsi_query(send_data)
+        specfile = 'Distributions/dist.json'
+        with open(specfile,'w') as file:
+            json.dump(dist, file)
+
+        #Create MDP from the initial distribution
+        n_form = len(dist['probs'])
+        print(f'Initial Batch distributions has {n_form} formulas')
+        MDP = CreateSmallDinnerMDP(specfile)
+
+        puns_request = create_puns_message(MDP, 'Puns')
+        #agent = send_puns_request(puns_request)
+        agent = send_puns_request(puns_request)
+        print('Final Agent saved')
+
+        send_text('\n Now showing what the robot has learned\n')
+        plt.pause(2)
+        for i in range(n_postdemo):
+            send_text(f'Starting {i+1} of {n_postdemo} demonstration')
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+            returnval = os.system(command)
+
+        return
+
+
 def clear_demonstrations():
     demofiles = [os.path.join('demos', f) for f in os.listdir('demos')]
     for f in demofiles:
@@ -42,7 +240,7 @@ def record_subject_data(subject_id, execution_type):
         shutil.rmtree(subjectpath)
     except:
         pass
-    
+
 
     os.mkdir(subjectpath)
 
@@ -71,13 +269,13 @@ def record_subject_data(subject_id, execution_type):
 
 
 def parse_demonstration(demo_id = 0):
-    
+
     demofile = f'demos/demo_{demo_id}.txt'
 
     if os.path.exists(demofile):
         with open(demofile,'r') as file:
             lines = file.readlines()
-        
+
         state_tuples = [tuple(json.loads(line)) for line in lines]
         cmdp = SmallTableMDP()
         trace_slices = [cmdp.create_observations(t) for t in state_tuples]
@@ -337,82 +535,7 @@ def active_trial_sim_demo(nQuery=3, n_postdemo = 3, n_demo = 2):
 
     return
 
-def active_trial(nQuery=3, n_postdemo = 3, n_demo = 2):
 
-    clear_demonstrations()
-
-    send_text(f'You must demonstrate how to set the table {n_demo} times')
-    plt.pause(3)
-
-    demos = []
-    for i in range(n_demo):
-        send_text(f'Collect demo {i+1} of {n_demo} \n\n Please wait for experimenter')
-        print('Press ENTER once complete')
-        trace = parse_demonstration(i)
-        new_demo = {}
-        new_demo['trace'] = trace
-        new_demo['label'] = True
-        demos.append(new_demo)
-
-    send_data = create_batch_message([d['trace'] for d in demos])
-    dist = request_bsi_query(send_data)
-    specfile = 'Distributions/dist.json'
-    with open(specfile,'w') as file:
-        json.dump(dist, file)
-
-    #Create MDP from the initial distribution
-    n_form = len(dist['probs'])
-    print(f'Initial Batch distributions has {n_form} formulas')
-    MDP = CreateSmallDinnerMDP(specfile)
-
-    for i in range(nQuery):
-
-        #Get the active query agent
-
-        puns_request = create_puns_message(MDP, 'Active')
-        agent = send_puns_request(puns_request)
-        #Lets assume that the demonstration has been written to './logs/query.pkl'
-
-        send_text('Performing query demonstration. The robot is uncertain about this task execution')
-        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
-        returnval = os.system(command)
-
-
-        send_text('\nWhat is your label?')
-        plt.pause(1)
-        # text_label = input()
-
-        label = get_label_with_confirmation()
-        new_text = f'Your confirmed label is {label}'
-        send_text(new_text)
-
-        with open(f'logs/query_{i}.pkl','rb') as file:
-            trace_slices = dill.load(file)
-        prior_dist = {'formulas': MDP.specification_fsm._formulas,
-        'probs': MDP.specification_fsm._partial_rewards}
-        update_message = create_active_message(trace_slices, label, prior_dist)
-        dist = request_bsi_query(update_message)
-        n_form = len(dist['support'])
-        print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
-        with open(specfile,'w') as file:
-            json.dump(dist, file)
-
-        #Update the MDP definition
-        MDP = CreateSmallDinnerMDP(specfile)
-
-    puns_request = create_puns_message(MDP, 'Puns')
-    #agent = send_puns_request(puns_request)
-    agent = send_puns_request(puns_request)
-    print('Final Agent saved')
-
-    send_text('\n Now showing what the robot has learned\n')
-    plt.pause(2)
-    for i in range(n_postdemo):
-        send_text(f'Starting {i+1} of {n_postdemo} demonstration')
-        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
-        returnval = os.system(command)
-
-    return
 
 
 
@@ -430,5 +553,3 @@ if __name__ == '__main__':
     get_label_with_confirmation()
     #active_trial(nQuery = 2, n_demo = 3, n_postdemo = 1)
     record_subject_data(0, 'Active')
-    
-    
