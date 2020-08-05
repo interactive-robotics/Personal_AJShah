@@ -15,9 +15,9 @@ import json
 
 
 
-def run_paired_trials():
+def run_paired_trials(ground_truth_formula = None):
 
-    run_types = ['Active', 'Random', 'Batch', 'Base']
+    run_types = ['Active', 'Random', 'Batch']
     trial_functions = [run_active_query_trial, run_random_query_trial, run_batch_trial, run_baseline_trial]
     out_data = {}
     out_data['true_formulas'] = []
@@ -30,7 +30,8 @@ def run_paired_trials():
     for i in range(params.n_runs):
 
         #Sample the ground truth formulas
-        ground_truth_formula = sample_ground_truth()
+        if ground_truth_formula == None:
+            ground_truth_formula = sample_ground_truth()
         out_data['true_formulas'].append(ground_truth_formula)
 
         #Run the trial with the selected ground ground_truth_formula
@@ -47,11 +48,11 @@ def run_paired_trials():
             create_run_log(i,type=type)
             del Distributions, MDPs, Queries
 
-    for type in run_types:
-        out_data[type]['average_entropy'] = np.mean(out_data[type]['entropies'])
-    summary_file = os.path.join(params.results_path,'paired_summary.pkl')
-    with open(summary_file,'wb') as file:
-        dill.dump(out_data,file)
+        for type in run_types:
+            out_data[type]['average_entropy'] = np.mean(out_data[type]['entropies'])
+        summary_file = os.path.join(params.results_path,'paired_summary.pkl')
+        with open(summary_file,'wb') as file:
+            dill.dump(out_data,file)
     return out_data
 
 def run_trials(run_type='Active'):
@@ -471,11 +472,13 @@ def compare_distribution(true_formula, distribution):
     similarities = [compare_formulas(true_formula, form) for form in distribution['formulas']]
     return np.dot(similarities, distribution['probs'])
 
-def report_entropies(type = None):
-    if type == None:
+def report_entropies(typ = None):
+    if typ == None:
         types = ['Active','Batch','Random', 'Base']
+    elif type(typ) == list:
+        types = typ
     else:
-        types = [type]
+        types = [typ]
 
 
     filename = os.path.join(params.results_path, 'paired_summary.pkl')
@@ -486,18 +489,20 @@ def report_entropies(type = None):
     Entropies['individual'] = {}
     Entropies['average'] = {}
 
-    for type in types:
-        Entropies['individual'][type] = data[type]['entropies']
-        Entropies['average'][type] = np.mean(data[type]['entropies'])
+    for typ in types:
+        Entropies['individual'][typ] = data[typ]['entropies']
+        Entropies['average'][typ] = np.mean(data[typ]['entropies'])
 
     Entropies = pd.DataFrame(Entropies['individual'])
     return Entropies
 
-def report_map_similarities(type=None):
-    if type == None:
+def report_map_similarities(typ=None):
+    if typ == None:
         types = ['Active','Batch','Random', 'Base']
+    elif type(typ) == list:
+        types = typ
     else:
-        types = [type]
+        types = [typ]
 
     similarities = {}
     similarities['individual'] = {}
@@ -507,20 +512,22 @@ def report_map_similarities(type=None):
     with open(filename, 'rb') as file:
         data = dill.load(file)
 
-    for type in types:
-        similarities['individual'][type] = [compare_formulas(f1, f2) for (f1,f2)
-                        in zip(data['true_formulas'], data[type]['map_formulas'])]
-        similarities['average'][type] = np.mean(similarities['individual'][type])
+    for typ in types:
+        similarities['individual'][typ] = [compare_formulas(f1, f2) for (f1,f2)
+                        in zip(data['true_formulas'], data[typ]['map_formulas'])]
+        similarities['average'][typ] = np.mean(similarities['individual'][typ])
 
     similarities = pd.DataFrame(similarities['individual'])
 
     return similarities
 
-def report_similarities(type=None):
-    if type == None:
+def report_similarities(typ=None):
+    if typ == None:
         types = ['Active','Batch','Random', 'Base']
+    elif type(typ) == list:
+        types = typ
     else:
-        types = [type]
+        types = [typ]
 
     similarities = {}
     similarities['individual'] = {}
@@ -530,17 +537,17 @@ def report_similarities(type=None):
     with open(filename, 'rb') as file:
         data = dill.load(file)
 
-    for type in types:
-        similarities['individual'][type] = [compare_distribution(f1,d) for
-                    (f1,d) in zip(data['true_formulas'], data[type]['dists'])]
-        similarities['average'][type] = np.mean(similarities['individual'][type])
+    for typ in types:
+        similarities['individual'][typ] = [compare_distribution(f1,d) for
+                    (f1,d) in zip(data['true_formulas'], data[typ]['dists'])]
+        similarities['average'][typ] = np.mean(similarities['individual'][typ])
 
     similarities = pd.DataFrame(similarities['individual'])
     return similarities
 
-def assimilate_metrics():
-    Entropy = report_entropies()
-    Similarity = report_similarities()
+def assimilate_metrics(typ):
+    Entropy = report_entropies(typ)
+    Similarity = report_similarities(typ)
     
     data = {}
     for i in Entropy.index:
@@ -575,10 +582,18 @@ def create_results_path():
 
 if __name__ == '__main__':
     
-    for i in [8,13,18]:
+    for i in [3]:
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
-        params.results_path = f'/home/ajshah/Results/Results_{n}_with_baseline'
+        params.results_path = f'/home/ajshah/Results/TableSetup_{n}_with_baseline'
         create_results_path()
-        out_data = run_trials(run_type='Batch')
+        params.n_runs = 20
+        ground_truth = ['and']
+        for i in range(5):
+            ground_truth.append(Eventually(f'W{i}'))
+        ground_truth.append(Order('W0','W1'))
+        ground_truth.append(Order('W0','W2'))
+        ground_truth.append(Order('W1','W2'))
+        
+        out_data = run_paired_trials(ground_truth)
