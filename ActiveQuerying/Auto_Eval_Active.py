@@ -406,7 +406,7 @@ def extract_dist(MDP:SpecificationMDP):
     new_dist['probs'] = MDP.specification_fsm._all_probs
     return new_dist
 
-def create_demonstrations(formula, nDemo, verbose = True):
+def create_demonstrations(formula, nDemo, verbose = True, n_threats = 0):
 
     specification_fsm = SpecificationFSM(formulas=[formula], probs = [1])
     control_mdp = SyntheticMDP(0,params.n_waypoints)
@@ -548,21 +548,21 @@ def report_similarities(typ=None):
 def assimilate_metrics(typ):
     Entropy = report_entropies(typ)
     Similarity = report_similarities(typ)
-    
+
     data = {}
     for i in Entropy.index:
-        for column in   Entropy.columns:             
+        for column in   Entropy.columns:
             ids = len(data)
             data[ids] = {}
             data[ids]['Entropy'] = Entropy.loc[i, column]
             data[ids]['Similarity'] = Similarity.loc[i, column]
             data[ids]['type'] = column
             data[ids]['n_data'] = params.n_queries + params.n_demo
-    
+
     data = pd.DataFrame.from_dict(data, orient='index')
     data.reset_index()
     return data
-    
+
 
 def get_summary():
     with open(os.path.join(params.results_path, 'paired_summary.pkl'),'rb') as file:
@@ -578,10 +578,10 @@ def get_run_data(i=0, run_type = 'Active'):
 def create_results_path():
     if not os.path.exists(params.results_path):
         os.mkdir(params.results_path)
-        os.mkdir(os.path.join(params.results_path, 'Runs')) 
+        os.mkdir(os.path.join(params.results_path, 'Runs'))
 
 if __name__ == '__main__':
-    
+
     for i in [3]:
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
@@ -595,5 +595,5 @@ if __name__ == '__main__':
         ground_truth.append(Order('W0','W1'))
         ground_truth.append(Order('W0','W2'))
         ground_truth.append(Order('W1','W2'))
-        
+
         out_data = run_paired_trials(ground_truth)
