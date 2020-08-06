@@ -214,7 +214,7 @@ var LTL_Sampler4 = function(nThreats, nWaypoints) {
 
   /*** Globally avoid threats ***/
   var ThreatAvoid = (Threats.length==0) ? [['true']] :
-  [['G', GlobalAnd(map(function(i) {return ['not', ['W' + i]];} , Threats))]];
+  map(function(i) {return ['G',['not', ['W' + i]]];} , Threats);
 
   /*** Eventually Waypoints ***/
   var FinallyWaypoints = (Waypoints.length==0) ? [['true']] :
