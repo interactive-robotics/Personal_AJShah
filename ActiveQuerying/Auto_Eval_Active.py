@@ -1,6 +1,6 @@
 from DemoScript import *
 from utils import *
-from puns.utils import CreateSpecMDP, Eventually, Order
+from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 from puns.SpecificationMDP import *
 from puns.LearningAgents import QLearningAgent
 from puns.Exploration import ExplorerAgent
@@ -586,14 +586,21 @@ if __name__ == '__main__':
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
-        params.results_path = f'/home/ajshah/Results/TableSetup_{n}_with_baseline'
+        params.results_path = f'/home/ajshah/Results/TableSetup_Task2_{n}_with_baseline'
         create_results_path()
         params.n_runs = 20
+        # ground_truth = ['and']
+        # for i in range(5):
+        #     ground_truth.append(Eventually(f'W{i}'))
+        # ground_truth.append(Order('W0','W1'))
+        # ground_truth.append(Order('W0','W2'))
+        # ground_truth.append(Order('W1','W2'))
+
         ground_truth = ['and']
-        for i in range(5):
-            ground_truth.append(Eventually(f'W{i}'))
-        ground_truth.append(Order('W0','W1'))
-        ground_truth.append(Order('W0','W2'))
-        ground_truth.append(Order('W1','W2'))
+        ground_truth.append(Globally('W0'))
+        ground_truth.append(Globally('w2'))
+        ground_truth.append(Eventually('W1'))
+        ground_truth.append(Eventually('W3'))
+        ground_truth.append(Eventually('W4'))
 
         out_data = run_paired_trials(ground_truth)
