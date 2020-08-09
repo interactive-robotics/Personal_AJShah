@@ -433,7 +433,7 @@ def waypoints_and_orders(formula):
     #assume that formula is in ['and',....] format
     waypoints = []
     orders = []
-    globals = []
+    threats = []
 
     if formula[0] == 'and':
         subformulas = formula[1::]
@@ -449,11 +449,17 @@ def waypoints_and_orders(formula):
             orders.append((w1,w2))
             waypoints.append(w1)
         elif sub_formula[0] == 'G':
-            globals.append('G' + sub_formula[1][1][0])
+            threats.append('G' + sub_formula[1][1][0])
         else:
             waypoints.append(0)
 
-    return waypoints, orders, globals
+        #Remove the orders whose precedents are in Globals
+
+        for order in orders:
+            if 'G' + order[1] in threats:
+                orders.remove(order)
+
+    return waypoints, orders, threats
 
 def compare_formulas(formula_1, formula_2):
 
