@@ -433,6 +433,7 @@ def waypoints_and_orders(formula):
     #assume that formula is in ['and',....] format
     waypoints = []
     orders = []
+    globals = []
 
     if formula[0] == 'and':
         subformulas = formula[1::]
@@ -447,19 +448,21 @@ def waypoints_and_orders(formula):
             w2 = sub_formula[1][1][0]
             orders.append((w1,w2))
             waypoints.append(w1)
+        elif sub_formula[0] == 'G':
+            globals.append('G' + sub_formula[1][1][0])
         else:
             waypoints.append(0)
 
-    return waypoints,orders
+    return waypoints, orders, globals
 
 def compare_formulas(formula_1, formula_2):
 
     # Assume that they are in ['and' ...] format
-    waypoints1, orders1 = waypoints_and_orders(formula_1)
-    waypoints2, orders2 = waypoints_and_orders(formula_2)
+    waypoints1, orders1, globals1 = waypoints_and_orders(formula_1)
+    waypoints2, orders2, globals2 = waypoints_and_orders(formula_2)
 
-    clauses_1 = set(waypoints1 + orders1)
-    clauses_2 = set(waypoints2 + orders2)
+    clauses_1 = set(waypoints1 + orders1 + globals1)
+    clauses_2 = set(waypoints2 + orders2 + globals2)
     try:
         L = len(set.intersection(clauses_1,clauses_2))/len(set.union(clauses_1,clauses_2))
     except:
@@ -598,9 +601,9 @@ if __name__ == '__main__':
 
         ground_truth = ['and']
         ground_truth.append(Globally('W0'))
-        ground_truth.append(Globally('w2'))
+        ground_truth.append(Globally('W2'))
         ground_truth.append(Eventually('W1'))
-        ground_truth.append(Eventually('W3'))
+        #ground_truth.append(Eventually('W3'))
         ground_truth.append(Eventually('W4'))
 
         out_data = run_paired_trials(ground_truth)

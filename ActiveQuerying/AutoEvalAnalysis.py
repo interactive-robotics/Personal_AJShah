@@ -15,11 +15,11 @@ import seaborn as sns
 def plot_entropy(Entropy):
     plt.figure()
     types = ['Active','Random','Batch', 'Base']
-    
+
     with sns.plotting_context('talk'):
         for t in types:
             sns.kdeplot(Entropy[t], bw = 'scott')
-    
+
         plt.title('Density estimate posterior Entropy')
 
 def plot_similarity(Similarity):
@@ -44,7 +44,7 @@ def plot_bar_plots(all_data):
             plt.xlabel('Number of task executions')
             plt.legend(loc='upper right')
             plt.savefig(os.path.join(params.results_path,'..','Entropy.png'), dpi = 500, bbox_inches = 'tight')
-            
+
             plt.figure(figsize=[12,9])
             #sns.boxplot(data = all_data, x = 'n_data', y = 'Similarity', hue = 'type')
             sns.lineplot(data = all_data, x = 'n_data', y = 'Similarity' , hue = 'Protocol', err_style = 'bars', err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
@@ -66,7 +66,7 @@ def plots(all_data):
             plt.xlabel('Number of task executions')
             plt.legend(loc='upper right')
             plt.savefig(os.path.join(params.results_path,'..','Entropy.png'), dpi = 500, bbox_inches = 'tight')
-            
+
             plt.figure(figsize=[12,9])
             #sns.boxplot(data = all_data, x = 'n_data', y = 'Similarity', hue = 'type')
             sns.lineplot(data = all_data, x = 'n_data', y = 'Similarity' , hue = 'Protocol', err_style = 'bars', err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
@@ -83,10 +83,10 @@ def bar_plots(all_data):
             plt.figure(figsize=[12,9])
             sns.barplot(data = all_data, x = 'Protocol', y = 'Entropy', hue = 'Type', capsize = 0.05, ci = 95, alpha = 1)
             plt.title('Mean Entropy', )
-            plt.xlabel('Number of task executions')
+            #plt.xlabel('Number of task executions')
             #plt.legend(loc='upper right')
             plt.savefig(os.path.join(params.results_path,'..','SimTable_Entropy.png'), dpi = 500, bbox_inches = 'tight')
-            
+
             plt.figure(figsize=[12,9])
             sns.barplot(data = all_data, x = 'Protocol', y = 'Similarity', hue='Type' , capsize=0.05, ci = 95, alpha = 1, estimator = np.mean)
             plt.ylim(top = 1.25)
@@ -100,12 +100,12 @@ def bar_plots(all_data):
 
 if __name__ == '__main__':
     all_data = pd.DataFrame()
-    
+
     for i in [3]:
         params.n_queries = i
         n = params.n_queries + params.n_demo
         params.results_path = f'/home/ajshah/Results/TableSetup_{n}_with_baseline'
-        
+
         new_data = assimilate_metrics(['Active','Random','Batch'])
         all_data = pd.concat([all_data, new_data])
         all_data.reindex()
@@ -115,4 +115,3 @@ if __name__ == '__main__':
         #plot_similarity(Similarity)
     all_data['Protocol'] = all_data['type']
     bar_plots(all_data)
-    
