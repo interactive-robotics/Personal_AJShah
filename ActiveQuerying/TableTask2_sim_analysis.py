@@ -42,5 +42,5 @@ if __name__ == '__main__':
     sim_data['Protocol'] = sim_data['type']
     new_data = collect(sim_data, 'Simulated')
 
-    bar_plots(new_data, suffix = 'Task3')
+    bar_plots(new_data, suffix = 'Task4')
 

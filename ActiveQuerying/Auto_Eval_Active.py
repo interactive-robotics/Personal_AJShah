@@ -617,7 +617,7 @@ if __name__ == '__main__':
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
-        params.results_path = f'/home/ajshah/Results/TableSetup_Task3_{n}_with_baseline'
+        params.results_path = f'/home/ajshah/Results/TableSetup_Task4_{n}_with_baseline'
         create_results_path()
         params.n_runs = 20
         # ground_truth = ['and']

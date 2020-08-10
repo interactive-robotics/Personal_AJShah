@@ -74,6 +74,7 @@ def create_entry(subject_id, condition):
     entry['Protocol'] = condition
     map_formula = dist['formulas'][np.argmax(dist['probs'])]
     entry['map'] = map_formula
+    entry['map_similarity'] = compare_formulas(map_formula, true_formula)
 
     return entry
 
