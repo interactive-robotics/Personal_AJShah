@@ -76,7 +76,7 @@ def plots(all_data):
             plt.legend(loc='upper left')
             plt.savefig(os.path.join(params.results_path,'..','Similarity.png'), dpi = 500, bbox_inches = 'tight')
 
-def bar_plots(all_data):
+def bar_plots(all_data, suffix = ''):
     #plt.figure()
     with sns.plotting_context('poster', rc = {'axes.labelsize': 28, 'axes.titlesize': 32, 'legend.fontsize': 24, 'xtick.labelsize': 24, 'ytick.labelsize': 22}):
         with sns.color_palette('muted'):
@@ -85,7 +85,7 @@ def bar_plots(all_data):
             plt.title('Mean Entropy', )
             #plt.xlabel('Number of task executions')
             #plt.legend(loc='upper right')
-            plt.savefig(os.path.join(params.results_path,'..','SimTable_Entropy.png'), dpi = 500, bbox_inches = 'tight')
+            plt.savefig(os.path.join(params.results_path,'..',f'SimTable_Entropy_{suffix}.png'), dpi = 500, bbox_inches = 'tight')
 
             plt.figure(figsize=[12,9])
             sns.barplot(data = all_data, x = 'Protocol', y = 'Similarity', hue='Type' , capsize=0.05, ci = 95, alpha = 1, estimator = np.mean)
@@ -93,7 +93,7 @@ def bar_plots(all_data):
             #plt.title('Mean Similarity')
             #plt.xlabel('Number of task executions')
             plt.legend(loc='lower left')
-            plt.savefig(os.path.join(params.results_path,'..','SimTable_Similarity.png'), dpi = 500, bbox_inches = 'tight')
+            plt.savefig(os.path.join(params.results_path,'..',f'SimTable_Similarity_{suffix}.png'), dpi = 500, bbox_inches = 'tight')
 
 
  #Change this to change the run for data analysis
