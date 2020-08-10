@@ -8,7 +8,7 @@ from scipy.stats import entropy
 import pandas as pd
 import pingouin as pg
 
-results_path = '/home/ajshah/Results/TableSetup_Task3_5_with_baseline'
+
 
 true_formula = ['and']
 true_formula.append(Globally('W0'))
@@ -33,6 +33,10 @@ def collect(data, label='Experiment'):
 
 if __name__ == '__main__':
 
+    for i in [2,3,4,5]:
+
+    results_path = f'/home/ajshah/Results/TableSetup_Task{i}_5_with_baseline'
+
     params.n_queries = 3
     params.results_path = results_path
 
@@ -42,5 +46,4 @@ if __name__ == '__main__':
     sim_data['Protocol'] = sim_data['type']
     new_data = collect(sim_data, 'Simulated')
 
-    bar_plots(new_data, suffix = 'Task4')
-
+    bar_plots(new_data, suffix = f'Task{i}')
