@@ -635,3 +635,4 @@ if __name__ == '__main__':
         #ground_truth.append(Eventually('W4'))
 
         out_data = run_paired_trials(ground_truth)
+
