@@ -631,10 +631,8 @@ if __name__ == '__main__':
         ground_truth.append(Globally('W0'))
         #ground_truth.append(Globally('W2'))
         ground_truth.append(Eventually('W1'))
-        ground_truth.append(Eventually('W2'))
-        ground_truth.append(Order('W1','W2'))
+	ground_truth.append
         #ground_truth.append(Eventually('W3'))
         #ground_truth.append(Eventually('W4'))
 
         out_data = run_paired_trials(ground_truth)
-
