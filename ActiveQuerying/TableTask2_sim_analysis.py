@@ -35,15 +35,15 @@ if __name__ == '__main__':
 
     for i in [2,3,4,5]:
 
-    results_path = f'/home/ajshah/Results/TableSetup_Task{i}_5_with_baseline'
+        results_path = f'/home/ajshah/Results/TableSetup_Task{i}_5_with_baseline'
 
-    params.n_queries = 3
-    params.results_path = results_path
+        params.n_queries = 3
+        params.results_path = results_path
 
-    sim_data = assimilate_metrics(['Active','Random','Batch'])
-    Entropy = report_entropies(['Active','Random','Batch'])
-    Similarity = report_similarities(['Active','Random','Batch'])
-    sim_data['Protocol'] = sim_data['type']
-    new_data = collect(sim_data, 'Simulated')
+        sim_data = assimilate_metrics(['Active','Random','Batch'])
+        Entropy = report_entropies(['Active','Random','Batch'])
+        Similarity = report_similarities(['Active','Random','Batch'])
+        sim_data['Protocol'] = sim_data['type']
+        new_data = collect(sim_data, 'Simulated')
 
-    bar_plots(new_data, suffix = f'Task{i}')
+        bar_plots(new_data, suffix = f'Task{i}')
