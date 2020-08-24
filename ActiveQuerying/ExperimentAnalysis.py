@@ -137,6 +137,15 @@ def collect_orders(subj, exclude, condition = 'Batch'):
             orders[idx].append(parse_demonstration(idx, condition=condition, demo_id = k))
     return orders
 
+def collect_robot_orders(subj, exclude, condition = None):
+    if condition == None:
+        condition = ['Active','Random','Batch']
+    else:
+        condition = [condition]
+
+    for c in condition:
+
+
 def collect(data, label='Experiment'):
     final_data = {}
     i = 0
