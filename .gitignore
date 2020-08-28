@@ -1,3 +1,8 @@
+puns-bsi-client/Agents/
+puns-bsi-client/demos/
+puns-bsi-clients/Distributions/
+puns-bsi-clients/logs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
