@@ -592,29 +592,28 @@ def create_results_path():
 if __name__ == '__main__':
 
     for i in [3]:
-        params.n_queries = i
-        print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
-        n = i + params.n_demo
-        params.results_path = f'/home/ajshah/Results/TableSetup_Task2_{n}_with_baseline'
-        create_results_path()
-        params.n_runs = 20
+        # params.n_queries = i
+        # print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
+        # n = i + params.n_demo
+        # params.results_path = f'/home/ajshah/Results/TableSetup_Task2_{n}_with_baseline'
+        # create_results_path()
+        # params.n_runs = 20
+        # # ground_truth = ['and']
+        # # for i in range(5):
+        # #     ground_truth.append(Eventually(f'W{i}'))
+        # # ground_truth.append(Order('W0','W1'))
+        # # ground_truth.append(Order('W0','W2'))
+        # # ground_truth.append(Order('W1','W2'))
+        #
         # ground_truth = ['and']
-        # for i in range(5):
-        #     ground_truth.append(Eventually(f'W{i}'))
-        # ground_truth.append(Order('W0','W1'))
-        # ground_truth.append(Order('W0','W2'))
-        # ground_truth.append(Order('W1','W2'))
+        # ground_truth.append(Globally('W0'))
+        # ground_truth.append(Globally('W2'))
+        # ground_truth.append(Eventually('W1'))
+        # #ground_truth.append(Eventually('W3'))
+        # ground_truth.append(Eventually('W4'))
+        #
+        # out_data = run_paired_trials(ground_truth)
 
-        ground_truth = ['and']
-        ground_truth.append(Globally('W0'))
-        ground_truth.append(Globally('W2'))
-        ground_truth.append(Eventually('W1'))
-        #ground_truth.append(Eventually('W3'))
-        ground_truth.append(Eventually('W4'))
-
-        out_data = run_paired_trials(ground_truth)
-
-        '''task 3'''
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
@@ -630,64 +629,9 @@ if __name__ == '__main__':
 
         ground_truth = ['and']
         ground_truth.append(Globally('W0'))
-        ground_truth.append(Globally('W2'))
-        ground_truth.append(Eventually('W1'))
-        #ground_truth.append(Eventually('W2'))
-        #ground_truth.append(Order('W1','W2'))
-        #ground_truth.append(Eventually('W3'))
-        #ground_truth.append(Eventually('W4'))
-
-        out_data = run_paired_trials(ground_truth)
-
-        '''task 4'''
-        params.n_queries = i
-        print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
-        n = i + params.n_demo
-        params.results_path = f'/home/ajshah/Results/TableSetup_Task4_{n}_with_baseline'
-        create_results_path()
-        params.n_runs = 20
-        # ground_truth = ['and']
-        # for i in range(5):
-        #     ground_truth.append(Eventually(f'W{i}'))
-        # ground_truth.append(Order('W0','W1'))
-        # ground_truth.append(Order('W0','W2'))
-        # ground_truth.append(Order('W1','W2'))
-
-        ground_truth = ['and']
-        ground_truth.append(Globally('W0'))
         #ground_truth.append(Globally('W2'))
         ground_truth.append(Eventually('W1'))
-        ground_truth.append(Eventually('W4'))
-        ground_truth.append(Order('W1','W2'))
-        #ground_truth.append(Eventually('W2'))
-        #ground_truth.append(Order('W1','W2'))
-        #ground_truth.append(Eventually('W3'))
-        #ground_truth.append(Eventually('W4'))
-
-        out_data = run_paired_trials(ground_truth)
-
-        '''task 5'''
-        params.n_queries = i
-        print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
-        n = i + params.n_demo
-        params.results_path = f'/home/ajshah/Results/TableSetup_Task5_{n}_with_baseline'
-        create_results_path()
-        params.n_runs = 20
-        # ground_truth = ['and']
-        # for i in range(5):
-        #     ground_truth.append(Eventually(f'W{i}'))
-        # ground_truth.append(Order('W0','W1'))
-        # ground_truth.append(Order('W0','W2'))
-        # ground_truth.append(Order('W1','W2'))
-
-        ground_truth = ['and']
-        ground_truth.append(Globally('W0'))
-        #ground_truth.append(Globally('W2'))
-        ground_truth.append(Eventually('W1'))
-        ground_truth.append(Eventually('W2'))
-        ground_truth.append(Order('W1','W2'))
-        #ground_truth.append(Eventually('W2'))
-        #ground_truth.append(Order('W1','W2'))
+	ground_truth.append
         #ground_truth.append(Eventually('W3'))
         #ground_truth.append(Eventually('W4'))
 
