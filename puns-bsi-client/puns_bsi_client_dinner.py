@@ -151,7 +151,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2):
         plt.pause(2)
         # text_label = input()
 
-        label = get_label_with_confirmation()
+        label = get_latest_assessment()
         new_text = f'Your confirmed label is {label}'
         send_text(new_text)
 
@@ -656,6 +656,36 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
     agent = send_puns_request(puns_request)
     print('Final Agent saved')
     return
+
+def checkdiff(previous_record, new_record):
+    return len(previous_record) != len(new_record)
+
+def get_current_record(typ = 'command'):
+    if typ == 'command':
+        workbook = gc.open_by_url('https://docs.google.com/spreadsheets/d/1-WHaUoXEJ5Ksw6TjscpBtoT7BiZd4kkmRiXDN8rbJQ0/edit?usp=sharing')
+    else:
+        workbook = gc.open_by_url('https://docs.google.com/spreadsheets/d/1yNtNTk-s18f_X5VnRmkLHFT2XPtoFVPhtSN5TN6YLY4/edit?usp=sharing')
+    data = workbook.get_worksheet(0)
+    return data.get_all_records()
+
+def get_latest_assessment():
+    
+    previous_record = get_current_record('assessment')
+    print('Waiting for google form response')
+    while True:
+        
+        new_record = get_current_record('assessment')
+        
+        if checkdiff(previous_record, new_record):
+            previous_record = new_record
+            assessment = new_record[-1]['Assessment']
+            print(f'Obtained assessment: {assessment}')
+            if assessment == 'Acceptable':
+                return (True, new_record)
+            else:
+                return (False, new_record)
+        else:
+            time.sleep(2)
 
 def get_label_from_joystick():
 
