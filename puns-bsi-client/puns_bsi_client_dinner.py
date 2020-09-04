@@ -10,6 +10,14 @@ import os
 import inputs
 import shutil
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import time
+
+scope = ['https://spreadsheets.google.com/feeds']
+cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope)
+gc = gspread.authorize(cred)
+
 
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
@@ -143,7 +151,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2):
         plt.pause(2)
         # text_label = input()
 
-        label = get_label_with_confirmation()
+        label = get_latest_assessment()
         new_text = f'Your confirmed label is {label}'
         send_text(new_text)
 
@@ -270,7 +278,7 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2):
         for i in range(n_demo):
             send_text(f'Learning Phase\n\nProvide demonstration {i+1} of {n_demo} \n\n Please wait for experimenter')
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py'
-        	returnval = os.system(command)
+            returnval = os.system(command)
             trace = parse_demonstration(i)
             new_demo = {}
             new_demo['trace'] = trace
@@ -338,7 +346,7 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2):
 
         return
 
-def batch_trial(nQuery=3, n_postdemo = 2, n_demo = 3):
+def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3):
 
         clear_demonstrations()
         clear_logs()
@@ -352,7 +360,7 @@ def batch_trial(nQuery=3, n_postdemo = 2, n_demo = 3):
         for i in range(n_demo):
             send_text(f'Learning Phase: Provide demonstration {i+1} of {n_demo} \n\n Please follow experimenter instructions')
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py'
-        	returnval = os.system(command)
+            returnval = os.system(command)
             trace = parse_demonstration(i)
             new_demo = {}
             new_demo['trace'] = trace
@@ -428,6 +436,8 @@ def batch_trial(nQuery=3, n_postdemo = 2, n_demo = 3):
             returnval = os.system(command)
 
         return
+
+
 
 
 def clear_demonstrations():
@@ -646,6 +656,36 @@ def automated_server_trial_random(n_demo = 2, n_query = 3, formula = None):
     agent = send_puns_request(puns_request)
     print('Final Agent saved')
     return
+
+def checkdiff(previous_record, new_record):
+    return len(previous_record) != len(new_record)
+
+def get_current_record(typ = 'command'):
+    if typ == 'command':
+        workbook = gc.open_by_url('https://docs.google.com/spreadsheets/d/1-WHaUoXEJ5Ksw6TjscpBtoT7BiZd4kkmRiXDN8rbJQ0/edit?usp=sharing')
+    else:
+        workbook = gc.open_by_url('https://docs.google.com/spreadsheets/d/1yNtNTk-s18f_X5VnRmkLHFT2XPtoFVPhtSN5TN6YLY4/edit?usp=sharing')
+    data = workbook.get_worksheet(0)
+    return data.get_all_records()
+
+def get_latest_assessment():
+    
+    previous_record = get_current_record('assessment')
+    print('Waiting for google form response')
+    while True:
+        
+        new_record = get_current_record('assessment')
+        
+        if checkdiff(previous_record, new_record):
+            previous_record = new_record
+            assessment = new_record[-1]['Assessment']
+            print(f'Obtained assessment: {assessment}')
+            if assessment == 'Acceptable':
+                return (True, new_record)
+            else:
+                return (False, new_record)
+        else:
+            time.sleep(2)
 
 def get_label_from_joystick():
 
