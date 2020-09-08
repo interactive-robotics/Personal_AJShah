@@ -70,6 +70,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
         #Get the active query agent
 
+        display_waiting()
         puns_request = create_puns_message(MDP, 'Active')
         agent = send_puns_request(puns_request)
         #Lets assume that the demonstration has been written to './logs/query.pkl'
@@ -105,6 +106,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         #Update the MDP definition
         MDP = CreateSmallDinnerMDP(specfile)
 
+    display_waiting()
     puns_request = create_puns_message(MDP, 'Puns')
     #agent = send_puns_request(puns_request)
     agent = send_puns_request(puns_request)
@@ -132,8 +134,8 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         plt.pause(3)
 
         for i in range(trials):
-        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
-        returnval = os.system(command)
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
+            returnval = os.system(command)
 
         
 
@@ -163,6 +165,7 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
             #Get the active query agent
 
+            display_waiting()
             puns_request = create_puns_message(MDP, 'Random')
             agent = send_puns_request(puns_request)
             #Lets assume that the demonstration has been written to './logs/query.pkl'
@@ -198,6 +201,8 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
             #Update the MDP definition
             MDP = CreateSmallDinnerMDP(specfile)
 
+        display_waiting()
+
         puns_request = create_puns_message(MDP, 'Puns')
         #agent = send_puns_request(puns_request)
         agent = send_puns_request(puns_request)
@@ -226,8 +231,8 @@ def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3):
 
 
         for i in range(trials):
-        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
-        returnval = os.system(command)
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
+            returnval = os.system(command)
 
         n_demo = n_demo + nQuery
         demos = []
@@ -252,6 +257,7 @@ def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3):
         print(f'Initial Batch distributions has {n_form} formulas')
         MDP = CreateSmallDinnerMDP(specfile)
 
+        display_waiting()
         puns_request = create_puns_message(MDP, 'Puns')
         #agent = send_puns_request(puns_request)
         agent = send_puns_request(puns_request)
