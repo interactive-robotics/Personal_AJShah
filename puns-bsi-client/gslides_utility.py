@@ -220,6 +220,7 @@ def display_slide(slide_idx):
     curr_display_slide_id = curr_slides[0]['objectId']
     new_display_slide_id = curr_slides[slide_idx]['objectId']
     copied_id = 'copy' + new_display_slide_id
+    copied_id = 'display_slide' if copied_id == curr_display_slide_id else copied_id
     
     #Copy the new display slide
     request = []
