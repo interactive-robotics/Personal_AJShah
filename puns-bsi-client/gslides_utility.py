@@ -47,6 +47,22 @@ slide_idx['eval'] = 8
 def display_welcome():
     display_slide(slide_idx['welcome'])
 
+def display_trial_demo_intro():
+    update_trial_demo()
+    idx = slide_idx['demo_intro']
+    display_slide(idx)
+
+def display_trial_demo_ready():
+    update_trial_demo()
+    idx = slide_idx['demo_ready']
+    display_slide(idx)
+
+def display_trial_demo_waiting(action):
+    update_trial_demo()
+    update_action_slide(action)
+    idx = slide_idx['demo_waiting']
+    display_slide(idx)
+
 def display_demo_intro(demo, nDemo):
     idx = slide_idx['demo_intro']
     update_demo_slide(demo, nDemo, idx)
@@ -79,6 +95,29 @@ def display_eval_slide(demo, nPostDemo):
     idx = slide_idx['eval']
     update_eval_slide(demo, nPostDemo)
     display_slide(idx)
+
+def update_trial_demo():
+    idx = [slide_idx['demo_intro'], slide_idx['demo_ready'], slide_idx['demo_waiting']]
+
+    for i in idx:
+        slide = slides[i]
+        title_object_id = slide['pageElements'][0]['objectId']
+        request = []
+
+        request.append({
+            'deleteText':{
+            'objectId': title_object_id,
+            'textRange': {'type': 'ALL'}
+            }
+            })
+
+        request.append({
+            'insertText':{
+            'objectId': title_object_id,
+            'text': f'Trial Demonstration'}
+            })
+        response = service.presentations().batchUpdate(presentationId=DISPLAY_PID, body = {'requests': request}).execute()
+
     
 
 def update_demo_slide( demo, nDemo, idx=1):
@@ -201,7 +240,3 @@ def display_slide(slide_idx):
     #Delete the old display slide
 
 
-
-if __name__ ==  '__main__':
-    
-    a=1
