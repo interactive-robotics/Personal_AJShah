@@ -42,6 +42,7 @@ slide_idx['query_waiting'] = 5
 slide_idx['query_assessment'] = 6
 slide_idx['query_confirmation'] = 7
 slide_idx['eval'] = 8
+slide_idx['questionnaire'] = 9
 
 
 def display_welcome():
@@ -94,6 +95,10 @@ def display_query_confirmation(label):
 def display_eval_slide(demo, nPostDemo):
     idx = slide_idx['eval']
     update_eval_slide(demo, nPostDemo)
+    display_slide(idx)
+    
+def display_questionnaire():
+    idx = slide_idx['questionnaire']
     display_slide(idx)
 
 def update_trial_demo():

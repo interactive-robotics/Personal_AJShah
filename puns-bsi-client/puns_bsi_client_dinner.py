@@ -111,7 +111,8 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
     print('Final Agent saved')
 
     #send_text('Task B: Start Testing Phase\n')
-    plt.pause(5)
+    display_questionnaire()
+    plt.pause(10)
     for i in range(n_postdemo):
         display_eval_slide(i+1, n_postdemo)
         #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
@@ -203,7 +204,8 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         print('Final Agent saved')
 
         #send_text('Task B: Starting Testing Phase')
-        plt.pause(5)
+        display_questionnaire()
+        plt.pause(10)
         for i in range(n_postdemo):
             display_eval_slide(i+1, n_postdemo)
             #send_text(f'Testing Phase \n\n Showing {i+1} of {n_postdemo} task executions')
@@ -256,7 +258,8 @@ def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3):
         print('Final Agent saved')
 
         #send_text('Task C: Starting Testing Phase')
-        plt.pause(5)
+        display_questionnaire()
+        plt.pause(10)
         for i in range(n_postdemo):
             #send_text(f'Testing Phase \n\n Showing {i+1} of {n_postdemo} task executions')
             display_eval_slide(i+1, n_postdemo)
