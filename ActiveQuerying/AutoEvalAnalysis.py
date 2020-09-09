@@ -88,7 +88,7 @@ def bar_plots(all_data, suffix = ''):
             plt.savefig(os.path.join(params.results_path,'..',f'SimTable_Entropy_{suffix}.png'), dpi = 500, bbox_inches = 'tight')
 
             plt.figure(figsize=[12,9])
-            sns.barplot(data = all_data, x = 'Protocol', y = 'Similarity', hue='Type' , capsize=0.05, ci = 95, alpha = 1, estimator = np.mean)
+            sns.barplot(data = all_data, x = 'Protocol', y = 'Similarity', hue='Type' , capsize=0.05, ci = 95, alpha = 1, estimator = np.median)
             plt.ylim(top = 1.25)
             #plt.title('Mean Similarity')
             #plt.xlabel('Number of task executions')
