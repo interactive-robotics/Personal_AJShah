@@ -24,7 +24,7 @@ def generate_services():
     cred_file = 'GSheetsKey.json'
     creds = service_account.Credentials.from_service_account_file('GSheetsKey.json', scopes = SCOPES)
     service = build('slides','v1', credentials = creds)
-    
+
     return service
 
 def display_slide(slide):
@@ -44,6 +44,7 @@ slide_idx['query_confirmation'] = 7
 slide_idx['eval'] = 8
 slide_idx['questionnaire'] = 9
 slide_idx['waiting'] = 10
+slide_idx['post-survey'] = 11
 
 
 def display_welcome():
@@ -74,7 +75,7 @@ def display_demo_ready(demo, nDemo):
     idx = slide_idx['demo_ready']
     update_demo_slide(demo, nDemo, idx)
     display_slide(idx)
-    
+
 
 def display_demo_waiting(demo, nDemo, action):
     idx = slide_idx['demo_waiting']
@@ -97,13 +98,17 @@ def display_eval_slide(demo, nPostDemo):
     idx = slide_idx['eval']
     update_eval_slide(demo, nPostDemo)
     display_slide(idx)
-    
+
 def display_questionnaire():
     idx = slide_idx['questionnaire']
     display_slide(idx)
 
 def display_waiting():
     idx = slide_idx['waiting']
+    display_slide(idx)
+
+def display_post():
+    idx = slide_idx['post-survey']
     display_slide(idx)
 
 def update_trial_demo():
@@ -128,10 +133,10 @@ def update_trial_demo():
             })
         response = service.presentations().batchUpdate(presentationId=DISPLAY_PID, body = {'requests': request}).execute()
 
-    
+
 
 def update_demo_slide( demo, nDemo, idx=1):
-    
+
     slide = slides[idx]
     title_obj_id = slide['pageElements'][0]['objectId']
     request = []
@@ -141,29 +146,29 @@ def update_demo_slide( demo, nDemo, idx=1):
             'textRange': {'type': 'ALL'}
             }
         })
-    
+
     request.append({
         'insertText':{
             'objectId': title_obj_id,
             'text': f'Learning Phase: Demo {demo} of {nDemo}'}
         })
-    
+
     response = service.presentations().batchUpdate(presentationId=DISPLAY_PID, body = {'requests': request}).execute()
     return response
 
 def update_action_slide(action):
     slide = slides[4]
     text_obj_id = slide['pageElements'][1]['objectId']
-    
+
     request = []
-    
+
     request.append({
         'deleteText':{
             'objectId': text_obj_id,
             'textRange': {'type': 'ALL'}
             }
         })
-    
+
     request.append({
         'insertText':{
             'objectId': text_obj_id,
@@ -174,63 +179,63 @@ def update_action_slide(action):
 def update_assessment_slide(label):
     slide = slides[slide_idx['query_confirmation']]
     text_object_id = slide['pageElements'][1]['objectId']
-    
+
     request = []
-    
+
     request.append({
         'deleteText': {
             'objectId': text_object_id,
             'textRange': {'startIndex':0, 'type': 'FROM_START_INDEX'}
             }
         })
-    
+
     request.append({
         'insertText':{
             'objectId': text_object_id,
             'text':f'Your assessment was: {label}'}
         })
-    
+
     response = service.presentations().batchUpdate(presentationId = DISPLAY_PID, body = {'requests': request}).execute()
-    
+
 def update_eval_slide(idx, nPostDemo):
     slide = slides[slide_idx['eval']]
     text_object_id = slide['pageElements'][1]['objectId']
-    
+
     request  = []
-    
+
     request.append({
         'deleteText': {
             'objectId': text_object_id,
             'textRange': {'startIndex': 0, 'type': 'FROM_START_INDEX'}
             }
         })
-    
+
     request.append({
         'insertText':{
             'objectId': text_object_id,
             'text': f'The Robot is ready to perform {idx} of {nPostDemo} demonstrations '
             }
         })
-        
+
     response = service.presentations().batchUpdate(presentationId = DISPLAY_PID, body = {'requests': request}).execute()
-    
+
 def display_slide(slide_idx):
-    
+
     curr_slides = service.presentations().get(presentationId=DISPLAY_PID).execute()['slides']
     curr_display_slide_id = curr_slides[0]['objectId']
     new_display_slide_id = curr_slides[slide_idx]['objectId']
     copied_id = 'copy' + new_display_slide_id
     copied_id = 'display_slide' if copied_id == curr_display_slide_id else copied_id
-    
+
     #Copy the new display slide
     request = []
-    
-    
-    
+
+
+
     request.append({
         'duplicateObject': {
             'objectId': new_display_slide_id,
-            'objectIds':{new_display_slide_id: copied_id} 
+            'objectIds':{new_display_slide_id: copied_id}
             }})
     #response = service.presentations().batchUpdate(presentationId=DISPLAY_PID, body = {'requests': request}).execute()
     #print(response)
@@ -241,13 +246,11 @@ def display_slide(slide_idx):
             'insertionIndex': 1}
             })
     response = service.presentations().batchUpdate(presentationId=DISPLAY_PID, body = {'requests': request}).execute()
-    
+
     request = [{
         'deleteObject':{
             'objectId': curr_display_slide_id}
         }]
-    
+
     response = service.presentations().batchUpdate(presentationId=DISPLAY_PID, body = {'requests': request}).execute()
     #Delete the old display slide
-
-

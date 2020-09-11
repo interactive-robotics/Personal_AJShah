@@ -121,7 +121,9 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
         returnval = os.system(command)
 
+    display_post()
     return
+
 
 def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
@@ -137,7 +139,7 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
             returnval = os.system(command)
 
-        
+
 
         demos = []
         for i in range(n_demo):
@@ -217,7 +219,10 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
             returnval = os.system(command)
 
+        display_post()
+
         return
+
 
 def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3):
 
@@ -272,6 +277,7 @@ def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3):
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
             returnval = os.system(command)
 
+        display_post()
         return
 
 
@@ -718,13 +724,13 @@ def get_current_record(typ = 'command'):
     return data.get_all_records()
 
 def get_latest_assessment():
-    
+
     previous_record = get_current_record('assessment')
     print('Waiting for google form response')
     while True:
-        
+
         new_record = get_current_record('assessment')
-        
+
         if checkdiff(previous_record, new_record):
             previous_record = new_record
             assessment = new_record[-1]['Assessment']
@@ -933,9 +939,9 @@ if __name__ == '__main__':
     send_text('Testing the joystick module')
     plt.pause(4)
     get_label_with_confirmation()
-    
+
     active_trial(nQuery=2, n_demo = 3)
     record_subject_data(100,'Active')
-    
+
     random_trial(nQuery = 2, n_demo = 3)
     record_subject_data(100,'Random')
