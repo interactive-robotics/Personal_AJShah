@@ -213,8 +213,9 @@ var LTL_Sampler4 = function(nThreats, nWaypoints) {
   //console.log(subs);
 
   /*** Globally avoid threats ***/
-  var ThreatAvoid = (Threats.length==0) ? [['true']] :
-  [['G', GlobalAnd(map(function(i) {return ['not', ['T' + i]];} , Threats))]];
+  var ThreatAvoid = (Threats.length==0) ? [['true']] : map(function(i) {return ['G',['not', ['W' + i]]];} , Threats);
+  //[['G', GlobalAnd(map(function(i) {return ['not', ['T' + i]];} , Threats))]];
+
 
   /*** Eventually Waypoints ***/
   var FinallyWaypoints = (Waypoints.length==0) ? [['true']] :
@@ -287,7 +288,8 @@ var makeModelQuery = function(data) {
 
 // makeModelQuery for multiple files.
 var makeModelQueryFull = function(FullData, sampler, ComplexityMeasure){
-  var num_t = FullData[0].Data.hasOwnProperty('ThreatPredicates') ? FullData[0].ThreatPredicates.length : 0;
+  //var num_t = FullData[0].Data.hasOwnProperty('ThreatPredicates') ? FullData[0].ThreatPredicates.length : 0;
+  var num_t = FullData[0].Data.WaypointPredicates.length;
   var num_w = FullData[0].Data.WaypointPredicates.length;
   return function(){
     var Formula = sampler(num_t, num_w);

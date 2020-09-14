@@ -340,7 +340,8 @@ var ComplexityFactorConstant = function(nT, nW, nO){
 
 // makeModelQuery for a single JSON object "data".
 var makeModelQuery = function(data, sampler, ComplexityMeasure, support, probs) {
-  var num_t = data.Data.hasOwnProperty('ThreatPredicates') ? data.ThreatPredicates.length : 0;
+  //var num_t = data.Data.hasOwnProperty('ThreatPredicates') ? data.ThreatPredicates.length : 0;
+  var num_t = data.Data.WaypointPredicates.length;
   var num_w = data.Data.WaypointPredicates.length;
   return function() {
     var word = GenerateWord(data.Data);
