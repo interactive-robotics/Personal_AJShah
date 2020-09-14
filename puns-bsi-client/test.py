@@ -23,6 +23,16 @@ gc = gspread.authorize(cred)
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
 
+def test_trial():
+    i = 0
+    n_demo = 3
+    returnval = 1
+    while returnval:
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
+        returnval = os.system(command)
+        print('Return value: ', returnval)
+    
+
 def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
 
@@ -36,14 +46,10 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
     plt.pause(5)
 
     for i in range(trials):
-        returnval = 1
         while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
             returnval = os.system(command)
-            if returnval: 
-                print('Trying again, reset the table and reactivate robot')
-
-
+        print('Return value: ', returnval)
     clear_demonstrations()
 
 
@@ -52,11 +58,10 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
     for i in range(n_demo):
         #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
         #print('Press ENTER once complete')
-        returnval = 1
-        if returnval:
+        while returnval:
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
             returnval = os.system(command)
-            print('Trying again, reset the table and reactivate the robot')
+            print('Return value: ', returnval)
         trace = parse_demonstration(i)
         new_demo = {}
         new_demo['trace'] = trace
@@ -85,12 +90,9 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
         display_query_waiting()
         #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
-        returnval = 1
-        if returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
-            returnval = os.system(command)
-            if returnval:
-                print('Trying again, reset the table and reactivate the robot')
+        
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
+        returnval = os.system(command)
 
         display_query_assessment()
         #send_text('\nWhat is your label?')
@@ -130,12 +132,8 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
     for i in range(n_postdemo):
         display_eval_slide(i+1, n_postdemo)
         #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
-        returnval = 1
-        if returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
-            returnval = os.system(command)
-            if returnval:
-                print('Trying again: Reset the task and reactivate the robot')
+        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+        returnval = os.system(command)
 
     display_post()
     return
@@ -152,25 +150,16 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         plt.pause(3)
 
         for i in range(trials):
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
+            returnval = os.system(command)
 
 
 
         demos = []
         for i in range(n_demo):
             #send_text(f'Learning Phase\n\nProvide demonstration {i+1} of {n_demo} \n\n Please wait for experimenter')
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
-
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
+            returnval = os.system(command)
             trace = parse_demonstration(i)
             new_demo = {}
             new_demo['trace'] = trace
@@ -199,16 +188,11 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
             display_query_waiting()
             #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
-
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
+            returnval = os.system(command)
 
             display_query_assessment()
-            #send_text('\nWhat is your label?')
+            send_text('\nWhat is your label?')
             plt.pause(1)
             # text_label = input()
 
@@ -246,13 +230,8 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         for i in range(n_postdemo):
             display_eval_slide(i+1, n_postdemo)
             #send_text(f'Testing Phase \n\n Showing {i+1} of {n_postdemo} task executions')
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
-
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+            returnval = os.system(command)
 
         display_post()
 
@@ -271,25 +250,15 @@ def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3, trials = 1):
 
 
         for i in range(trials):
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
-
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
+            returnval = os.system(command)
 
         n_demo = n_demo + nQuery
         demos = []
         for i in range(n_demo):
             #send_text(f'Learning Phase: Provide demonstration {i+1} of {n_demo} \n\n Please follow experimenter instructions')
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
-
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
+            returnval = os.system(command)
             trace = parse_demonstration(i)
             new_demo = {}
             new_demo['trace'] = trace
@@ -319,13 +288,8 @@ def batch_trial_remote(nQuery=3, n_postdemo = 2, n_demo = 3, trials = 1):
         for i in range(n_postdemo):
             #send_text(f'Testing Phase \n\n Showing {i+1} of {n_postdemo} task executions')
             display_eval_slide(i+1, n_postdemo)
-            returnval = 1
-            while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
-                returnval = os.system(command)
-                if returnval:
-                    'Trying again: Reset the task and reactivate the robot'
-
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+            returnval = os.system(command)
 
         display_post()
         return
