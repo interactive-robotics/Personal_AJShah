@@ -34,6 +34,7 @@ def collect(data, label='Experiment'):
 if __name__ == '__main__':
 
     Similarity = {}
+    Entropy = {}
 
     for i in [2,3,4,5]:
 
