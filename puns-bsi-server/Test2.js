@@ -417,25 +417,11 @@ var GetDist = function(dir){
 
 //console.log(dist.support)
 
-var Complexity = ComplexityFactorCustom
-var dataPath = argv.dataPath
-var outPath = argv.outPath
-var nBurn = argv.nBurn
-var nSamples = argv.nSamples
-var nQuery = argv.nQuery
-
-var data = GetData(dataPath, nQuery)
-var dist = GetDist(outPath + '/batch_posterior.json')
-
-//console.log(data)
-
-var model = makeModelQuery(data, LTL_Sampler4, Complexity, dist.support, dist.probs)
-var out_dist = Infer({method:'MCMC', samples:nSamples, burn:nBurn, verbose:true}, model)
-//var out_dist = Infer({model:model, method:'enumerate', maxExecutions:5000})
-var filename =  outPath + '/batch_posterior.json'
-var filename_old = outPath + '/old_posterior.json'
-json.write(filename, out_dist)
-json.write(filename_old, dist)
+var formula = ['and',['G',['not','W0']],['F','W0']]
+data = {WaypointPredicates:[[false, false, true]]}
+word = GenerateWord(data)
+var val = SatChecker(word, formula, ['W0'])
+console.log(val)
 
 //
 // var Complexity = ComplexityFactorCustom
