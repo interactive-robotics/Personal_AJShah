@@ -143,7 +143,7 @@ def collect_robot_orders(subj, exclude, condition = None):
     else:
         condition = [condition]
 
-    for c in condition:
+    #for c in condition:
 
 
 def collect(data, label='Experiment'):

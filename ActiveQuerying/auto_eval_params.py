@@ -4,9 +4,9 @@ n_waypoints = 5
 
 # File paths
 results_path = '/home/ajshah/Results/Results_5_with_baseline'
-if not os.path.exists(results_path):
-    os.mkdir(results_path)
-    os.mkdir(os.path.join(results_path, 'Runs'))
+#if not os.path.exists(results_path):
+#    os.mkdir(results_path)
+#    os.mkdir(os.path.join(results_path, 'Runs'))
 data_path = 'Data'
 raw_data_path = data_path+'/RawData'
 compressed_data_path = data_path + '/CompressedData'

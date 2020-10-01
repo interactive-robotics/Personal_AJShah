@@ -591,6 +591,8 @@ def create_results_path():
 
 if __name__ == '__main__':
 
+    
+    '''
     for i in [3]:
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
@@ -614,7 +616,7 @@ if __name__ == '__main__':
 
         out_data = run_paired_trials(ground_truth)
 
-        '''task 3'''
+        ''' 'task 3' '''
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
@@ -639,7 +641,7 @@ if __name__ == '__main__':
 
         out_data = run_paired_trials(ground_truth)
 
-        '''task 4'''
+        ''' 'task 4' '''
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
@@ -666,7 +668,7 @@ if __name__ == '__main__':
 
         out_data = run_paired_trials(ground_truth)
 
-        '''task 5'''
+        ''' 'task 5' '''
         params.n_queries = i
         print(f'Running evaluations for {params.n_demo} demonstrations and {params.n_queries} queries')
         n = i + params.n_demo
@@ -692,3 +694,22 @@ if __name__ == '__main__':
         #ground_truth.append(Eventually('W4'))
 
         out_data = run_paired_trials(ground_truth)
+        '''
+        
+    params.n_queries = 3
+    params.n_demo = 2
+    params.results_path = f'/home/ajshah/Results/Task1_Simulated'
+    params.n_runs = 6
+    task1_formula = ['and',['F',['W0']],['F',['W1']],['F',['W2']],['F',['W3']],['F',['W4']],['U',['not',['W2']],['W1']],['U',['not',['W2']],['W0']],['U',['not',['W1']],['W0']]]
+    task2_formula = ['and',['G',['not',['W1']]],['F',['W0']],['F',['W2']],['U',['not',['W2']],['W0']]]
+    
+    params.results_path = f'/home/ajshah/Results/Task1_Simulated'
+    out_data = run_paired_trials(task1_formula)
+    
+    params.results_path = f'/home/ajshah/Results/Task2_Simulated'
+    out_data = run_paired_trials(task2_formula)
+        
+        
+        
+        
+        
