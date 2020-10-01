@@ -696,6 +696,9 @@ if __name__ == '__main__':
         out_data = run_paired_trials(ground_truth)
         '''
         
+    if not os.path.exists(results_path):
+        os.mkdir(results_path)
+        os.mkdir(os.path.join(results_path, 'Runs'))
     params.n_queries = 3
     params.n_demo = 2
     params.results_path = f'/home/ajshah/Results/Task1_Simulated'
