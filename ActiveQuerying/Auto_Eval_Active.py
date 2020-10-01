@@ -696,9 +696,7 @@ if __name__ == '__main__':
         out_data = run_paired_trials(ground_truth)
         '''
         
-    if not os.path.exists(results_path):
-        os.mkdir(results_path)
-        os.mkdir(os.path.join(results_path, 'Runs'))
+
     params.n_queries = 3
     params.n_demo = 2
     params.results_path = f'/home/ajshah/Results/Task1_Simulated'
@@ -707,9 +705,17 @@ if __name__ == '__main__':
     task2_formula = ['and',['G',['not',['W1']]],['F',['W0']],['F',['W2']],['U',['not',['W2']],['W0']]]
     
     params.results_path = f'/home/ajshah/Results/Task1_Simulated'
+    if not os.path.exists(params.results_path):
+        os.mkdir(params.results_path)
+        os.mkdir(os.path.join(params.results_path, 'Runs'))
     out_data = run_paired_trials(task1_formula)
     
+    
+    
     params.results_path = f'/home/ajshah/Results/Task2_Simulated'
+    if not os.path.exists(params.results_path):
+        os.mkdir(params.results_path)
+        os.mkdir(os.path.join(params.results_path, 'Runs'))
     out_data = run_paired_trials(task2_formula)
         
         
