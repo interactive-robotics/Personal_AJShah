@@ -417,9 +417,9 @@ var GetDist = function(dir){
 
 //console.log(dist.support)
 
-var formula = ['and',['G',['not','W0']],['F','W0']]
-data = {WaypointPredicates:[[false, false, true]]}
-word = GenerateWord(data)
+var formula = ['G',['not',['W0']]]
+var data = {WaypointPredicates:[[true, false, false]]}
+var word = GenerateWord(data)
 var val = SatChecker(word, formula, ['W0'])
 console.log(val)
 

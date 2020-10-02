@@ -17,13 +17,15 @@ import pandas as pd
 from puns.SpecificationMDP import *
 from scipy.stats import entropy
 import itertools
+from data_utils import *
 # from puns.utils import CreateSmallDinnerMDP
 # from puns.ControlMDP import SmallTableMDP
 # from puns.SpecificationMDP import *
 
 pandas2ri.activate()
 ARTool = importr('ARTool')
-Path = 'C:/Users/AJShah/Google Drive/Remote Interactive Robot Training/TableSetup_SubjectData'
+#Path = 'C:/Users/AJShah/Google Drive/Remote Interactive Robot Training/TableSetup_SubjectData'
+Path = '/home/ajshah/Data/Experiment2Data'
 
 task1_formula = ['and',['F',['W0']],['F',['W1']],['F',['W2']],['F',['W3']],['F',['W4']],['U',['not',['W2']],['W1']],['U',['not',['W2']],['W0']],['U',['not',['W1']],['W0']]]
 task2_formula = ['and',['G',['not',['W1']]],['F',['W0']],['F',['W2']],['U',['not',['W2']],['W0']]]
