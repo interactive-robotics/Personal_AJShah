@@ -18,6 +18,7 @@ from puns.SpecificationMDP import *
 from scipy.stats import entropy
 import itertools
 from data_utils import *
+from formula_utils import *
 # from puns.utils import CreateSmallDinnerMDP
 # from puns.ControlMDP import SmallTableMDP
 # from puns.SpecificationMDP import *
@@ -149,10 +150,170 @@ def compare_formulas(formula_1, formula_2):
            print(formula_1, formula_2)
            L = 0
     return L
+'''Formula Utils'''
+def waypoints_and_orders(formula):
+    #assume that formula is in ['and',....] format
+    waypoints = []
+    orders = []
+    threats = []
+
+    if formula[0] == 'and':
+        subformulas = formula[1::]
+    else:
+        subformulas = [formula]
+
+    for sub_formula in subformulas:
+        if sub_formula[0] == 'F':
+            waypoints.append(sub_formula[1][0])
+        elif sub_formula[0]=='U':
+            w1 = sub_formula[2][0]
+            w2 = sub_formula[1][1][0]
+            orders.append((w1,w2))
+            waypoints.append(w1)
+        elif sub_formula[0] == 'G':
+            threats.append('G' + sub_formula[1][1][0])
+        else:
+            waypoints.append(0)
+
+        #Remove the orders whose precedents are in Globals
+
+        for order in orders:
+            if 'G' + order[1] in threats:
+                orders.remove(order)
+
+    return waypoints, orders, threats
+
+def compare_formulas(formula_1, formula_2):
+
+    # Assume that they are in ['and' ...] format
+    waypoints1, orders1, globals1 = waypoi
+'''Formula Utils'''
+def waypoints_and_orders(formula):
+    #assume that formula is in ['and',....] format
+    waypoints = []
+    orders = []
+    threats = []
+
+    if formula[0] == 'and':
+        subformulas = formula[1::]
+    else:
+        subformulas = [formula]
+
+    for sub_formula in subformulas:
+        if sub_formula[0] == 'F':
+            waypoints.append(sub_formula[1][0])
+        elif sub_formula[0]=='U':
+            w1 = sub_formula[2][0]
+            w2 = sub_formula[1][1][0]
+            orders.append((w1,w2))
+            waypoints.append(w1)
+        elif sub_formula[0] == 'G':
+            threats.append('G' + sub_formula[1][1][0])
+        else:
+            waypoints.append(0)
+
+        #Remove the orders whose precedents are in Globals
+
+        for order in orders:
+            if 'G' + order[1] in threats:
+                orders.remove(order)
+
+    return waypoints, orders, threats
+
+def compare_formulas(formula_1, formula_2):
+
+    # Assume that they are in ['and' ...] format
+    waypoints1, orders1, globals1 = waypoints_and_orders(formula_1)
+    waypoints2, orders2, globals2 = waypoints_and_orders(formula_2)
+
+    clauses_1 = set(waypoints1 + orders1 + globals1)
+    clauses_2 = set(waypoints2 + orders2 + globals2)
+    try:
+        L = len(set.intersection(clauses_1,clauses_2))/len(set.union(clauses_1,clauses_2))
+    except:
+           print(clauses_1, clauses_2)
+           print(formula_1, formula_2)
+           L = 0
+    return L
 
 def compare_distribution(true_formula, distribution):
     similarities = [compare_formulas(true_formula, form) for form in distribution['formulas']]
     return np.dot(similarities, distribution['probs'])
+
+def read_distribution(subject_id, condition):
+    dirname = f'subject_{subject_id}_{condition}'
+
+    if condition == 'Batch':
+        final_dist = 'dist_0.json'
+    else:
+        final_dist = 'dist_3.json'
+
+    filename = os.path.join(Path, dirname, 'Distributions',final_dist)
+
+    with open(filename, 'r') as file:
+        dist = json.load(file)
+
+    if condition == 'Batch':
+        n_threats = 0
+        n_waypoints = 5
+        accessibility = [True]*n_waypoints
+        TraceSlice = {}
+        for i in range(n_threats):
+            TraceSlice[f'T{i}'] = False
+        for i in range(n_waypoints):
+            TraceSlice[f'W{i}'] = False
+            TraceSlice[f'P{i}'] = accessibility[i]
+
+        ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in dist['support']]
+        dist['formulas'] = ProgressedFormulas
+    else:
+        dist['formulas'] = dist['support']
+    return distnts_and_orders(formula_1)
+    waypoints2, orders2, globals2 = waypoints_and_orders(formula_2)
+
+    clauses_1 = set(waypoints1 + orders1 + globals1)
+    clauses_2 = set(waypoints2 + orders2 + globals2)
+    try:
+        L = len(set.intersection(clauses_1,clauses_2))/len(set.union(clauses_1,clauses_2))
+    except:
+           print(clauses_1, clauses_2)
+           print(formula_1, formula_2)
+           L = 0
+    return L
+
+def compare_distribution(true_formula, distribution):
+    similarities = [compare_formulas(true_formula, form) for form in distribution['formulas']]
+    return np.dot(similarities, distribution['probs'])
+
+def read_distribution(subject_id, condition):
+    dirname = f'subject_{subject_id}_{condition}'
+
+    if condition == 'Batch':
+        final_dist = 'dist_0.json'
+    else:
+        final_dist = 'dist_3.json'
+
+    filename = os.path.join(Path, dirname, 'Distributions',final_dist)
+
+    with open(filename, 'r') as file:
+        dist = json.load(file)
+
+    if condition == 'Batch':
+        n_threats = 0
+        n_waypoints = 5
+        accessibility = [True]*n_waypoints
+        TraceSlice = {}
+        for i in range(n_threats):
+            TraceSlice[f'T{i}'] = False
+        for i in range(n_waypoints):
+            TraceSlice[f'W{i}'] = False
+            TraceSlice[f'P{i}'] = accessibility[i]
+
+        ProgressedFormulas = [ProgressSingleTimeStep(formula, TraceSlice) for formula in dist['support']]
+        dist['formulas'] = ProgressedFormulas
+    else:
+        dist['formulas'] = dist['support']
+    return dist
 
 def read_distribution(subject_id, condition):
     dirname = f'subject_{subject_id}_{condition}'
