@@ -211,7 +211,7 @@ def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose =
     identified final state'''
 
     # Identify desired final state and recompile reward
-    desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_type)
+    desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
     spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
     if non_terminal:
         spec_fsm2.terminal_states.append(desired_state)
