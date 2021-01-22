@@ -56,6 +56,42 @@ def run_paired_trials(ground_truth_formula = None):
             dill.dump(out_data,file)
     return out_data
 
+
+
+def run_active_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None,
+verbose = True, write_file = True):
+
+    MDPs = []
+    Distributions = []
+    Queries = []
+    query_matches = 0
+
+    clear_demonstrations()
+
+    if ground_truth_formula == None:
+        if verbose: print(f'Trial {run_id}: Sampling ground truth and generating demonstrations')
+        ground_truth_formula = sample_ground_truth()
+
+    #If demonstrations are provided through a high level interface record them, if not create new demonstrations
+    if type(demo) == int:
+        create_demonstrations(ground_truth_formula, demo)
+    else:
+        record_agent_episodes(demo)
+
+    # Run batch Inference
+    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo}'
+    returnval = os.system(infer_command)
+    if returnval: Exception('Inference Failure')
+
+    # Compile the first MDP
+    spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
+    MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
+    Distributions.append(extract_dist(MDPs[-1]))
+
+
+
+    return
+
 def run_active_query_trial(query_strategy = 'uncertainty_sampling', n_demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, verbose=True, write_file=True):
 
     MDPs = [] #The list of all the MDPs compiled
@@ -71,6 +107,39 @@ def run_active_query_trial(query_strategy = 'uncertainty_sampling', n_demo = 2, 
     '''
     #Clear the data from previous runs
     clear_demonstrations(params)
+
+    #Start running the queries and active Inference
+    for i in range(n_query):
+
+        # Create the query
+        if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
+        Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = params.non_terminal))
+
+        # Eliciting feedback label for the query from ground ground_truth_formula
+        signal = create_signal(Queries[-1]['trace'])
+        label = Progress(ground_truth_formula, signal)[0]
+        if verbose:
+            print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
+            print('Assigned label', label)
+
+        # Writing the query data to the inference database
+        new_traj = create_query_demo(Queries[-1]['trace'])
+        write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
+
+        # Update the posterior distribution using active BSI
+        if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
+        infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nQuery {i+1}'
+        returnval = os.system(infer_command)
+        if returnval: Exception('Inference failure')
+
+        # Recompile the MDP with the updated specification and add the distributions
+        spec_file = spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
+        MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
+        Distributions.append(extract_dist(MDPs[-1]))
+
+    if write_file:
+        write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
+    return Distributions, MDPs, Queries, ground_truth_formula
 
 
     # Generate the demonstrations
@@ -121,6 +190,17 @@ def run_active_query_trial(query_strategy = 'uncertainty_sampling', n_demo = 2, 
     if write_file:
         write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
     return Distributions, MDPs, Queries, ground_truth_formula
+
+def record_agent_episodes(eval_agent):
+    MDP = eval_agent.MDP
+    for record in eval_agent.episodic_record:
+
+        trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
+        trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+
+        new_traj = create_query_demo(trace_slices)
+
+        write_demo_query_data(new_traj, True, params.compressed_data_path, filename='demo')
 
 def write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type = 'Active'):
     if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
@@ -223,57 +303,7 @@ def create_demonstrations(formula, nDemo, verbose = True, n_threats = 0):
         write_demo_query_data(new_traj, True, params.compressed_data_path, filename='demo')
     return eval_agent
 
-def waypoints_and_orders(formula):
-    #assume that formula is in ['and',....] format
-    waypoints = []
-    orders = []
-    threats = []
 
-    if formula[0] == 'and':
-        subformulas = formula[1::]
-    else:
-        subformulas = [formula]
-
-    for sub_formula in subformulas:
-        if sub_formula[0] == 'F':
-            waypoints.append(sub_formula[1][0])
-        elif sub_formula[0]=='U':
-            w1 = sub_formula[2][0]
-            w2 = sub_formula[1][1][0]
-            orders.append((w1,w2))
-            waypoints.append(w1)
-        elif sub_formula[0] == 'G':
-            threats.append('G' + sub_formula[1][1][0])
-        else:
-            waypoints.append(0)
-
-        #Remove the orders whose precedents are in Globals
-
-        for order in orders:
-            if 'G' + order[1] in threats:
-                orders.remove(order)
-
-    return waypoints, orders, threats
-
-def compare_formulas(formula_1, formula_2):
-
-    # Assume that they are in ['and' ...] format
-    waypoints1, orders1, globals1 = waypoints_and_orders(formula_1)
-    waypoints2, orders2, globals2 = waypoints_and_orders(formula_2)
-
-    clauses_1 = set(waypoints1 + orders1 + globals1)
-    clauses_2 = set(waypoints2 + orders2 + globals2)
-    try:
-        L = len(set.intersection(clauses_1,clauses_2))/len(set.union(clauses_1,clauses_2))
-    except:
-           print(clauses_1, clauses_2)
-           print(formula_1, formula_2)
-           L = 0
-    return L
-
-def compare_distribution(true_formula, distribution):
-    similarities = [compare_formulas(true_formula, form) for form in distribution['formulas']]
-    return np.dot(similarities, distribution['probs'])
 
 def report_entropies(typ = None):
     if typ == None:
