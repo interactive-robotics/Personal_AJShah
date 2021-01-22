@@ -14,6 +14,7 @@ import os
 import dill
 
 discard = set([1])
+Path = 'C:/Users/AJShah/Google Drive/Remote Interactive Robot Training/TableSetup_SubjectData'
 
 
 
@@ -112,7 +113,7 @@ def read_distribution(subject_id, condition):
     dirname = f'subject_{subject_id}_{condition}'
 
     if condition == 'Batch':
-        final_dist = 'dist_0.json'
+        final_dist = 'dist_3.json'
     else:
         final_dist = 'dist_3.json'
 

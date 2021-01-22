@@ -700,7 +700,7 @@ if __name__ == '__main__':
     params.n_queries = 3
     params.n_demo = 2
     params.results_path = f'/home/ajshah/Results/Task1_Simulated'
-    params.n_runs = 6
+    params.n_runs = 18
     task1_formula = ['and',['F',['W0']],['F',['W1']],['F',['W2']],['F',['W3']],['F',['W4']],['U',['not',['W2']],['W1']],['U',['not',['W2']],['W0']],['U',['not',['W1']],['W0']]]
     task2_formula = ['and',['G',['not',['W1']]],['F',['W0']],['F',['W2']],['U',['not',['W2']],['W0']]]
     

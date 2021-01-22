@@ -103,13 +103,7 @@ def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
     return desired_state, bread_crumb_states
 
-def identify_desired_state_non_terminal(specification_fsm:SpecificationFSM):
-    states = list(specification_fsm.states2id.keys())
-    rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
-    desired_state = states[np.argmin(np.abs(rewards))]
-    path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
-    bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
-    return desired_state, bread_crumb_states
+
 
 def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state, breadcrumb_states):
     spec_fsm2 = deepcopy(specification_fsm)
@@ -204,35 +198,7 @@ def create_random_query(MDP, verbose=True):
 
     return {'trace': trace_slices, 'agent': random_agent}
 
-def create_active_query_non_terminal(MDP, verbose = True):
-    ''' A query generated as per the most informative heuristic based on the
-    identified final state
 
-    NOW DEPRECATED: use create_active_query(MDP, non_terminal=True) instead'''
-
-    # Identify desired final state and recompile reward
-    desired_state, breadcrumbs = identify_desired_state_non_terminal(MDP.specification_fsm)
-    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
-    spec_fsm2.terminal_states.append(desired_state)
-
-    # Re-define MDP and learning agent
-    MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
-    agent = QLearningAgent(MDP2)
-
-    # Train learning agent to produce a query
-    agent.explore(episode_limit = 5000, action_limit = 1000000, verbose = verbose)
-    eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
-
-    # Generate a query with the trained agent and visualize query
-    eval_agent.explore(episode_limit = 1)
-    #_ = eval_agent.visualize_exploration()
-
-    # Create proposition trace slices
-    episode_record = eval_agent.episodic_record[0]
-    trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
-    trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
-
-    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
 
 def create_active_query(MDP, verbose = True, non_terminal=True):
     ''' A query generated as per the most informative heuristic based on the
@@ -311,6 +277,44 @@ def create_signal(trace_slices):
             signal[key].append(slice[key])
     return signal
 
+def identify_desired_state_non_terminal(specification_fsm:SpecificationFSM):
+    '''NOW DEPRECATED'''
+    states = list(specification_fsm.states2id.keys())
+    rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
+    desired_state = states[np.argmin(np.abs(rewards))]
+    path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
+    bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
+    return desired_state, bread_crumb_states
+
+def create_active_query_non_terminal(MDP, verbose = True):
+    ''' A query generated as per the most informative heuristic based on the
+    identified final state
+
+    NOW DEPRECATED: use create_active_query(MDP, non_terminal=True) instead'''
+
+    # Identify desired final state and recompile reward
+    desired_state, breadcrumbs = identify_desired_state_non_terminal(MDP.specification_fsm)
+    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+    spec_fsm2.terminal_states.append(desired_state)
+
+    # Re-define MDP and learning agent
+    MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
+    agent = QLearningAgent(MDP2)
+
+    # Train learning agent to produce a query
+    agent.explore(episode_limit = 5000, action_limit = 1000000, verbose = verbose)
+    eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
+
+    # Generate a query with the trained agent and visualize query
+    eval_agent.explore(episode_limit = 1)
+    #_ = eval_agent.visualize_exploration()
+
+    # Create proposition trace slices
+    episode_record = eval_agent.episodic_record[0]
+    trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
+    trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
+
+    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
 
 
 
