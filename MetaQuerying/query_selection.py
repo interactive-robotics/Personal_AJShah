@@ -23,6 +23,7 @@ from puns.FormulaTools import IsSafe, IsCoSafe
 from puns.SpecificationFSMTools import CreateReward
 from scipy.special import softmax
 from scipy.stats import entropy
+from tqdm import tqdm
 
 def plot_probs(MDP, show_cdf = False):
     Probs = MDP.specification_fsm._partial_rewards
@@ -369,7 +370,7 @@ def compute_expected_entropy_gain_demonstrations(specification_fsm, n_threats=5,
             if state in accepting_states[json.dumps(formula)]:
                 p_state_given_formula = 1/(len(accepting_states[json.dumps(formula)]))
                 p_formula = specification_fsm._partial_rewards[j]
-                p_state = p_state + p_state_given_formula*p_formula
+                p_state[state] = p_state[state] + p_state_given_formula*p_formula
                 increment = state_entropy*p_state_given_formula*p_formula
                 expected_entropy_gain = expected_entropy_gain + increment
 
