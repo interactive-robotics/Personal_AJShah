@@ -18,7 +18,7 @@ from copy import deepcopy
 
 
 
-def run_meta_selection_trials(demo = 2, n_query = 4, query_selection = 'info_gain',
+def run_meta_selection_trials(demo = 2, n_query = 4, query_strategy = 'info_gain',
 run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
 
     MDPs = []
