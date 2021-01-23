@@ -104,22 +104,22 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
             Distributions.append(extract_dist(MDPs[-1]))
 
-        out_data = {}
-        out_data['similarities'] = similarities
-        out_data['similarity'] = similarities[-1]
-        out_data['Distributions'] = Distributions
-        out_data['MDPs'] = MDPs
-        out_data['Queries'] = Queries
-        out_data['ground_truth_formula'] = ground_truth_formula
-        out_data['run_id'] = run_id
-        out_data['type'] = query_strategy
-        out_data['query_mismatches'] = query_mismatches
-        out_data['demonstrations_requested'] = demonstrations_requested
-        out_data['queries_performed'] = queries_performed
+    out_data = {}
+    out_data['similarities'] = similarities
+    out_data['similarity'] = similarities[-1]
+    out_data['Distributions'] = Distributions
+    out_data['MDPs'] = MDPs
+    out_data['Queries'] = Queries
+    out_data['ground_truth_formula'] = ground_truth_formula
+    out_data['run_id'] = run_id
+    out_data['type'] = query_strategy
+    out_data['query_mismatches'] = query_mismatches
+    out_data['demonstrations_requested'] = demonstrations_requested
+    out_data['queries_performed'] = queries_performed
 
-        if write_file:
-            write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
-        return out_data
+    if write_file:
+        write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
+    return out_data
 
 
 
