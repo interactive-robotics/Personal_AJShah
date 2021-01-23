@@ -591,21 +591,22 @@ if __name__ == '__main__':
 
 #
 #    '''Test vanilla active learning in uncertainty sampling mode'''
-#    Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_active_trial(query_strategy = 'uncertainty_sampling')
-#    mismatches[1] = query_mismatches
+#    out_data = run_active_trial(query_strategy = 'uncertainty_sampling')
+#
 #
 #    '''Test vanilla active learning in uncertainty sampling mode'''
-#    Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_active_trial(query_strategy = 'uncertainty_sampling')
-#    mismatches[2] = query_mismatches
-
+#    out_data = run_active_trial(query_strategy = 'uncertainty_sampling')
+#
     '''Test uncertainty sampling mode with predefined demonstrations'''
     ground_truth_formula = sample_ground_truth(5)
     eval_agent = create_demonstrations(ground_truth_formula, 2)
     #
     # Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_active_trial(query_strategy = 'uncertainty_sampling', demo = eval_agent, ground_truth_formula = ground_truth_formula)
+    #
+    # '''Run batch trial in batch mode'''
+    # out_data = run_batch_trial(demo = eval_agent, mode = 'batch', ground_truth_formula = ground_truth_formula)
+    #
+    # '''Run batch trial in incremental mode'''
+    # out_data = run_batch_trial(demo = eval_agent, mode = 'incremental', ground_truth_formula = ground_truth_formula)
 
-    '''Run batch trial in batch mode'''
-    Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_batch_trial(demo = eval_agent, mode = 'batch', ground_truth_formula = ground_truth_formula)
-
-    '''Run batch trial in incremental mode'''
-    Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_batch_trial(demo = eval_agent, mode = 'incremental', ground_truth_formula = ground_truth_formula)
+    out_data = run_meta_selection_trials()

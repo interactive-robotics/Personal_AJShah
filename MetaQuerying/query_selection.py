@@ -348,7 +348,7 @@ def compute_expected_entropy_gain_demonstrations(specification_fsm, n_threats=5,
     #for each formula construct set of accepting states
     accepting_states = {}
 
-    for (i,formula) in enumerate(specification_fsm._formulas):
+    for (i,formula) in tqdm(list(enumerate(specification_fsm._formulas))):
         accepting_states[json.dumps(formula)] = list()
         for state in states:
             if IsSafe(json.loads(state[i]))[0] and json.loads(state[i]) != [False] or json.loads(state[i]) == [True]:
@@ -362,7 +362,7 @@ def compute_expected_entropy_gain_demonstrations(specification_fsm, n_threats=5,
     #for all states, for all formulas compute P(state | formula) evenly divided
     #among number of accepting state if the state is an accepting state for that formula
 
-    for (i,state) in enumerate(states):
+    for (i,state) in tqdm(list(enumerate(states))):
         for (j,formula) in enumerate(specification_fsm._formulas):
             state_entropy = expected_entropies[i]
             p_state[state] = 0
