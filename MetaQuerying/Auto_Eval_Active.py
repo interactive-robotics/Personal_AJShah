@@ -16,45 +16,113 @@ import json
 from copy import deepcopy
 
 
-def run_paired_trials(ground_truth_formula = None):
 
-    run_types = ['Active', 'Random', 'Batch']
-    trial_functions = [run_active_query_trial, run_random_query_trial, run_batch_trial, run_baseline_trial]
-    out_data = {}
-    out_data['true_formulas'] = []
-    for type in run_types:
-        out_data[type] = {}
-        out_data[type]['map_formulas'] = []
-        out_data[type]['entropies'] = []
-        out_data[type]['dists'] = []
 
-    for i in range(params.n_runs):
+def run_meta_selection_trials(demo = 2, n_query = 4, query_selection = 'info_gain',
+run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
 
-        #Sample the ground truth formulas
-        if ground_truth_formula == None:
-            ground_truth_formula = sample_ground_truth()
-        out_data['true_formulas'].append(ground_truth_formula)
+    MDPs = []
+    Distributions = []
+    Queries = []
+    query_mismatches = 0
+    queries_performed = 0
+    demonstrations_requested = 0
 
-        #Run the trial with the selected ground ground_truth_formula
-        for (type, trial) in zip(run_types, trial_functions):
-            print(f'Run {i} {type} trial')
-            Distributions, MDPs, Queries, ground_truth_formula = trial(
-            n_demo = params.n_demo, n_query = params.n_queries, run_id = i,
-            ground_truth_formula = ground_truth_formula)
+    clear_demonstrations(params)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo, ground_truth_formula)
 
-            out_data[type]['entropies'].append(entropy(Distributions[-1]['probs']))
-            out_data[type]['map_formulas'].append(Distributions[-1]['formulas'][0])
-            out_data[type]['dists'].append(Distributions[-1])
+    # Run batch Inference
+    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo}'
+    returnval = os.system(infer_command)
+    if returnval: Exception('Inference Failure')
 
-            create_run_log(i,type=type)
-            del Distributions, MDPs, Queries
+    # Compile the first MDP
+    spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
+    MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
+    Distributions.append(extract_dist(MDPs[-1]))
 
-        for type in run_types:
-            out_data[type]['average_entropy'] = np.mean(out_data[type]['entropies'])
-        summary_file = os.path.join(params.results_path,'paired_summary.pkl')
-        with open(summary_file,'wb') as file:
-            dill.dump(out_data,file)
-    return out_data
+    for i in range(n_query):
+
+        #Determine if additional demonstration or query will yield larger entropy gain
+        state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = 'info_gain')
+        query_gain = compute_expected_entropy_gain(state, MDPs[-1].specification_fsm)
+        demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm)
+
+        demo = True if demonstration_gain >= query_gain else False
+
+        if demo:
+            if verbose: print('Selecting demonstration for next data point')
+            demonstrations_requested = demonstrations_requested + 1
+
+            #create a demonstration as a positive query
+            eval_agent.explore(1)
+            MDP = eval_agent.MDP
+            record = eval_agent.episodic_record[-1]
+            trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
+            trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+            new_traj = create_query_demo(trace_slices)
+            write_demo_query_data(new_traj, True, params.compressed_data_path, query_number=i+1)
+
+            # Update the posterior distribution using active BSI
+            if verbose: print(f'Trial {run_id}: Updating posterior after demo {n_demo+i+1}')
+            infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nQuery {i+1}'
+            returnval = os.system(infer_command)
+            if returnval: Exception('Inference failure')
+
+            # Recompile the MDP with the updated specification and add the distributions
+            spec_file = spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
+            MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
+            Distributions.append(extract_dist(MDPs[-1]))
+        else:
+            #learn from an active info gain query
+            if verbose: print(f'Trial {run_id}: Selecting Query for next data point')
+            queries_performed = queries_performed + 1
+
+            #Create the query
+            if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
+            Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = params.non_terminal, query_strategy = query_strategy))
+
+            #Elicit label feedback from the ground truth
+            signal = create_signal(Queries[-1]['trace'])
+            label = Progress(ground_truth_formula, signal)[0]
+            if verbose:
+                print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
+                print('Assigned label', label)
+
+            # Writing the query data to the inference database
+            new_traj = create_query_demo(Queries[-1]['trace'])
+            write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
+
+            # Update the posterior distribution using active BSI
+            if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
+            infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nQuery {i+1}'
+            returnval = os.system(infer_command)
+            if returnval: Exception('Inference failure')
+
+            # Recompile the MDP with the updated specification and add the distributions
+            spec_file = spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
+            MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
+            Distributions.append(extract_dist(MDPs[-1]))
+
+        out_data = {}
+        out_data['similarities'] = similarities
+        out_data['similarity'] = similarities[-1]
+        out_data['Distributions'] = Distributions
+        out_data['MDPs'] = MDPs
+        out_data['Queries'] = Queries
+        out_data['ground_truth_formula'] = ground_truth_formula
+        out_data['run_id'] = run_id
+        out_data['type'] = query_strategy
+        out_data['query_mismatches'] = query_mismatches
+        out_data['demonstrations_requested'] = demonstrations_requested
+        out_data['queries_performed'] = queries_performed
+
+        if write_file:
+            write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
+        return out_data
+
+
+
 
 def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = True, verbose=True):
 
@@ -65,22 +133,11 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
 
     clear_demonstrations(params)
 
-    if ground_truth_formula == None:
-        if verbose: print(f'Trial {run_id}: Sampling ground truth and generating demonstrations')
-        ground_truth_formula = sample_ground_truth()
-
-    #If demonstrations are provided through a high level interface record them, if not create new demonstrations
-    if type(demo) == int:
-        n_demo = demo
-        eval_agent = create_demonstrations(ground_truth_formula, demo)
-    else:
-        n_demo = len(demo.episodic_record)
-        record_agent_episodes(demo)
-        eval_agent = deepcopy(demo)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo, ground_truth_formula)
 
     if mode == 'incremental':
-        
-        
+
+
         # Run batch Inference
         infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo + n_query}'
         returnval = os.system(infer_command)
@@ -93,7 +150,7 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
 
         #Add each demonstration one after the other
         for i in range(n_query):
-            
+
 
 
             #create a demonstration as a positive query
@@ -141,9 +198,20 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
         MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
         Distributions.append(extract_dist(MDPs[-1]))
 
+        out_data = {}
+        out_data['similarities'] = similarities
+        out_data['similarity'] = similarities[-1]
+        out_data['Distributions'] = Distributions
+        out_data['MDPs'] = MDPs
+        out_data['Queries'] = Queries
+        out_data['ground_truth_formula'] = ground_truth_formula
+        out_data['run_id'] = run_id
+        out_data['type'] = 'Demo'
+        out_data['query_mismatches'] = query_mismatches
+
         if write_file:
-            write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
-        return Distributions, MDPs, Queries, ground_truth_formula, query_mismatches
+            write_run_data_new(out_data, run_id, typ = f'Demo')
+        return out_data
 
 
 
@@ -160,17 +228,7 @@ verbose = True, write_file = True):
 
     clear_demonstrations(params)
 
-    if ground_truth_formula == None:
-        if verbose: print(f'Trial {run_id}: Sampling ground truth and generating demonstrations')
-        ground_truth_formula = sample_ground_truth()
-
-    #If demonstrations are provided through a high level interface record them, if not create new demonstrations
-    if type(demo) == int:
-        n_demo = demo
-        create_demonstrations(ground_truth_formula, demo)
-    else:
-        n_demo = len(demo.episodic_record)
-        record_agent_episodes(demo)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo, ground_truth_formula)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo}'
@@ -216,13 +274,43 @@ verbose = True, write_file = True):
         MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
         Distributions.append(extract_dist(MDPs[-1]))
 
+    last_dist = Distributions[-1]
+    similarities = [compare_distribution(ground_truth_formula, dist) for dist in Distributions]
+
+    out_data = {}
+    out_data['similarities'] = similarities
+    out_data['similarity'] = similarities[-1]
+    out_data['Distributions'] = Distributions
+    out_data['MDPs'] = MDPs
+    out_data['Queries'] = Queries
+    out_data['ground_truth_formula'] = ground_truth_formula
+    out_data['run_id'] = run_id
+    out_data['type'] = f'Active_{query_strategy}'
+    out_data['query_mismatches'] = query_mismatches
+
     if write_file:
-        write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
-    return Distributions, MDPs, Queries, ground_truth_formula, query_mismatches
+        write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
+    return out_data
+
+
+def write_run_data_new(out_data, run_id, typ):
+    if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
+    filename = os.path.join(params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
 
 
 
+def ground_truth_selector(demo = 2, ground_truth_formula = None):
+    if ground_truth_formula == None:
+        ground_truth_formula = sample_ground_truth()
 
+    if type(demo) == int:
+        n_demo = demo
+        eval_agent = create_demonstrations(ground_truth_formula, n_demo)
+    else:
+        n_demo = len(demo.episodic_record)
+        record_agent_episodes(demo)
+        eval_agent = deepcopy(demo)
+    return n_demo, eval_agent, ground_truth_formula
 
 def record_agent_episodes(eval_agent):
     MDP = eval_agent.MDP
