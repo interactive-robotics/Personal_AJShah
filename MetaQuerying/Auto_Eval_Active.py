@@ -46,8 +46,9 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
         #Determine if additional demonstration or query will yield larger entropy gain
         state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = 'info_gain')
         query_gain = compute_expected_entropy_gain(state, MDPs[-1].specification_fsm)
+        print('Query Gain:', query_gain)
         demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm)
-
+        print('Demonstration Gain:', demonstration_gain)
         demo = True if demonstration_gain >= query_gain else False
 
         if demo:
@@ -103,7 +104,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             spec_file = spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
             MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
             Distributions.append(extract_dist(MDPs[-1]))
-            
+
     similarities = [compare_distribution(ground_truth_formula, dist) for dist in Distributions]
     out_data = {}
     out_data['similarities'] = similarities
