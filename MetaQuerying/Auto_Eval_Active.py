@@ -103,7 +103,8 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             spec_file = spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
             MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
             Distributions.append(extract_dist(MDPs[-1]))
-
+            
+    similarities = [compare_distribution(ground_truth_formula, dist) for dist in Distributions]
     out_data = {}
     out_data['similarities'] = similarities
     out_data['similarity'] = similarities[-1]
@@ -198,20 +199,21 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
         MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
         Distributions.append(extract_dist(MDPs[-1]))
 
-        out_data = {}
-        out_data['similarities'] = similarities
-        out_data['similarity'] = similarities[-1]
-        out_data['Distributions'] = Distributions
-        out_data['MDPs'] = MDPs
-        out_data['Queries'] = Queries
-        out_data['ground_truth_formula'] = ground_truth_formula
-        out_data['run_id'] = run_id
-        out_data['type'] = 'Demo'
-        out_data['query_mismatches'] = query_mismatches
+    similarities = [compare_distribution(ground_truth_formula, dist) for dist in Distributions]
+    out_data = {}
+    out_data['similarities'] = similarities
+    out_data['similarity'] = similarities[-1]
+    out_data['Distributions'] = Distributions
+    out_data['MDPs'] = MDPs
+    out_data['Queries'] = Queries
+    out_data['ground_truth_formula'] = ground_truth_formula
+    out_data['run_id'] = run_id
+    out_data['type'] = 'Demo'
+    out_data['query_mismatches'] = query_mismatches
 
-        if write_file:
-            write_run_data_new(out_data, run_id, typ = f'Demo')
-        return out_data
+    if write_file:
+        write_run_data_new(out_data, run_id, typ = f'Demo')
+    return out_data
 
 
 
