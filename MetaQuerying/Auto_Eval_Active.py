@@ -52,7 +52,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
     for i in range(trials):
 
         run_id = start_id + i
-        ground_truth_formula, eval_agent = ground_truth_selector(demo=n_demo, ground_truth_formula = ground_truth_formula)
+        n_demo, ground_truth_formula, eval_agent = ground_truth_selector(demo=n_demo, ground_truth_formula = ground_truth_formula)
         #Initialize the run information
 
         out_data['similarity'][run_id] = {}
