@@ -572,11 +572,15 @@ if __name__ == '__main__':
     '''MAIN SCRIPT: Running Paired Trials'''
     params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(params.results_path)
-    n_trials = 1
+    n_trials = 200
     n_demo = 2
-    n_query = 1
+    n_query = [1,2,3,4,5]
 
-    results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_query)
+    for n_q in n_query:
+        n_data = n_demo + n_query
+        params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+        check_results_path(params.results_path)
+        results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
 
 
 #
