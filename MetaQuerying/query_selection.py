@@ -216,8 +216,8 @@ def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose =
     desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
     spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
     for state_id in breadcrumbs:
-        if specfsm2.id2states[state_id] in specfsm2.terminal_states:
-            specfsm2.terminal_states.remove(specfsm2.id2states[state_id])
+        if spec_fsm2.id2states[state_id] in spec_fsm2.terminal_states:
+            spec_fsm2.terminal_states.remove(spec_fsm2.id2states[state_id])
     if non_terminal:
         spec_fsm2.terminal_states.append(desired_state)
 
