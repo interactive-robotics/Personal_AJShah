@@ -22,7 +22,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
     #Check if the results path already exists
     summary_file = os.path.join(params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
-        with open(summary_file.'rb') as file:
+        with open(summary_file,'rb') as file:
             out_data = dill.load(file)
             start_id = len(out_data['similarity'].keys())
     else:
@@ -46,7 +46,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
     args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
     args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
     args3 = {'n_query': n_query, 'mode': mode}
-    args4 = {'n_query': n_query, query_strategy: 'info_gain'}
+    args4 = {'n_query': n_query, 'query_strategy': 'info_gain'}
     args = [args1, args2, args3, args4]
 
     for i in range(trials):
@@ -676,12 +676,12 @@ if __name__ == '__main__':
 
     '''MAIN SCRIPT: Running Paired Trials'''
     params.results_path = '/home/ajshah/Results/Test_Meta'
-    n_trials = 200
+    n_trials = 1
     n_demo = 2
     n_query = 3
 
     results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_query)
-    
+
 
 #
 #    '''Test vanilla active learning in uncertainty sampling mode'''
