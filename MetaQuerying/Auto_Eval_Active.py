@@ -73,7 +73,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
 
             #add query mismatch information for the active trials
             if trial_func == run_active_trial:
-                out_data['query_mismatch'] = out_data['query_mismatch'] + run_data['query_mismatch']
+                out_data['query_mismatch'] = out_data['query_mismatch'] + run_data['query_mismatches']
             if trial_func == run_meta_selection_trials:
                 out_data['queries_chosen'] = out_data['queries_chosen'] + run_data['queries_performed']
                 out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] + run_data['demonstrations_requested']
