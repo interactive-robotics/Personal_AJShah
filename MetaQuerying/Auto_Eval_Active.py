@@ -254,10 +254,6 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
             MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
             Distributions.append(extract_dist(MDPs[-1]))
 
-        if write_file:
-            write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
-        return Distributions, MDPs, Queries, ground_truth_formula, query_mismatches
-
     else:
         mode = 'batch'
         #create all demonstrations and run inference only once
@@ -377,6 +373,8 @@ verbose = True, write_file = True):
 def write_run_data_new(out_data, run_id, typ):
     if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
     filename = os.path.join(params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
+    with open(filename, 'wb') as file:
+        dill.dump(out_data)
 
 
 
@@ -679,7 +677,7 @@ if __name__ == '__main__':
     check_results_path(params.results_path)
     n_trials = 1
     n_demo = 2
-    n_query = 3
+    n_query = 1
 
     results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_query)
 
