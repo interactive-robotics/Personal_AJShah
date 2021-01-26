@@ -16,6 +16,87 @@ import json
 from copy import deepcopy
 
 
+def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formula = None, mode = 'incremental'):
+
+    #Making this incremental
+    #Check if the results path already exists
+    summary_file = os.path.join(params.results_path,'paired_summary.pkl')
+    if os.path.exists(summary_file):
+        with open(summary_file.'rb') as file:
+            out_data = dill.load(file)
+            start_id = len(out_data['similarity'].keys())
+    else:
+        out_data = {}
+        start_id = 0
+        out_data['queries_chosen'] = 0
+        out_data['demonstrations_chosen'] = 0
+        out_data['query_mismatch'] = 0
+        out_data['similarity'] = {}
+        out_data['entropy'] = {}
+        out_data['results'] = {}
+
+
+    #Metrics to collect for each run: Similarity, Entropy, ground_truth formula, distribution
+
+    #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
+
+
+    trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
+    conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
+    args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
+    args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
+    args3 = {'n_query': n_query, 'mode': mode}
+    args4 = {'n_query': n_query, query_strategy: 'info_gain'}
+    args = [args1, args2, args3, args4]
+
+    for i in range(trials):
+
+        run_id = start_id + i
+        ground_truth_formula, eval_agent = ground_truth_selector(demo=n_demo, ground_truth_formula = ground_truth_formula)
+        #Initialize the run information
+
+        out_data['similarity'][run_id] = {}
+        out_data['entropy'][run_id] = {}
+        out_data['results'][run_id] = {}
+        out_data['results'][run_id]['ground_truth'] = ground_truth_formula
+
+        for (trial_func, condition, kwarg) in zip(trial_functions, conditions, args):
+            #Initialize the dictionary for this run
+
+
+            #set the ground_truth conditions and initial demonstrations
+            arg['demo'] = eval_agent
+            arg['ground_truth_formula'] = ground_truth_formula
+            arg['run_id'] = run_id
+
+            run_data = trial_func(**kwarg)
+
+            #add query mismatch information for the active trials
+            if trial_func == run_active_trial:
+                out_data['query_mismatch'] = out_data['query_mismatch'] + run_data['query_mismatch']
+            if trial_func == run_meta_selection_trials:
+                out_data['queries_chosen'] = out_data['queries_chosen'] + run_data['queries_performed']
+                out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] + run_data['demonstrations_requested']
+
+            out_data['similarity'][run_id][condition] = run_data['similarity']
+            out_data['entropy'][run_id][condition] = run_data['entropy']
+            out_data['results'][run_id][condition] = run_data['Distributions'][-1]
+
+    # out_data['similarity'] = pd.DataFrame.from_dict(out_data['similarity'], orient='index')
+    # out_data['entropy'] = pd.DataFrame.from_dict(out_data['entropy'], orient='index')
+    # out_data['similarity'] = pd.DataFrame.from_dict(out_data['similarity'], orient='index')
+    #
+    summary_file = os.path.join(params.results_path,'paired_summary.pkl')
+    with open(summary_file,'wb') as file:
+        dill.dump(out_data,file)
+
+
+
+    #Write to file in results path and return
+    return out_data
+
+
+
 
 
 def run_meta_selection_trials(demo = 2, n_query = 4, query_strategy = 'info_gain',
@@ -109,6 +190,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
     out_data = {}
     out_data['similarities'] = similarities
     out_data['similarity'] = similarities[-1]
+    out_data['entropy'] = entropy(Distributions[-1]['probs'])
     out_data['Distributions'] = Distributions
     out_data['MDPs'] = MDPs
     out_data['Queries'] = Queries
@@ -122,9 +204,6 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
     if write_file:
         write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
     return out_data
-
-
-
 
 def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = True, verbose=True):
 
@@ -204,6 +283,7 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
     out_data = {}
     out_data['similarities'] = similarities
     out_data['similarity'] = similarities[-1]
+    out_data['entropy'] = entropy(Distributions[-1]['probs'])
     out_data['Distributions'] = Distributions
     out_data['MDPs'] = MDPs
     out_data['Queries'] = Queries
@@ -216,11 +296,6 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
         write_run_data_new(out_data, run_id, typ = f'Demo')
     return out_data
 
-
-
-
-
-
 def run_active_trial(query_strategy = 'uncertainty_sampling', demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None,
 verbose = True, write_file = True):
 
@@ -230,6 +305,8 @@ verbose = True, write_file = True):
     query_mismatches = 0
 
     clear_demonstrations(params)
+
+    print(f'Trial {run_id}: Running Active trial {query_strategy}')
 
     n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo, ground_truth_formula)
 
@@ -241,7 +318,7 @@ verbose = True, write_file = True):
     # Compile the first MDP
     spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
     MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
-    Distributions.append(extract_dist(MDPs[-1]))
+    Distributions.append(extract_dist(MDPs[-1],))
 
     #For the number of budgeted Queries
     for i in range(n_query):
@@ -284,6 +361,7 @@ verbose = True, write_file = True):
     out_data['similarities'] = similarities
     out_data['similarity'] = similarities[-1]
     out_data['Distributions'] = Distributions
+    out_data['entropy'] = entropy(Distributions[-1]['probs'])
     out_data['MDPs'] = MDPs
     out_data['Queries'] = Queries
     out_data['ground_truth_formula'] = ground_truth_formula
@@ -588,9 +666,22 @@ def run_active_query_trial(query_strategy = 'uncertainty_sampling', n_demo = 2, 
         write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
     return Distributions, MDPs, Queries, ground_truth_formula
 
+def check_results_path():
+    if not os.path.exists(results_path):
+       os.mkdir(results_path)
+       os.mkdir(os.path.join(results_path, 'Runs'))
+
 if __name__ == '__main__':
-    params.results_path = '/home/ajshah/Results/Test'
-    mismatches = {}
+
+
+    '''MAIN SCRIPT: Running Paired Trials'''
+    params.results_path = '/home/ajshah/Results/Test_Meta'
+    n_trials = 200
+    n_demo = 2
+    n_query = 3
+
+    results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_query)
+    
 
 #
 #    '''Test vanilla active learning in uncertainty sampling mode'''
@@ -600,9 +691,9 @@ if __name__ == '__main__':
 #    '''Test vanilla active learning in uncertainty sampling mode'''
 #    out_data = run_active_trial(query_strategy = 'uncertainty_sampling')
 #
-    '''Test uncertainty sampling mode with predefined demonstrations'''
-    ground_truth_formula = sample_ground_truth(5)
-    eval_agent = create_demonstrations(ground_truth_formula, 2)
+    # '''Test uncertainty sampling mode with predefined demonstrations'''
+    # ground_truth_formula = sample_ground_truth(5)
+    # eval_agent = create_demonstrations(ground_truth_formula, 2)
     #
     # Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_active_trial(query_strategy = 'uncertainty_sampling', demo = eval_agent, ground_truth_formula = ground_truth_formula)
     #
@@ -612,4 +703,4 @@ if __name__ == '__main__':
     # '''Run batch trial in incremental mode'''
     # out_data = run_batch_trial(demo = eval_agent, mode = 'incremental', ground_truth_formula = ground_truth_formula)
 
-    out_data = run_meta_selection_trials()
+    #out_data = run_meta_selection_trials()
