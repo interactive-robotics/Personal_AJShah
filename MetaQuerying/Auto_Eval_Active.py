@@ -577,7 +577,7 @@ if __name__ == '__main__':
     n_query = [1,2,3,4,5]
 
     for n_q in n_query:
-        n_data = n_demo + n_query
+        n_data = n_demo + n_q
         params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
         check_results_path(params.results_path)
         results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
