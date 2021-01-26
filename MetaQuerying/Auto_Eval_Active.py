@@ -65,9 +65,9 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
 
 
             #set the ground_truth conditions and initial demonstrations
-            arg['demo'] = eval_agent
-            arg['ground_truth_formula'] = ground_truth_formula
-            arg['run_id'] = run_id
+            kwarg['demo'] = eval_agent
+            kwarg['ground_truth_formula'] = ground_truth_formula
+            kwarg['run_id'] = run_id
 
             run_data = trial_func(**kwarg)
 
