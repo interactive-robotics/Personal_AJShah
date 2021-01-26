@@ -373,6 +373,7 @@ verbose = True, write_file = True):
 def write_run_data_new(out_data, run_id, typ):
     if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
     filename = os.path.join(params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
+    out_data[MDPs] = 1
     with open(filename, 'wb') as file:
         dill.dump(out_data, file)
 
