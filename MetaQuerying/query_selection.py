@@ -131,6 +131,7 @@ def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state,
                 return -1
 
     spec_fsm2.reward_function = Reward
+
     return spec_fsm2
 
 def modify_formula(formula):
@@ -214,6 +215,9 @@ def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose =
     # Identify desired final state and recompile reward
     desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
     spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+    for state_id in breadcrumbs:
+        if specfsm2.id2states[state_id] in specfsm2.terminal_states:
+            specfsm2.terminal_states.remove(specfsm2.id2states[state_id])
     if non_terminal:
         spec_fsm2.terminal_states.append(desired_state)
 
