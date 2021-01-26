@@ -202,7 +202,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
     out_data['queries_performed'] = queries_performed
 
     if write_file:
-        write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
+        write_run_data_new(out_data, run_id, typ = f'Meta_Selection')
     return out_data
 
 def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = True, verbose=True):
@@ -374,7 +374,7 @@ def write_run_data_new(out_data, run_id, typ):
     if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
     filename = os.path.join(params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
     with open(filename, 'wb') as file:
-        dill.dump(out_data)
+        dill.dump(out_data, file)
 
 
 
