@@ -666,7 +666,7 @@ def run_active_query_trial(query_strategy = 'uncertainty_sampling', n_demo = 2, 
         write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
     return Distributions, MDPs, Queries, ground_truth_formula
 
-def check_results_path():
+def check_results_path(results_path):
     if not os.path.exists(results_path):
        os.mkdir(results_path)
        os.mkdir(os.path.join(results_path, 'Runs'))
@@ -676,6 +676,7 @@ if __name__ == '__main__':
 
     '''MAIN SCRIPT: Running Paired Trials'''
     params.results_path = '/home/ajshah/Results/Test_Meta'
+    check_results_path(params.results_path)
     n_trials = 1
     n_demo = 2
     n_query = 3
