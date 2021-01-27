@@ -203,6 +203,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
 
     if write_file:
         write_run_data_new(out_data, run_id, typ = f'Meta_Selection')
+        create_run_log(run_id, f'Meta_Selection')
     return out_data
 
 def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = True, verbose=True):
@@ -263,7 +264,7 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
             trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
             trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
             new_traj = create_query_demo(trace_slices)
-            write_demo_query_data(new_traj, True, params.compressed_data_path, filename = 'demo')
+            write_demo_query_data(new_traj, True, params.compressed_data_path, filename = 'Demo')
 
         # Run batch Inference
         infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo + n_query}'
@@ -290,6 +291,7 @@ def run_batch_trial(demo = 2, n_query = 4, run_id = 1, ground_truth_formula = No
 
     if write_file:
         write_run_data_new(out_data, run_id, typ = f'Demo')
+        create_run_log(run_id, 'Demo')
     return out_data
 
 def run_active_trial(query_strategy = 'uncertainty_sampling', demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None,
@@ -365,15 +367,18 @@ verbose = True, write_file = True):
     out_data['type'] = f'Active_{query_strategy}'
     out_data['query_mismatches'] = query_mismatches
 
+
+
     if write_file:
         write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
+        create_run_log(run_id, f'Active_{query_strategy}')
     return out_data
 
 
 def write_run_data_new(out_data, run_id, typ):
     if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
     filename = os.path.join(params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
-    out_data['Queries'] = 1
+    out_data['Queries'] = [q['trace'] for q in Queries]
     with open(filename, 'wb') as file:
         dill.dump(out_data, file)
 
@@ -420,7 +425,7 @@ def create_run_log(run_id, type = 'Active'):
     with open(filename+'.pkl','rb') as file:
         data = dill.load(file)
 
-    if type == 'Batch':
+    if type == 'Demo':
         n_demo = params.n_demo + params.n_queries
     else:
         n_demo = params.n_demo
@@ -572,9 +577,21 @@ if __name__ == '__main__':
     '''MAIN SCRIPT: Running Paired Trials'''
     params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(params.results_path)
+
+    n_trials = 80
+    n_demo = 2
+    n_query = [2,3,4,5]
+
+    for n_q in n_query:
+        n_data = n_demo + n_q
+        params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+        check_results_path(params.results_path)
+        results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+
+
     n_trials = 200
     n_demo = 2
-    n_query = [1,2,3,4,5]
+    n_query = [2,3,4,5]
 
     for n_q in n_query:
         n_data = n_demo + n_q
