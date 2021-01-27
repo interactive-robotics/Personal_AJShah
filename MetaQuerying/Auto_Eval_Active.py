@@ -85,10 +85,10 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
     # out_data['similarity'] = pd.DataFrame.from_dict(out_data['similarity'], orient='index')
     # out_data['entropy'] = pd.DataFrame.from_dict(out_data['entropy'], orient='index')
     # out_data['similarity'] = pd.DataFrame.from_dict(out_data['similarity'], orient='index')
-    #
-    summary_file = os.path.join(params.results_path,'paired_summary.pkl')
-    with open(summary_file,'wb') as file:
-        dill.dump(out_data,file)
+        #Summary file should be written at the end of every trial
+        summary_file = os.path.join(params.results_path,'paired_summary.pkl')
+        with open(summary_file,'wb') as file:
+            dill.dump(out_data,file)
 
 
 
@@ -378,7 +378,7 @@ verbose = True, write_file = True):
 def write_run_data_new(out_data, run_id, typ):
     if not os.path.exists(os.path.join(params.results_path,'Runs')): os.mkdir(os.path.join(params.results_path,'Runs'))
     filename = os.path.join(params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
-    out_data['Queries'] = [q['trace'] for q in Queries]
+    out_data['Queries'] = [q['trace'] for q in out_data['Queries']]
     with open(filename, 'wb') as file:
         dill.dump(out_data, file)
 
@@ -434,7 +434,7 @@ def create_run_log(run_id, type = 'Active'):
     with PdfPages(pdf_file) as pdf:
         #print the ground truth formula
         plt.figure()
-        true_form = json.dumps(data['True_Formula'])
+        true_form = json.dumps(data['ground_truth_formula'])
         plt.text(0,0,true_form, wrap = True)
         plt.axis([-0.1,1,-1,1])
         plt.title(f'Trial {run_id}: Ground truth')
@@ -580,7 +580,7 @@ if __name__ == '__main__':
 
     n_trials = 80
     n_demo = 2
-    n_query = [2,3,4,5]
+    n_query = [1]
 
     for n_q in n_query:
         n_data = n_demo + n_q
