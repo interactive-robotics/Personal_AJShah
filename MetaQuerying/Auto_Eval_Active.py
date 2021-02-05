@@ -174,6 +174,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             # Writing the query data to the inference database
             new_traj = create_query_demo(Queries[-1]['trace'])
             write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
+            Queries[-1]['agent'] = 1
 
             # Update the posterior distribution using active BSI
             if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
@@ -340,6 +341,7 @@ verbose = True, write_file = True):
         # Writing the query data to the inference database
         new_traj = create_query_demo(Queries[-1]['trace'])
         write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
+        Queries[-1]['agent'] = 1
 
         # Update the posterior distribution using active BSI
         if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
@@ -578,9 +580,9 @@ if __name__ == '__main__':
     params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(params.results_path)
 
-    n_trials = 80
+    n_trials = 135
     n_demo = 2
-    n_query = [1]
+    n_query = [3]
 
     for n_q in n_query:
         n_data = n_demo + n_q
@@ -591,7 +593,7 @@ if __name__ == '__main__':
 
     n_trials = 200
     n_demo = 2
-    n_query = [2,3,4,5]
+    n_query = [4,5]
 
     for n_q in n_query:
         n_data = n_demo + n_q
