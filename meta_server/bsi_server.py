@@ -1,7 +1,7 @@
 import socket
 import dill
 import json
-from DemoScript import *
+from query_selection import *
 import auto_eval_params as params
 import os
 import time
