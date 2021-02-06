@@ -12,9 +12,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 import dill
 import params.auto_eval_params as global_params
 import params.uncertainty_sampling_params as uncertainty_sampling_params
-import params.info_gain_params as info_gain params
+import params.info_gain_params as info_gain_params
 import params.batch_params as batch_params
-import params.
+import params.meta_params as meta_params
 import os
 import json
 from copy import deepcopy
@@ -24,7 +24,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
 
     #Making this incremental
     #Check if the results path already exists
-    summary_file = os.path.join(params.results_path,'paired_summary.pkl')
+    summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
         with open(summary_file,'rb') as file:
             out_data = dill.load(file)
@@ -56,7 +56,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
     for i in range(trials):
 
         run_id = start_id + i
-        n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo=n_demo, ground_truth_formula = ground_truth_formula)
+        n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = ground_truth_formula)
         #Initialize the run information
 
         out_data['similarity'][run_id] = {}
@@ -90,7 +90,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
     # out_data['entropy'] = pd.DataFrame.from_dict(out_data['entropy'], orient='index')
     # out_data['similarity'] = pd.DataFrame.from_dict(out_data['similarity'], orient='index')
         #Summary file should be written at the end of every trial
-        summary_file = os.path.join(params.results_path,'paired_summary.pkl')
+        summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
         with open(summary_file,'wb') as file:
             dill.dump(out_data,file)
 
@@ -102,6 +102,7 @@ def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formul
 def run_meta_selection_trials(demo = 2, n_query = 4, query_strategy = 'info_gain',
 run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
 
+    params = meta_params
     MDPs = []
     Distributions = []
     Queries = []
@@ -110,7 +111,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
     demonstrations_requested = 0
 
     clear_demonstrations(params)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo, ground_truth_formula)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(params, demo, ground_truth_formula)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo}'
@@ -162,7 +163,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
 
             #Create the query
             if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
-            Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = params.non_terminal, query_strategy = query_strategy))
+            Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy))
 
             #Elicit label feedback from the ground truth
             signal = create_signal(Queries[-1]['trace'])
@@ -314,7 +315,7 @@ verbose = True, write_file = True):
     n_demo, eval_agent, ground_truth_formula = ground_truth_selector(params, demo, ground_truth_formula)
 
     # Run batch Inference
-    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {gloibal_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo}'
+    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nTraj {n_demo}'
     returnval = os.system(infer_command)
     if returnval: Exception('Inference Failure')
 
@@ -584,7 +585,7 @@ if __name__ == '__main__':
     check_results_path(global_params.results_path)
 
     n_trials = 1
-    n_demo = 2
+    n_demo = 4
     n_query = [1]
 
     for n_q in n_query:
