@@ -19,34 +19,7 @@ from copy import deepcopy
 def apply(f, x):
     return f(**x)
 
-# def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formula = None, mode = 'incremental'):
-#     summary_file = os.path.join(params.results_path,'paired_summary.pkl')
-#     if os.path.exists(summary_file):
-#         with open(summary_file,'rb') as file:
-#             out_data = dill.load(file)
-#             start_id = len(out_data['similarity'].keys())
-#     else:
-#         out_data = {}
-#         start_id = 0
-#         out_data['queries_chosen'] = 0
-#         out_data['demonstrations_chosen'] = 0
-#         out_data['query_mismatch'] = 0
-#         out_data['similarity'] = {}
-#         out_data['entropy'] = {}
-#         out_data['results'] = {}
-#
-#         #Metrics to collect for each run: Similarity, Entropy, ground_truth formula, distribution
-#         #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
-#         trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
-#         conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
-#         args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
-#         args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
-#         args3 = {'n_query': n_query, 'mode': mode}
-#         args4 = {'n_query': n_query, 'query_strategy': 'info_gain'}
-#         args = [args1, args2, args3, args4]
-#
-#         with Pool(processes = 4) as pool:
-#             run_data = pool.map
+
 
 def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formula = None, mode = 'incremental'):
 
@@ -206,7 +179,6 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             # Writing the query data to the inference database
             new_traj = create_query_demo(Queries[-1]['trace'])
             write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
-            Queries[-1]['agent'] = 1
 
             # Update the posterior distribution using active BSI
             if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
@@ -362,6 +334,7 @@ verbose = True, write_file = True):
         #Create the query
         if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
         Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = params.non_terminal, query_strategy = query_strategy))
+        
 
         #Elicit label feedback from the ground truth
         signal = create_signal(Queries[-1]['trace'])
@@ -373,7 +346,6 @@ verbose = True, write_file = True):
         # Writing the query data to the inference database
         new_traj = create_query_demo(Queries[-1]['trace'])
         write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
-        Queries[-1]['agent'] = 1
 
         # Update the posterior distribution using active BSI
         if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
@@ -612,9 +584,9 @@ if __name__ == '__main__':
     params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(params.results_path)
 
-    n_trials = 185
+    n_trials = 80
     n_demo = 2
-    n_query = [4]
+    n_query = [1]
 
     for n_q in n_query:
         n_data = n_demo + n_q
@@ -625,7 +597,7 @@ if __name__ == '__main__':
 
     n_trials = 200
     n_demo = 2
-    n_query = [5]
+    n_query = [2,3,4,5]
 
     for n_q in n_query:
         n_data = n_demo + n_q
