@@ -580,9 +580,9 @@ if __name__ == '__main__':
     params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(params.results_path)
 
-    n_trials = 135
+    n_trials = 185
     n_demo = 2
-    n_query = [3]
+    n_query = [4]
 
     for n_q in n_query:
         n_data = n_demo + n_q
@@ -593,7 +593,7 @@ if __name__ == '__main__':
 
     n_trials = 200
     n_demo = 2
-    n_query = [4,5]
+    n_query = [5]
 
     for n_q in n_query:
         n_data = n_demo + n_q
