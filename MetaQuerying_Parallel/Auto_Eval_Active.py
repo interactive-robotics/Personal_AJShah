@@ -67,8 +67,31 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_form
                 arg['ground_truth_formula'] = ground_truth_formula
                 arg['run_id'] = run_id
 
+            #Save the args in 'Run_Config/run_config.pkl'
+            with open('Run_Config/run_config.pkl', 'wb') as file:
+                dill.dump({'args': args}, file)
+
+            commands = ['python uncertainty_sampling_trial.py',
+                        'python info_gain_trial.py',
+                        'python batch_trial.py',
+                        'python meta_selection_trial.py']
+
+
             with Pool(processes = 4) as pool:
-                run_data = pool.starmap(f, zip(trial_functions, args))
+                returnvals = pool.starmap(os.system, commands)
+
+            for (retval, command) in zip(returnvals, commands):
+                if retval:
+                    retval = os.system(command)
+
+            # Read the respective files from 'Run_Config'
+            run_data = []
+            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch_trial.pkl','meta_selection_trial.pkl']
+            for file in files:
+                with open(os.path.join('Run_Config', file), 'rb') as file:
+                    data = dill.load(file)
+                run_data.append(data)
+                        
 
             for (condition, rd) in zip(conditions, run_data):
 
