@@ -1,5 +1,5 @@
 from numpy.random import binomial
-from puns.utils import CreateSpecMDP, Eventually, Order
+from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 import matplotlib.pyplot as plt
 import networkx as nx
 import params.auto_eval_params as global_params
@@ -37,27 +37,42 @@ def create_orders(subsets):
     return orders
 
 
-def sample_ground_truth(n_waypoints = 5):
+def sample_ground_truth(n_waypoints = 5, threats = False):
 
     values = [f'W{i}' for i in range(n_waypoints)]
     waypoints = sample_subset(values)
     orders = create_orders(divide_into_subsets(values))
 
-    if len(waypoints) == 0 and len(orders)==0:
+    if threats:
+        threat_candidates = list(set(values) - set(waypoints))
+        if len(threat_candidates) > 0:
+            threats = sample_subset(threat_candidates)
+        else:
+            threats = []
+    else:
+        threats = []
+
+    if len(waypoints) == 0 and len(orders)==0 and len(threats) == 0:
         ground_truth_formula = [True]
-    elif len(waypoints)+len(orders) == 1:
+    elif len(waypoints)+len(orders)+len(threats) == 1:
         ground_truth_formula = []
+        for threat in threats:
+            ground_truth_formula.append(Globally(threat))
         for waypoint in waypoints:
             ground_truth_formula.append(Eventually(waypoint))
         for order in orders:
             ground_truth_formula.append(Order(*order))
+
         ground_truth_formula = ground_truth_formula[0]
     else:
         ground_truth_formula = ['and']
+        for threat in threats:
+            ground_truth_formula.append(Globally(threat))
         for waypoint in waypoints:
             ground_truth_formula.append(Eventually(waypoint))
         for order in orders:
             ground_truth_formula.append(Order(*order))
+
 
     return ground_truth_formula
 

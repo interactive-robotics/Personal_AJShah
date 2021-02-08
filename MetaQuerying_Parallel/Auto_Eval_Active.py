@@ -25,7 +25,7 @@ from itertools import repeat
 def apply(f,x):
     return f(**x)
 
-def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formula = None, mode = 'incremental'):
+def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, given_ground_truth_formula = None, mode = 'incremental'):
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
         with open(summary_file,'rb') as file:
@@ -55,7 +55,7 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_form
 
             run_id = start_id + i
             print(f'Running Trial {run_id}')
-            n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = ground_truth_formula)
+            n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth_formula)
 
             out_data['similarity'][run_id] = {}
             out_data['entropy'][run_id] = {}
@@ -91,7 +91,7 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_form
                 with open(os.path.join('Run_Config', file), 'rb') as file:
                     data = dill.load(file)
                 run_data.append(data)
-                        
+
 
             for (condition, rd) in zip(conditions, run_data):
 
