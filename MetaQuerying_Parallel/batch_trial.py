@@ -7,10 +7,10 @@ if __name__ == '__main__':
     with open('Run_Config/run_config.pkl', 'rb') as file:
         args = dill.load(file)
     args = args['args']
-    run_args = args[0]
+    run_args = args[2]
 
-    run_data = run_active_trial(**run_args)
+    run_data = run_batch_trial(**run_args)
 
     #Save the run information
-    with open('Run_Config/uncertainty_sampling.pkl','wb') as file:
+    with open('Run_Config/batch.pkl','wb') as file:
         dill.dump(run_data, file)

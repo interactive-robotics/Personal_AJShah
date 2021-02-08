@@ -41,73 +41,74 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_form
         out_data['entropy'] = {}
         out_data['results'] = {}
 
-        #Metrics to collect for each run: Similarity, Entropy, ground_truth formula, distribution
-        #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
-        trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
-        conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
-        args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
-        args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
-        args3 = {'n_query': n_query, 'mode': mode}
-        args4 = {'n_query': n_query, 'query_strategy': 'info_gain'}
-        args = [args1, args2, args3, args4]
+    #Metrics to collect for each run: Similarity, Entropy, ground_truth formula, distribution
+    #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
+    trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
+    conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
+    args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
+    args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
+    args3 = {'n_query': n_query, 'mode': mode}
+    args4 = {'n_query': n_query, 'query_strategy': 'info_gain'}
+    args = [args1, args2, args3, args4]
 
-        for i in range(n_trials):
+    for i in range(n_trials):
 
-            run_id = start_id + i
-            print(f'Running Trial {run_id}')
-            n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = ground_truth_formula)
+        run_id = start_id + i
+        print(f'Running Trial {run_id}')
+        n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = ground_truth_formula)
 
-            out_data['similarity'][run_id] = {}
-            out_data['entropy'][run_id] = {}
-            out_data['results'][run_id] = {}
-            out_data['results'][run_id]['ground_truth'] = ground_truth_formula
+        out_data['similarity'][run_id] = {}
+        out_data['entropy'][run_id] = {}
+        out_data['results'][run_id] = {}
+        out_data['results'][run_id]['ground_truth'] = ground_truth_formula
 
-            for arg in args:
-                arg['demo'] = eval_agent
-                arg['ground_truth_formula'] = ground_truth_formula
-                arg['run_id'] = run_id
+        for arg in args:
+            arg['demo'] = eval_agent
+            arg['ground_truth_formula'] = ground_truth_formula
+            arg['run_id'] = run_id
 
-            #Save the args in 'Run_Config/run_config.pkl'
-            with open('Run_Config/run_config.pkl', 'wb') as file:
-                dill.dump({'args': args}, file)
+        #Save the args in 'Run_Config/run_config.pkl'
+        with open('Run_Config/run_config.pkl', 'wb') as file:
+            dill.dump({'args': args}, file)
 
-            commands = ['python uncertainty_sampling_trial.py',
-                        'python info_gain_trial.py',
-                        'python batch_trial.py',
-                        'python meta_selection_trial.py']
+        commands = ['python uncertainty_sampling_trial.py',
+                    'python info_gain_trial.py',
+                    'python batch_trial.py',
+                    'python meta_selection_trial.py']
 
 
-            with Pool(processes = 4) as pool:
-                returnvals = pool.starmap(os.system, commands)
+        with Pool(processes = 4) as pool:
+            returnvals = pool.map(os.system, commands)
 
-            for (retval, command) in zip(returnvals, commands):
-                if retval:
-                    retval = os.system(command)
+        for (retval, command) in zip(returnvals, commands):
+            if retval:
+                retval = os.system(command)
 
-            # Read the respective files from 'Run_Config'
-            run_data = []
-            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch_trial.pkl','meta_selection_trial.pkl']
-            for file in files:
-                with open(os.path.join('Run_Config', file), 'rb') as file:
-                    data = dill.load(file)
-                run_data.append(data)
-                        
+        # Read the respective files from 'Run_Config'
+        run_data = []
+        files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl']
+        for file in files:
+            with open(os.path.join('Run_Config', file), 'rb') as f:
+                data = dill.load(f)
+            os.remove(os.path.join('Run_Config',file))
+            run_data.append(data)
+                    
 
-            for (condition, rd) in zip(conditions, run_data):
+        for (condition, rd) in zip(conditions, run_data):
 
-                if condition == 'Active: Uncertainty Sampling' or condition == 'Active: Info Gain':
-                    out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
-                if condition == 'Meta-Selection':
-                    out_data['queries_chosen'] = out_data['queries_chosen'] + rd['queries_performed']
-                    out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] = rd['demonstrations_requested']
+            if condition == 'Active: Uncertainty Sampling' or condition == 'Active: Info Gain':
+                out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
+            if condition == 'Meta-Selection':
+                out_data['queries_chosen'] = out_data['queries_chosen'] + rd['queries_performed']
+                out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] = rd['demonstrations_requested']
 
-                out_data['similarity'][run_id][condition] = rd['similarity']
-                out_data['entropy'][run_id][condition] = rd['entropy']
-                out_data['results'][run_id][condition] = rd['Distributions'][-1]
+            out_data['similarity'][run_id][condition] = rd['similarity']
+            out_data['entropy'][run_id][condition] = rd['entropy']
+            out_data['results'][run_id][condition] = rd['Distributions'][-1]
 
-            summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
-            with open(summary_file,'wb') as file:
-                dill.dump(out_data,file)
+        summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
+        with open(summary_file,'wb') as file:
+            dill.dump(out_data,file)
 
 
 
@@ -681,15 +682,39 @@ if __name__ == '__main__':
     global_params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(global_params.results_path)
 
-    n_trials = 1
-    n_demo = 4
-    n_query = [1]
+    n_trials = 175
+    n_demo = 2
+    n_query = [4]
 
     for n_q in n_query:
         n_data = n_demo + n_q
-        #params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
         check_results_path(global_params.results_path)
         results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+    
+    
+    n_trials = 33
+    n_demo = 2
+    n_query = [2]
+
+    for n_q in n_query:
+        n_data = n_demo + n_q
+        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+        check_results_path(global_params.results_path)
+        results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+
+
+
+    n_trials = 200
+    n_demo = 2
+    n_query = [1,5]
+
+    for n_q in n_query:
+        n_data = n_demo + n_q
+        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+        check_results_path(global_params.results_path)
+        results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+    results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
 
 
 #
