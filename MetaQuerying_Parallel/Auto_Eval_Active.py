@@ -45,17 +45,17 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, given_ground_trut
     #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
     trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
     conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
-    args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
-    args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
-    args3 = {'n_query': n_query, 'mode': mode}
-    args4 = {'n_query': n_query, 'query_strategy': 'info_gain'}
+    args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'write_file': False}
+    args2 = {'n_query': n_query, 'query_strategy': 'info_gain', 'write_file': False}
+    args3 = {'n_query': n_query, 'mode': mode, 'write_file': False}
+    args4 = {'n_query': n_query, 'query_strategy': 'info_gain', 'write_file': False}
     args = [args1, args2, args3, args4]
 
     for i in range(n_trials):
 
-            run_id = start_id + i
-            print(f'Running Trial {run_id}')
-            n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth_formula)
+        run_id = start_id + i
+        print(f'Running Trial {run_id}')
+        n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth_formula)
 
         out_data['similarity'][run_id] = {}
         out_data['entropy'][run_id] = {}
@@ -87,11 +87,17 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, given_ground_trut
         # Read the respective files from 'Run_Config'
         run_data = []
         files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl']
-        for file in files:
+        typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection']
+        for (file, typ) in zip(files, typs):
             with open(os.path.join('Run_Config', file), 'rb') as f:
                 data = dill.load(f)
+            write_run_data_new(data, run_id, typ = typ)
+            create_run_log(run_id, typ)
             os.remove(os.path.join('Run_Config',file))
             run_data.append(data)
+        
+        # write_run_data_new(out_data, run_id, typ = f'Meta_Selection')
+        # create_run_log(run_id, f'Meta_Selection')
 
 
         for (condition, rd) in zip(conditions, run_data):
@@ -265,6 +271,7 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             #Elicit label feedback from the ground truth
             signal = create_signal(Queries[-1]['trace'])
             label = Progress(ground_truth_formula, signal)[0]
+            Queries[-1]['label'] = label
             if verbose:
                 print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
                 print('Assigned label', label)
@@ -437,6 +444,8 @@ verbose = True, write_file = True):
         #Elicit label feedback from the ground truth
         signal = create_signal(Queries[-1]['trace'])
         label = Progress(ground_truth_formula, signal)[0]
+        Queries[-1]['label'] = label
+
         if verbose:
             print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
             print('Assigned label', label)
@@ -488,9 +497,9 @@ def write_run_data_new(out_data, run_id, typ):
 
 
 
-def ground_truth_selector(params, demo = 2, ground_truth_formula = None):
+def ground_truth_selector(params, demo = 2, ground_truth_formula = None, threats = True):
     if ground_truth_formula == None:
-        ground_truth_formula = sample_ground_truth()
+        ground_truth_formula = sample_ground_truth(threats = threats)
 
     if type(demo) == int:
         n_demo = demo
@@ -682,39 +691,18 @@ if __name__ == '__main__':
     global_params.results_path = '/home/ajshah/Results/Test_Meta'
     check_results_path(global_params.results_path)
 
-    n_trials = 175
-    n_demo = 2
-    n_query = [4]
-
-    for n_q in n_query:
-        n_data = n_demo + n_q
-        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
-        check_results_path(global_params.results_path)
-        results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
-
-
-    n_trials = 33
-    n_demo = 2
-    n_query = [2]
-
-    for n_q in n_query:
-        n_data = n_demo + n_q
-        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
-        check_results_path(global_params.results_path)
-        results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
-
 
 
     n_trials = 200
     n_demo = 2
-    n_query = [1,5]
+    n_query = [1,2,3,4,5]
 
     for n_q in n_query:
         n_data = n_demo + n_q
         global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
         check_results_path(global_params.results_path)
-        results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
-    results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+        #results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+        results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
 
 
 #
