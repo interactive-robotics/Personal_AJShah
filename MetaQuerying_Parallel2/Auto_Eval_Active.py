@@ -25,7 +25,8 @@ from itertools import repeat
 def apply(f,x):
     return f(**x)
 
-def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, given_ground_truth_formula = None, mode = 'incremental'):
+def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental'):
+
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
         with open(summary_file,'rb') as file:
@@ -41,85 +42,158 @@ def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, given_ground_trut
         out_data['entropy'] = {}
         out_data['results'] = {}
 
-    #Metrics to collect for each run: Similarity, Entropy, ground_truth formula, distribution
-    #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
-    trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
-    conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
-    args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'write_file': False}
-    args2 = {'n_query': n_query, 'query_strategy': 'info_gain', 'write_file': False}
-    args3 = {'n_query': n_query, 'mode': mode, 'write_file': False}
-    args4 = {'n_query': n_query, 'query_strategy': 'info_gain', 'write_file': False}
-    args = [args1, args2, args3, args4]
+    #Create the trial directories
+    directories = [os.path.join('Run_Config', f'trial_{i}') for i in range(workers)]
+    for directory in directories:
+        if not os.path.exists(directory): os.mkdir(directory)
 
-    for i in range(n_trials):
+    #Create the trial_config
+    trial_config = {
+                    'n_demo': n_demo,
+                    'n_query': n_query,
+                    'given_ground_truth': given_ground_truth,
+                    'mode': mode,
+                    }
 
-        run_id = start_id + i
-        print(f'Running Trial {run_id}')
-        n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth_formula)
+    for j in range(batches):
 
-        out_data['similarity'][run_id] = {}
-        out_data['entropy'][run_id] = {}
-        out_data['results'][run_id] = {}
-        out_data['results'][run_id]['ground_truth'] = ground_truth_formula
+        #Write the trial directories
+        for (k,directory) in enumerate(directories):
+            trial_config['batch_id'] = start_id + workers*batch_id + k
+            with open(os.path.join(directory, 'trial_config.pkl'),'wb') as file:
+                dill.dump(trial_config, file)
 
-        for arg in args:
-            arg['demo'] = eval_agent
-            arg['ground_truth_formula'] = ground_truth_formula
-            arg['run_id'] = run_id
-
-        #Save the args in 'Run_Config/run_config.pkl'
-        with open('Run_Config/run_config.pkl', 'wb') as file:
-            dill.dump({'args': args}, file)
-
-        commands = ['python uncertainty_sampling_trial.py',
-                    'python info_gain_trial.py',
-                    'python batch_trial.py',
-                    'python meta_selection_trial.py']
-
-
-        with Pool(processes = 4) as pool:
+        commands = [f'python trial.py {directory}' for directory in directories]
+        with Pool(processes = workers) as pool:
             returnvals = pool.map(os.system, commands)
 
+        #If any run did not succeed, run it in series
         for (retval, command) in zip(returnvals, commands):
             if retval:
                 retval = os.system(command)
 
-        # Read the respective files from 'Run_Config'
-        run_data = []
-        files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl']
-        typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection']
-        for (file, typ) in zip(files, typs):
-            with open(os.path.join('Run_Config', file), 'rb') as f:
-                data = dill.load(f)
-            write_run_data_new(data, run_id, typ = typ)
-            create_run_log(run_id, typ)
-            os.remove(os.path.join('Run_Config',file))
-            run_data.append(data)
-        
-        # write_run_data_new(out_data, run_id, typ = f'Meta_Selection')
-        # create_run_log(run_id, f'Meta_Selection')
+        for (k,directory) in enumerate(directories):
+            #Record all individual runs
+            run_id = start_id + workers*batch_id + k
+            run_data = []
+            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl']
+            typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection']
+            for (file, typ) in zip(files, typs):
+                with open(os.path.join(directory, file), 'rb') as f:
+                    data = dill.load(f)
+                write_run_data_new(data, run_id, typ = typ)
+                create_run_log(run_id, typ)
+                os.remove(os.path.join(directory,file))
+                run_data.append(data)
 
+            #Assimilate trial data into the final out_data
+            with open(directory, 'trial_out_data.pkl','rb') as file:
+                trial_out_data = dill.load(file)
 
-        for (condition, rd) in zip(conditions, run_data):
+            out_data['similarity'][run_id] = trial_out_data['similarity']
+            out_data['entropy'][run_id] = trial_out_data['entropy']
+            out_data['results'][run_id] = trial_out_data['results']
+            out_data['query_mismatch'] = out_data['query_mismatch'] + trial_out_data['query_mismatch']
+            out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] + trial_out_data['demonstrations_chosen']
+            out_data['queries_chosen'] = out_data['queries_chosen'] + trial_out_data['queries_chosen']
 
-            if condition == 'Active: Uncertainty Sampling' or condition == 'Active: Info Gain':
-                out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
-            if condition == 'Meta-Selection':
-                out_data['queries_chosen'] = out_data['queries_chosen'] + rd['queries_performed']
-                out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] = rd['demonstrations_requested']
+    summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
+    with open(summary_file,'wb') as file:
+        dill.dump(out_data,file)
 
-            out_data['similarity'][run_id][condition] = rd['similarity']
-            out_data['entropy'][run_id][condition] = rd['entropy']
-            out_data['results'][run_id][condition] = rd['Distributions'][-1]
-
-        summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
-        with open(summary_file,'wb') as file:
-            dill.dump(out_data,file)
-
-
-
-    #Write to file in results path and return
     return out_data
+
+
+#
+# def run_parallel_trials(trials = 200, n_demo = 2, n_query = 4, given_ground_truth_formula = None, mode = 'incremental'):
+#     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
+#     if os.path.exists(summary_file):
+#         with open(summary_file,'rb') as file:
+#             out_data = dill.load(file)
+#             start_id = len(out_data['similarity'].keys())
+#     else:
+#         out_data = {}
+#         start_id = 0
+#         out_data['queries_chosen'] = 0
+#         out_data['demonstrations_chosen'] = 0
+#         out_data['query_mismatch'] = 0
+#         out_data['similarity'] = {}
+#         out_data['entropy'] = {}
+#         out_data['results'] = {}
+#
+#     #Metrics to collect for each run: Similarity, Entropy, ground_truth formula, distribution
+#     #Global metrics: number of queries chosen, number of demonstrations chosen, query_mismatches
+#     trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials]
+#     conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection']
+#     args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
+#     args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
+#     args3 = {'n_query': n_query, 'mode': mode}
+#     args4 = {'n_query': n_query, 'query_strategy': 'info_gain'}
+#     args = [args1, args2, args3, args4]
+#
+#     for i in range(n_trials):
+#
+#             run_id = start_id + i
+#             print(f'Running Trial {run_id}')
+#             n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth_formula)
+#
+#         out_data['similarity'][run_id] = {}
+#         out_data['entropy'][run_id] = {}
+#         out_data['results'][run_id] = {}
+#         out_data['results'][run_id]['ground_truth'] = ground_truth_formula
+#
+#         for arg in args:
+#             arg['demo'] = eval_agent
+#             arg['ground_truth_formula'] = ground_truth_formula
+#             arg['run_id'] = run_id
+#
+#         #Save the args in 'Run_Config/run_config.pkl'
+#         with open('Run_Config/run_config.pkl', 'wb') as file:
+#             dill.dump({'args': args}, file)
+#
+#         commands = ['python uncertainty_sampling_trial.py',
+#                     'python info_gain_trial.py',
+#                     'python batch_trial.py',
+#                     'python meta_selection_trial.py']
+#
+#
+#         with Pool(processes = 4) as pool:
+#             returnvals = pool.map(os.system, commands)
+#
+#         for (retval, command) in zip(returnvals, commands):
+#             if retval:
+#                 retval = os.system(command)
+#
+#         # Read the respective files from 'Run_Config'
+#         run_data = []
+#         files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl']
+#         for file in files:
+#             with open(os.path.join('Run_Config', file), 'rb') as f:
+#                 data = dill.load(f)
+#             os.remove(os.path.join('Run_Config',file))
+#             run_data.append(data)
+#
+#
+#         for (condition, rd) in zip(conditions, run_data):
+#
+#             if condition == 'Active: Uncertainty Sampling' or condition == 'Active: Info Gain':
+#                 out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
+#             if condition == 'Meta-Selection':
+#                 out_data['queries_chosen'] = out_data['queries_chosen'] + rd['queries_performed']
+#                 out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] = rd['demonstrations_requested']
+#
+#             out_data['similarity'][run_id][condition] = rd['similarity']
+#             out_data['entropy'][run_id][condition] = rd['entropy']
+#             out_data['results'][run_id][condition] = rd['Distributions'][-1]
+#
+#         summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
+#         with open(summary_file,'wb') as file:
+#             dill.dump(out_data,file)
+#
+#
+#
+#     #Write to file in results path and return
+#     return out_data
 
 
 def run_paired_trials(trials = 200, n_demo = 2, n_query = 4, ground_truth_formula = None, mode = 'incremental'):
@@ -271,7 +345,6 @@ run_id = 1, ground_truth_formula = None, write_file = True, verbose=True):
             #Elicit label feedback from the ground truth
             signal = create_signal(Queries[-1]['trace'])
             label = Progress(ground_truth_formula, signal)[0]
-            Queries[-1]['label'] = label
             if verbose:
                 print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
                 print('Assigned label', label)
@@ -444,8 +517,6 @@ verbose = True, write_file = True):
         #Elicit label feedback from the ground truth
         signal = create_signal(Queries[-1]['trace'])
         label = Progress(ground_truth_formula, signal)[0]
-        Queries[-1]['label'] = label
-
         if verbose:
             print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
             print('Assigned label', label)
@@ -497,11 +568,9 @@ def write_run_data_new(out_data, run_id, typ):
 
 
 
-def ground_truth_selector(params, demo = 2, ground_truth_formula = None, threats = True):
+def ground_truth_selector(params, demo = 2, ground_truth_formula = None):
     if ground_truth_formula == None:
-
-        ground_truth_formula = sample_ground_truth(threats = threats)
-
+        ground_truth_formula = sample_ground_truth(threats = True)
 
     if type(demo) == int:
         n_demo = demo
@@ -689,22 +758,15 @@ def check_results_path(results_path):
 if __name__ == '__main__':
 
 
-    '''MAIN SCRIPT: Running Paired Trials'''
-    global_params.results_path = '/home/ajshah/Results/Test_Meta'
-    check_results_path(global_params.results_path)
-
-
-
-    n_trials = 200
+    batches = 1
     n_demo = 2
-    n_query = [1,2,3,4,5]
+    n_query = [1]
 
     for n_q in n_query:
         n_data = n_demo + n_q
         global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
         check_results_path(global_params.results_path)
-        #results = run_paired_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
-        results = run_parallel_trials(trials = n_trials, n_demo = n_demo, n_query = n_q)
+        results = run_paired_trials(batches = batches, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental')
 
 
 #
