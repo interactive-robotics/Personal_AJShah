@@ -12,5 +12,5 @@ if __name__ == '__main__':
     run_data = run_batch_trial(**run_args)
 
     #Save the run information
-    with open('Run_config/batch.pkl','wb') as file:
-        dill.dump(run_data)
+    with open('Run_Config/batch.pkl','wb') as file:
+        dill.dump(run_data, file)

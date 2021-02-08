@@ -12,5 +12,5 @@ if __name__ == '__main__':
     run_data = run_meta_selection_trials(**run_args)
 
     #Save the run information
-    with open('Run_config/uncertainty_sampling.pkl','wb') as file:
-        dill.dump(run_data)
+    with open('Run_Config/meta_selection.pkl','wb') as file:
+        dill.dump(run_data, file)
