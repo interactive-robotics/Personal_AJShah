@@ -76,10 +76,10 @@ def sample_ground_truth(n_waypoints = 5, threats = False):
 
     return ground_truth_formula
 
-def clear_demonstrations(params):
-    files = os.listdir(params.compressed_data_path)
+def clear_demonstrations(directory, params):
+    files = os.listdir(os.path.join(directory, params.compressed_data_path))
     for f in files:
-        os.remove(os.path.join(params.compressed_data_path, f))
+        os.remove(os.path.join(directory, params.compressed_data_path, f))
 
 def label_slice(trace_slice):
     label = 'S'

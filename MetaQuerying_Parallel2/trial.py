@@ -6,7 +6,7 @@ def run_single_trial(directory):
 
     '''directory should include a file 'trial_config.pkl' that acts as arguments'''
     with open(os.path.join(directory,'trial_config.pkl'),'rb') as file:
-        args = dill.load(file)
+        data = dill.load(file)
 
     n_demo = data['n_demo']
     n_query = data['n_query']
@@ -33,7 +33,7 @@ def run_single_trial(directory):
 
     run_id = batch_id
     print(f'Running Trial {run_id}')
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth_formula)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth)
 
     out_data['results']['ground_truth'] = ground_truth_formula
     for arg in args:
@@ -62,7 +62,7 @@ def run_single_trial(directory):
     for file in files:
         with open(os.path.join(directory, file), 'rb') as f:
             data = dill.load(f)
-        os.remove(os.path.join(directory,file))
+        #os.remove(os.path.join(directory,file))
         run_data.append(data)
 
     for (condition, rd) in zip(conditions, run_data):
@@ -78,7 +78,7 @@ def run_single_trial(directory):
         out_data['results'][condition] = rd['Distributions'][-1]
 
     with open(os.path.join(directory, 'trial_out_data.pkl'), 'wb') as file:
-        dill.dump(out_data)
+        dill.dump(out_data, file)
 
 
 

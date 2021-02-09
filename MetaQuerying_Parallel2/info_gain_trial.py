@@ -1,5 +1,6 @@
 from Auto_Eval_Active import *
 import dill
+import sys
 
 if __name__ == '__main__':
 
@@ -11,7 +12,7 @@ if __name__ == '__main__':
     args = args['args']
     run_args = args[1]
 
-    run_data = run_active_trial(**run_args)
+    run_data = run_active_trial(directory, **run_args)
 
     #Save the run information
     with open(os.path.join(directory, 'info_gain.pkl'),'wb') as file:

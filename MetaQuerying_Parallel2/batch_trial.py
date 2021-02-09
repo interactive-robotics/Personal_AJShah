@@ -12,7 +12,7 @@ if __name__ == '__main__':
     args = args['args']
     run_args = args[2]
 
-    run_data = run_batch_trial(**run_args)
+    run_data = run_batch_trial(directory, **run_args)
 
     #Save the run information
     with open(os.path.join(directory, 'batch.pkl'),'wb') as file:

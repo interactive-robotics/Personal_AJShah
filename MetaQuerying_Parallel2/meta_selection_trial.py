@@ -1,5 +1,6 @@
 from Auto_Eval_Active import *
 import dill
+import sys
 
 if __name__ == '__main__':
 
@@ -11,7 +12,7 @@ if __name__ == '__main__':
     args = args['args']
     run_args = args[3]
 
-    run_data = run_meta_selection_trials(**run_args)
+    run_data = run_meta_selection_trials(directory, **run_args)
 
     #Save the run information
     with open(os.path.join(directory, 'meta_selection.pkl'),'wb') as file:
