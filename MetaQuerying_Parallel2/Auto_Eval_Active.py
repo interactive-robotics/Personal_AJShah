@@ -25,7 +25,7 @@ from itertools import repeat
 def apply(f,x):
     return f(**x)
 
-def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental'):
+def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'info_gain'):
 
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
@@ -45,7 +45,7 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
     #Create the trial directories
     for i in range(workers):
         create_trial_directory('Run_Config', i)
-    
+
     directories = [os.path.join('Run_Config', f'trial_{i}') for i in range(workers)]
 
     #Create the trial_config
@@ -98,9 +98,9 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
             out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] + trial_out_data['demonstrations_chosen']
             out_data['queries_chosen'] = out_data['queries_chosen'] + trial_out_data['queries_chosen']
 
-        summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
-        with open(summary_file,'wb') as file:
-            dill.dump(out_data,file)
+            summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
+            with open(summary_file,'wb') as file:
+                dill.dump(out_data,file)
 
     return out_data
 
@@ -134,7 +134,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     for i in range(n_query):
 
         #Determine if additional demonstration or query will yield larger entropy gain
-        state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = 'info_gain')
+        state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = query_strategy)
         query_gain = compute_expected_entropy_gain(state, MDPs[-1].specification_fsm)
         print('Query Gain:', query_gain)
         demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm)
@@ -396,7 +396,7 @@ def create_trial_directory(directory, i):
     trial_dir = os.path.join(directory, f'trial_{i}')
     if not os.path.exists(trial_dir):
         os.mkdir(trial_dir)
-    
+
     from os.path import exists
 
     if not exists(os.path.join(trial_dir, uncertainty_sampling_params.data_path)):
@@ -405,32 +405,32 @@ def create_trial_directory(directory, i):
         os.mkdir(os.path.join(trial_dir, uncertainty_sampling_params.raw_data_path))
         os.mkdir(os.path.join(trial_dir, uncertainty_sampling_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, uncertainty_sampling_params.distributions_path))
-    
+
     if not exists(os.path.join(trial_dir, info_gain_params.data_path)):
         new_dir = os.path.join(trial_dir, info_gain_params.data_path)
         os.mkdir(new_dir)
         os.mkdir(os.path.join(trial_dir, info_gain_params.raw_data_path))
         os.mkdir(os.path.join(trial_dir, info_gain_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, info_gain_params.distributions_path))
-    
+
     if not exists(os.path.join(trial_dir, batch_params.data_path)):
         new_dir = os.path.join(trial_dir, batch_params.data_path)
         os.mkdir(new_dir)
         os.mkdir(os.path.join(trial_dir, batch_params.raw_data_path))
         os.mkdir(os.path.join(trial_dir, batch_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, batch_params.distributions_path))
-    
+
     if not exists(os.path.join(trial_dir, meta_params.data_path)):
         new_dir = os.path.join(trial_dir, meta_params.data_path)
         os.mkdir(new_dir)
         os.mkdir(os.path.join(trial_dir, meta_params.raw_data_path))
         os.mkdir(os.path.join(trial_dir, meta_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, meta_params.distributions_path))
-    
-    
-        
-    
-    
+
+
+
+
+
 
 
 def write_run_data_new(out_data, run_id, typ):
@@ -633,45 +633,23 @@ def check_results_path(results_path):
 if __name__ == '__main__':
 
 
-    batches = 85
+    # batches = 20
+    # n_demo = 2
+    # n_query = [3]
+    #
+    # for n_q in n_query:
+    #     n_data = n_demo + n_q
+    #     global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+    #     check_results_path(global_params.results_path)
+    #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
+
+    batches = 150
     n_demo = 2
-    n_query = [1]
+    n_query = [5]
 
     for n_q in n_query:
         n_data = n_demo + n_q
         global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
         check_results_path(global_params.results_path)
         results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
-    
-    batches = 100
-    n_demo = 2
-    n_query = [2,3,4,5]
 
-    for n_q in n_query:
-        n_data = n_demo + n_q
-        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
-        check_results_path(global_params.results_path)
-        results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
-
-
-#
-#    '''Test vanilla active learning in uncertainty sampling mode'''
-#    out_data = run_active_trial(query_strategy = 'uncertainty_sampling')
-#
-#
-#    '''Test vanilla active learning in uncertainty sampling mode'''
-#    out_data = run_active_trial(query_strategy = 'uncertainty_sampling')
-#
-    # '''Test uncertainty sampling mode with predefined demonstrations'''
-    # ground_truth_formula = sample_ground_truth(5)
-    # eval_agent = create_demonstrations(ground_truth_formula, 2)
-    #
-    # Distributions, MDPs, Queries, ground_truth_formula, query_mismatches = run_active_trial(query_strategy = 'uncertainty_sampling', demo = eval_agent, ground_truth_formula = ground_truth_formula)
-    #
-    # '''Run batch trial in batch mode'''
-    # out_data = run_batch_trial(demo = eval_agent, mode = 'batch', ground_truth_formula = ground_truth_formula)
-    #
-    # '''Run batch trial in incremental mode'''
-    # out_data = run_batch_trial(demo = eval_agent, mode = 'incremental', ground_truth_formula = ground_truth_formula)
-
-    #out_data = run_meta_selection_trials()
