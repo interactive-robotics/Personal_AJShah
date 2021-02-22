@@ -42,6 +42,8 @@ def sample_ground_truth(n_waypoints = 5, threats = False):
     values = [f'W{i}' for i in range(n_waypoints)]
     waypoints = sample_subset(values)
     orders = create_orders(divide_into_subsets(values))
+    order_waypoints = [o[0] for o in orders]
+    waypoints = list(set(waypoints) | set(order_waypoints))
 
     if threats:
         threat_candidates = list(set(values) - set(waypoints))

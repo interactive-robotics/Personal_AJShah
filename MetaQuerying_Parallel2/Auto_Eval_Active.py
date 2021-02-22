@@ -25,7 +25,7 @@ from itertools import repeat
 def apply(f,x):
     return f(**x)
 
-def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'info_gain'):
+def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
 
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
@@ -643,13 +643,12 @@ if __name__ == '__main__':
     #     check_results_path(global_params.results_path)
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
-    batches = 150
+    batches = 50
     n_demo = 2
-    n_query = [5]
+    n_query = [13]
 
     for n_q in n_query:
         n_data = n_demo + n_q
         global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
         check_results_path(global_params.results_path)
-        results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
-
+        results = run_parallel_trials(batches = batches, workers = 4, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
