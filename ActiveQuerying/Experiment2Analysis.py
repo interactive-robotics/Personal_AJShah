@@ -6,9 +6,10 @@ Created on Fri Sep 25 16:31:51 2020
 """
 
 import os
-os.environ['R_HOME'] = 'C:\Program Files\R\R-3.6.3'
+os.environ['R_HOME'] = r"C:\Program Files\R\R-3.6.3"
 os.environ['R_USER'] = 'C:/Users/AJShah/anaconda3/Lib/site-packages/rpy2'
 os.environ['R_LIB'] = 'C:/Users/AJShah/Documents/R/win-library'
+os.environ["PATH"]   = r"C:\Program Files\R\R-3.6.3\bin\x64" + ";" + os.environ["PATH"]
 
 from rpy2.robjects.packages import importr
 import rpy2.robjects as ro

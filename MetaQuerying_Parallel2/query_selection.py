@@ -308,6 +308,22 @@ def likelihood_factor(formula, label, sat_check, n_threats=5, n_waypoints=5):
             factor = 0
     return factor
 
+def compute_online_bsi_update(state, specification_fsm: SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
+    logprobs = np.log(specification_fsm._partial_rewards)
+
+    #for each state in the FSM
+    for (i,formula) in enumerate(state):
+        formula = json.loads(formula)
+        #Check if the formula is satisfied
+
+        sat_check = (IsSafe(formula)[0] and formula != [False]) or formula == [True]
+        factor = likelihood_factor(formula, label, sat_check, n_threats, n_waypoints)
+        logprobs[i] = logprobs[i] + factor
+
+    #the log probs should now be updated and unnormalized
+    new_probs = softmax(logprobs)
+    return {'formulas': specification_fsm._formulas, 'probs': new_probs}
+
 def compute_new_entropy(state, specification_fsm:SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
     #take log of all probabilities and convert to a numpy array
     logprobs = np.log(specification_fsm._partial_rewards)
@@ -438,44 +454,48 @@ def create_active_query_non_terminal(MDP, verbose = True):
 
 if __name__ == '__main__':
 
-    ''' Filter the trajectories while retaining only the time stamps with changes '''
-    #Import the traj Data
-    raw_data = read_raw_data(params.raw_data_path)
+    a=1
 
-    #Compress data
-    compressed_data = compress_data(raw_data)
-
-    #Write the compressed data to file
-    write_data(params.compressed_data_path, compressed_data)
-
-    ''' Perform Specification inference on the compressed data '''
-    inference_path = 'bsi_batch.js'
-    print('Executing Bayesian Specification Inference')
-    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.nSamples}  --nBurn {params.nBurn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.output_path}\' --nTraj {params.nTraj}'
-    returnval = os.system(infer_command)
-    if returnval:
-        Exception('Inference Error')
-
-    '''Read specification and plot the formula probabilities'''
-    specification = json.load(open(os.path.join(params.output_path, 'batch_posterior.json'),'r'))
-    formulas = specification['support']
-    probs = specification['probs']
-
-    plt.bar(range(len(probs)), np.sort(probs)[::-1])
-    f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(probs),0)[0:i+1], 0)
-    plt.plot(range(len(probs)), list(map(f, range(len(probs)))))
-
-    ''' Compile an instance of PUNS and plan with 10000 training episode '''
-    print('Compiling PUnS instance')
-    MDP = CreateSpecMDP(os.path.join(params.output_path,'batch_posterior.json'), 0, 5)
-    QAgent = QLearningAgent(MDP)
-    print('Training PuNS instance')
-    #QAgent.explore(episode_limit = 10000, action_limit = 100000, verbose=True)
-
-    print('Evaluating trained agent')
-    #eval_agent = ExplorerAgent(MDP, input_policy = QAgent.create_learned_softmax_policy(0.01))
-    #eval_agent.explore(episode_limit=100)
-    #col = eval_agent.visualize_exploration(prog='neato')
-
-    print('Getting desired state for most informative query')
-    desired_state, bread_crumb_states = identify_desired_state(MDP.specification_fsm)
+    #
+    #
+    # ''' Filter the trajectories while retaining only the time stamps with changes '''
+    # #Import the traj Data
+    # raw_data = read_raw_data(params.raw_data_path)
+    #
+    # #Compress data
+    # compressed_data = compress_data(raw_data)
+    #
+    # #Write the compressed data to file
+    # write_data(params.compressed_data_path, compressed_data)
+    #
+    # ''' Perform Specification inference on the compressed data '''
+    # inference_path = 'bsi_batch.js'
+    # print('Executing Bayesian Specification Inference')
+    # infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.nSamples}  --nBurn {params.nBurn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.output_path}\' --nTraj {params.nTraj}'
+    # returnval = os.system(infer_command)
+    # if returnval:
+    #     Exception('Inference Error')
+    #
+    # '''Read specification and plot the formula probabilities'''
+    # specification = json.load(open(os.path.join(params.output_path, 'batch_posterior.json'),'r'))
+    # formulas = specification['support']
+    # probs = specification['probs']
+    #
+    # plt.bar(range(len(probs)), np.sort(probs)[::-1])
+    # f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(probs),0)[0:i+1], 0)
+    # plt.plot(range(len(probs)), list(map(f, range(len(probs)))))
+    #
+    # ''' Compile an instance of PUNS and plan with 10000 training episode '''
+    # print('Compiling PUnS instance')
+    # MDP = CreateSpecMDP(os.path.join(params.output_path,'batch_posterior.json'), 0, 5)
+    # QAgent = QLearningAgent(MDP)
+    # print('Training PuNS instance')
+    # #QAgent.explore(episode_limit = 10000, action_limit = 100000, verbose=True)
+    #
+    # print('Evaluating trained agent')
+    # #eval_agent = ExplorerAgent(MDP, input_policy = QAgent.create_learned_softmax_policy(0.01))
+    # #eval_agent.explore(episode_limit=100)
+    # #col = eval_agent.visualize_exploration(prog='neato')
+    #
+    # print('Getting desired state for most informative query')
+    # desired_state, bread_crumb_states = identify_desired_state(MDP.specification_fsm)
