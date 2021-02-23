@@ -1,5 +1,6 @@
 from query_selection import *
 from utils import *
+from pedagogical_demo import *
 from formula_utils import *
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 from puns.SpecificationMDP import *
@@ -15,12 +16,12 @@ import params.uncertainty_sampling_params as uncertainty_sampling_params
 import params.info_gain_params as info_gain_params
 import params.batch_params as batch_params
 import params.meta_params as meta_params
+import params.pedagogical_params as pedagogical_params
 import os
 import json
 from copy import deepcopy
 from multiprocessing import Pool
 from itertools import repeat
-from pedagogical_demo import *
 
 
 def apply(f,x):
@@ -78,8 +79,8 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
             #Record all individual runs
             run_id = start_id + workers*batch_id + k
             run_data = []
-            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl']
-            typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection']
+            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl']
+            typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection', 'Pedagogical Batch']
             for (file, typ) in zip(files, typs):
                 with open(os.path.join(directory, file), 'rb') as f:
                     data = dill.load(f)
@@ -105,6 +106,7 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
 
     return out_data
 
+
 def run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
 run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
@@ -123,6 +125,53 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
     returnval = os.system(infer_command)
     if returnval: Exception('Inference Failure')
+
+    # Compile the first MDP
+    spec_file = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
+    MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = global_params.n_waypoints))
+    Distributions.append(extract_dist(MDPs[-1]))
+
+    for i in range(n_query):
+        demo = create_pedagogical_demo(ground_truth_formula, MDP[-1])
+        label = true
+        demo['label'] = True
+
+        new_traj = create_query_demo(Queries[-1]['trace'])
+        write_demo_query_data(new_traj, label, os.path.join(directory, params.compressed_data_path), query_number = i+1)
+        demo['agent'] = 1
+        Queries.append(demo)
+
+        # Update the posterior distribution using active BSI
+        if verbose: print(f'Trial {run_id}: Updating posterior after demo {n_demo+i+1}')
+        infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
+        returnval = os.system(infer_command)
+        if returnval: Exception('Inference failure')
+
+        # Recompile the MDP with the updated specification and add the distributions
+        spec_file = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
+        MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = global_params.n_waypoints))
+        Distributions.append(extract_dist(MDPs[-1]))
+
+    similarities = [compare_distribution(ground_truth_formula, dist) for dist in Distributions]
+    out_data = {}
+    out_data['similarities'] = similarities
+    out_data['similarity'] = similarities[-1]
+    out_data['entropy'] = entropy(Distributions[-1]['probs'])
+    out_data['Distributions'] = Distributions
+    out_data['MDPs'] = MDPs
+    out_data['Queries'] = Queries
+    out_data['ground_truth_formula'] = ground_truth_formula
+    out_data['run_id'] = run_id
+    out_data['type'] = query_strategy
+    out_data['query_mismatches'] = query_mismatches
+    out_data['demonstrations_requested'] = demonstrations_requested
+    out_data['queries_performed'] = queries_performed
+
+    if write_file:
+        write_run_data_new(out_data, run_id, typ = f'Pedagogical_Batch')
+        create_run_log(run_id, f'Pedagogical_Batch')
+    return out_data
+
 
 
 def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
@@ -592,6 +641,56 @@ def create_results_path():
         os.mkdir(global_params.results_path)
         os.mkdir(os.path.join(global_params.results_path, 'Runs'))
 
+'''DEPRECATED CODE'''
+def run_active_query_trial(query_strategy = 'uncertainty_sampling', n_demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, verbose=True, write_file=True):
+
+    '''NOW DEPRECATED'''
+    MDPs = [] #The list of all the MDPs compiled
+
+    Distributions = []
+    '''The list of the distributions computed inferred
+    Each entry is a dictionary with keys 'formulas' and 'probs'
+    can be used to compute the entropies
+    '''
+    Queries = []
+    '''The list of the queries generated by the active query mechanism
+    Each entry is a dictionary with keys 'trace', 'agent' and 'desired state'
+    '''
+    #Clear the data from previous runs
+    clear_demonstrations(params)
+
+    #Start running the queries and active Inference
+    for i in range(n_query):
+
+        # Create the query
+        if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
+        Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = params.non_terminal))
+
+        # Eliciting feedback label for the query from ground ground_truth_formula
+        signal = create_signal(Queries[-1]['trace'])
+        label = Progress(ground_truth_formula, signal)[0]
+        if verbose:
+            print(f'Trial {run_id}: Generating ground truth label for query {i+1}')
+            print('Assigned label', label)
+
+        # Writing the query data to the inference database
+        new_traj = create_query_demo(Queries[-1]['trace'])
+        write_demo_query_data(new_traj, label, params.compressed_data_path, query_number = i+1)
+
+        # Update the posterior distribution using active BSI
+        if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
+        infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.n_samples}  --nBurn {params.n_burn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.distributions_path}\' --nQuery {i+1}'
+        returnval = os.system(infer_command)
+        if returnval: Exception('Inference failure')
+
+        # Recompile the MDP with the updated specification and add the distributions
+        spec_file = spec_file = os.path.join(params.distributions_path, 'batch_posterior.json')
+        MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = params.n_waypoints))
+        Distributions.append(extract_dist(MDPs[-1]))
+
+    if write_file:
+        write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type='Active')
+    return Distributions, MDPs, Queries, ground_truth_formula
 
 def check_results_path(results_path):
     if not os.path.exists(results_path):
@@ -611,12 +710,16 @@ if __name__ == '__main__':
     #     check_results_path(global_params.results_path)
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
-    batches = 50
-    n_demo = 2
-    n_query = [13]
+    directory = 'Run_Config/trial_0'
+    our_data = run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
+    run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
-    for n_q in n_query:
-        n_data = n_demo + n_q
-        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
-        check_results_path(global_params.results_path)
-        results = run_parallel_trials(batches = batches, workers = 4, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
+    # batches = 50
+    # n_demo = 2
+    # n_query = [13]
+    #
+    # for n_q in n_query:
+    #     n_data = n_demo + n_q
+    #     global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
+    #     check_results_path(global_params.results_path)
+    #     results = run_parallel_trials(batches = batches, workers = 4, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')

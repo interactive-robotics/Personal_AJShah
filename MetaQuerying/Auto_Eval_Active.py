@@ -1,6 +1,7 @@
 from query_selection import *
 from utils import *
 from formula_utils import *
+from pedagogical_demo import *
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 from puns.SpecificationMDP import *
 from puns.LearningAgents import QLearningAgent
@@ -334,7 +335,7 @@ verbose = True, write_file = True):
         #Create the query
         if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
         Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = params.non_terminal, query_strategy = query_strategy))
-        
+
 
         #Elicit label feedback from the ground truth
         signal = create_signal(Queries[-1]['trace'])
