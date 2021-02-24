@@ -17,6 +17,7 @@ import params.info_gain_params as info_gain_params
 import params.batch_params as batch_params
 import params.meta_params as meta_params
 import params.pedagogical_params as pedagogical_params
+import params.meta_pedagogical_params as meta_pedagogical_params
 import os
 import json
 from copy import deepcopy
@@ -174,7 +175,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
 
 
-def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
+def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
 run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, verbose=True):
 
     params = meta_params
@@ -204,7 +205,10 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
         state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = query_strategy)
         query_gain = compute_expected_entropy_gain(state, MDPs[-1].specification_fsm)
         print('Query Gain:', query_gain)
-        demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm)
+        if pedagogical:
+            demonstration_gain = compute_expected_entropy_gain_pedagogical(MDPs[-1].specification_fsm)
+        else:
+            demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm)
         print('Demonstration Gain:', demonstration_gain)
         demo = True if demonstration_gain >= query_gain else False
 
@@ -212,12 +216,17 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
             if verbose: print('Selecting demonstration for next data point')
             demonstrations_requested = demonstrations_requested + 1
 
+            if pedagogical:
+                demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1])
+                trace_slices = demo['trace']
+            else:
             #create a demonstration as a positive query
-            eval_agent.explore(1)
-            MDP = eval_agent.MDP
-            record = eval_agent.episodic_record[-1]
-            trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
-            trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+                eval_agent.explore(1)
+                MDP = eval_agent.MDP
+                record = eval_agent.episodic_record[-1]
+                trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
+                trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+
             new_traj = create_query_demo(trace_slices)
             write_demo_query_data(new_traj, True, os.path.join(directory, params.compressed_data_path), query_number=i+1)
 
@@ -226,6 +235,12 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
             infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
             returnval = os.system(infer_command)
             if returnval: Exception('Inference failure')
+
+            new_query = {}
+            new_query['trace'] = trace_slices
+            new_query['agent'] = 1
+            new_query['label'] = True
+            new_query['type'] = 'Demonstration'
 
             # Recompile the MDP with the updated specification and add the distributions
             spec_file = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
@@ -240,6 +255,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
             if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
             Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy))
             Queries[-1]['agent'] = 1
+
 
             #Elicit label feedback from the ground truth
             signal = create_signal(Queries[-1]['trace'])
@@ -257,6 +273,9 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
             infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
             returnval = os.system(infer_command)
             if returnval: Exception('Inference failure')
+
+            Queries[-1]['type'] = 'Query'
+            Queries[-1]['label'] = label
 
             # Recompile the MDP with the updated specification and add the distributions
             spec_file = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
@@ -279,8 +298,12 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
     out_data['queries_performed'] = queries_performed
 
     if write_file:
-        write_run_data_new(out_data, run_id, typ = f'Meta_Selection')
-        create_run_log(run_id, f'Meta_Selection')
+        if pedagogical:
+            write_run_data_new(out_data, run_id, typ = f'Meta_Pedagogical')
+            create_run_log(run_id, f'Meta_Pedagogical')
+        else:
+            write_run_data_new(out_data, run_id, typ = f'Meta_Selection')
+            create_run_log(run_id, f'Meta_Selection')
     return out_data
 
 def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = False, verbose=True):
@@ -326,6 +349,12 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
             infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
             returnval = os.system(infer_command)
             if returnval: Exception('Inference failure')
+
+            new_query = {}
+            new_query['trace'] = trace_slices
+            new_query['label'] = True
+            new_query['agent'] = 1
+            new_query['type'] = 'Demonstration'
 
             # Recompile the MDP with the updated specification and add the distributions
             spec_file  = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
@@ -430,6 +459,9 @@ verbose = True, write_file = False):
         returnval = os.system(infer_command)
         if returnval: Exception('Inference failure')
 
+        Queries[-1]['type'] = 'Query'
+        Queries[-1]['label'] = label
+
         # Recompile the MDP with the updated specification and add the distributions
         spec_file = spec_file = os.path.join(os.path.join(directory, params.distributions_path), 'batch_posterior.json')
         MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = global_params.n_waypoints))
@@ -501,6 +533,13 @@ def create_trial_directory(directory, i):
         os.mkdir(os.path.join(trial_dir, pedagogical_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, pedagogical_params.distributions_path))
 
+    if not exists(os.path.join(trial_dir, meta_pedagogical_params.data_path)):
+        new_dir = os.path.join(trial_dir, meta_pedagogical_params.data_path)
+        os.mkdir(new_dir)
+        os.mkdir(os.path.join(trial_dir, meta_pedagogical_params.raw_data_path))
+        os.mkdir(os.path.join(trial_dir, meta_pedagogical_params.compressed_data_path))
+        os.mkdir(os.path.join(trial_dir, meta_pedagogical_params.distributions_path))
+
 
 
 
@@ -556,7 +595,7 @@ def create_run_log(run_id, type = 'Active'):
     filename = os.path.join(global_params.results_path, 'Runs', f'{type}_Run_{run_id}')
     with open(filename+'.pkl','rb') as file:
         data = dill.load(file)
-    data['Queries'] = [q['trace'] for q in data['Queries']]
+    #data['Queries'] = [q['trace'] for q in data['Queries']]
 
     if type == 'Demo':
         n_demo = global_params.n_demo + global_params.n_queries
@@ -585,8 +624,8 @@ def create_run_log(run_id, type = 'Active'):
         for i in range(len(data['Queries'])):
             #plot the query_
             plt.figure(figsize=(5,5))
-            visualize_query(data['Queries'][i])
-            plt.title(f'Query {i+1}')
+            visualize_query(data['Queries'][i]['trace'])
+            plt.title(f'{data['Queries'][i]['type']} {i+1}: {data['Queries'][i]['label']}')
             pdf.savefig()
             plt.close()
 
@@ -717,9 +756,15 @@ if __name__ == '__main__':
     #     check_results_path(global_params.results_path)
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
+
+    directory = 'Run_Config/trial_0'
+    create_trial_directory('Run_Config',0)
+    run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
+    run_id = 1, ground_truth_formula = None, pedagogical=True, write_file = True, verbose=True)
+'''
     global_params.results_path = f'/home/ajshah/Results/Test'
     run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling')
-
+'''
 
     # batches = 50
     # n_demo = 2
