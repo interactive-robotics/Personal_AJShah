@@ -119,7 +119,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     demonstrations_requested = []
 
     clear_demonstrations(directory, params)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, params, demo, groud_truth_formula)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, params, demo, ground_truth_formula)
 
     # Run Batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -132,11 +132,11 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     Distributions.append(extract_dist(MDPs[-1]))
 
     for i in range(n_query):
-        demo = create_pedagogical_demo(ground_truth_formula, MDP[-1])
-        label = true
+        demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1])
+        label = True
         demo['label'] = True
 
-        new_traj = create_query_demo(Queries[-1]['trace'])
+        new_traj = create_query_demo(demo['trace'])
         write_demo_query_data(new_traj, label, os.path.join(directory, params.compressed_data_path), query_number = i+1)
         demo['agent'] = 1
         Queries.append(demo)
@@ -493,6 +493,13 @@ def create_trial_directory(directory, i):
         os.mkdir(os.path.join(trial_dir, meta_params.raw_data_path))
         os.mkdir(os.path.join(trial_dir, meta_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, meta_params.distributions_path))
+    
+    if not exists(os.path.join(trial_dir, pedagogical_params.data_path)):
+        new_dir = os.path.join(trial_dir, pedagogical_params.data_path)
+        os.mkdir(new_dir)
+        os.mkdir(os.path.join(trial_dir, pedagogical_params.raw_data_path))
+        os.mkdir(os.path.join(trial_dir, pedagogical_params.compressed_data_path))
+        os.mkdir(os.path.join(trial_dir, pedagogical_params.distributions_path))
 
 
 
@@ -710,9 +717,43 @@ if __name__ == '__main__':
     #     check_results_path(global_params.results_path)
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
+    global_params.results_path = f'/home/ajshah/Results/Test'
     directory = 'Run_Config/trial_0'
-    our_data = run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
-    run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
+    create_trial_directory('Run_Config', 0)
+    
+    ground_truth_formula = ['and',
+                            ['G' , ['not',['W4']]],
+                            ['F',['W0']],
+                            ['F',['W1']],
+                            ['F',['W2']],
+                            ['U',['not',['W2']],['W0']],
+                            ['U',['not',['W1']],['W0']],
+                            ['U',['not',['W3']],['W0']],
+                            ['U',['not',['W2']],['W1']],
+                            ['U',['not',['W3']],['W1']],
+                            ['U',['not',['W3']],['W2']]]
+
+    out_data = run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
+    run_id = 1, ground_truth_formula = ground_truth_formula, write_file = False, verbose=True)
+
+    ground_truth_formula = ['and',
+                            ['G' , ['not',['W4']]],
+                            ['F',['W0']],
+                            ['F',['W1']],
+                            ['F',['W2']],
+                            ['U',['not',['W2']],['W0']],
+                            ['U',['not',['W1']],['W0']],
+                            ['U',['not',['W3']],['W0']],
+                            ['U',['not',['W2']],['W1']],
+                            ['U',['not',['W3']],['W1']],
+                            ['U',['not',['W3']],['W2']]]
+
+    spec_fsm = SpecificationFSM(out_data['Distributions'][0]['formulas'], out_data['Distributions'][0]['probs'])
+    d = identify_pedagogical_state(out_data['ground_truth_formula'], spec_fsm, debug = True)
+    desired_state = d['desired_state']
+    new_dist = compute_online_bsi_update(desired_state, spec_fsm, True)
+    states = d['states']
+    ces = d['cross_entropies']
 
     # batches = 50
     # n_demo = 2

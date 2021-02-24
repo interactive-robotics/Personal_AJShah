@@ -2,24 +2,27 @@
 from formula_utils import compare_formulas, compare_distribution
 from query_selection import *
 import networkx as nx
-from tqdm import tqdm
+#from tqdm import tqdm
+
 
 
 
 def compute_updated_cross_entropy(formula, new_dist):
 
-    similarities = [compare_formulas(formula, form) for form in new_dist]
+    similarities = [compare_formulas(formula, form) for form in new_dist['formulas']]
     most_similar_idx = np.argmax(similarities)
+    #print(type(np))
+    val = np.log(new_dist['probs'][most_similar_idx])
+    
+    return -val
 
-    return -log(new_dist['formulas'][most_similar_idx])
-
-def identify_pedagogical_state(groud_truth, prior_specification_fsm):
+def identify_pedagogical_state(ground_truth, prior_specification_fsm, debug = False):
 
     cross_entropies = []
     states = list(prior_specification_fsm.states2id.keys())
 
     for state in states:
-        new_dist = compute_online_bsi_update(state, specification_fsm: SpecificationFSM, label, n_threats = 5, n_waypoints = 5)
+        new_dist = compute_online_bsi_update(state, prior_specification_fsm, True, n_threats = 5, n_waypoints = 5)
         cross_entropies.append(compute_updated_cross_entropy(ground_truth, new_dist))
 
     state_idx = np.argmin(cross_entropies)
@@ -28,18 +31,21 @@ def identify_pedagogical_state(groud_truth, prior_specification_fsm):
     path_to_desired_state = nx.all_simple_paths(prior_specification_fsm.graph, 0, prior_specification_fsm.states2id[desired_state])
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([prior_specification_fsm.states2id[desired_state]])
 
+    if debug:
+        return{'desired_state': desired_state, 'bread_crumb_states': bread_crumb_states, 'cross_entropies': cross_entropies, 'states': states}
+
     return desired_state, bread_crumb_states
 
 
 
-def create_pedagogical_demo(ground_truth, MDP, n_threats = 0):
+def create_pedagogical_demo(ground_truth, MDP, n_threats = 0, non_terminal = True, verbose = True):
 
     #Identify desired state in the current FSM
-    desired_state, bread_crumb_states = identify_pedagogical_state(ground_truth, MDP.prior_specification_fsm)
+    desired_state, bread_crumb_states = identify_pedagogical_state(ground_truth, MDP.specification_fsm)
 
     #Recompile the spec_fsm with the new reward`
-    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
-    for state_id in breadcrumbs:
+    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, bread_crumb_states)
+    for state_id in bread_crumb_states:
         if spec_fsm2.id2states[state_id] in spec_fsm2.terminal_states:
             spec_fsm2.terminal_states.remove(spec_fsm2.id2states[state_id])
     if non_terminal:
