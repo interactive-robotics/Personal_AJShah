@@ -175,7 +175,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
 
 def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
-run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
+run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, verbose=True):
 
     params = meta_params
     MDPs = []
@@ -493,7 +493,7 @@ def create_trial_directory(directory, i):
         os.mkdir(os.path.join(trial_dir, meta_params.raw_data_path))
         os.mkdir(os.path.join(trial_dir, meta_params.compressed_data_path))
         os.mkdir(os.path.join(trial_dir, meta_params.distributions_path))
-    
+
     if not exists(os.path.join(trial_dir, pedagogical_params.data_path)):
         new_dir = os.path.join(trial_dir, pedagogical_params.data_path)
         os.mkdir(new_dir)
@@ -718,42 +718,8 @@ if __name__ == '__main__':
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
     global_params.results_path = f'/home/ajshah/Results/Test'
-    directory = 'Run_Config/trial_0'
-    create_trial_directory('Run_Config', 0)
-    
-    ground_truth_formula = ['and',
-                            ['G' , ['not',['W4']]],
-                            ['F',['W0']],
-                            ['F',['W1']],
-                            ['F',['W2']],
-                            ['U',['not',['W2']],['W0']],
-                            ['U',['not',['W1']],['W0']],
-                            ['U',['not',['W3']],['W0']],
-                            ['U',['not',['W2']],['W1']],
-                            ['U',['not',['W3']],['W1']],
-                            ['U',['not',['W3']],['W2']]]
+    run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
 
-    out_data = run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
-    run_id = 1, ground_truth_formula = ground_truth_formula, write_file = False, verbose=True)
-
-    ground_truth_formula = ['and',
-                            ['G' , ['not',['W4']]],
-                            ['F',['W0']],
-                            ['F',['W1']],
-                            ['F',['W2']],
-                            ['U',['not',['W2']],['W0']],
-                            ['U',['not',['W1']],['W0']],
-                            ['U',['not',['W3']],['W0']],
-                            ['U',['not',['W2']],['W1']],
-                            ['U',['not',['W3']],['W1']],
-                            ['U',['not',['W3']],['W2']]]
-
-    spec_fsm = SpecificationFSM(out_data['Distributions'][0]['formulas'], out_data['Distributions'][0]['probs'])
-    d = identify_pedagogical_state(out_data['ground_truth_formula'], spec_fsm, debug = True)
-    desired_state = d['desired_state']
-    new_dist = compute_online_bsi_update(desired_state, spec_fsm, True)
-    states = d['states']
-    ces = d['cross_entropies']
 
     # batches = 50
     # n_demo = 2
