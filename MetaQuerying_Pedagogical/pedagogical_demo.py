@@ -33,6 +33,31 @@ def identify_pedagogical_state(ground_truth, prior_specification_fsm, debug = Fa
     else:
         return desired_state, bread_crumb_states
 
+def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, n_waypoints = 5, debug = False):
+
+    current_entropy = entropy(specification_fsm._partial_rewards)
+    entropy_gains = []
+    expected_entropy_gain = 0
+
+    for (formula, p_formula) in zip(specification_fsm._formulas, specification_fsm._partial_rewards):
+        pedagogical_state,_ = identify_pedagogical_state(formula, specification_fsm)
+        new_entropy = compute_new_entropy(pedagogical_state, specification_fsm, True, n_threats = n_threats, n_waypoints = n_waypoints)
+
+        entropy_gain = current_entropy - new_entropy
+        entropy_gains.append(entropy_gain)
+
+        expected_entropy_gain = expected_entropy_gain + entropy_gain*p_formula
+
+    if debug:
+        return {'expected_entropy_gain': expected_entropy_gain, 'entropy_gain': entropy_gains, 'formulas': specifications_fsm._formulas}
+    else:
+        return expected_entropy_gain
+
+
+
+
+
+
 def recompile_reward_function_2(spec_fsm:SpecificationFSM, desired_states, breadcrumbs):
     a=1
 
