@@ -38,15 +38,24 @@ def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, 
     current_entropy = entropy(specification_fsm._partial_rewards)
     entropy_gains = []
     expected_entropy_gain = 0
+    states = list(specification_fsm.states2id.keys())
 
-    for (formula, p_formula) in zip(specification_fsm._formulas, specification_fsm._partial_rewards):
-        pedagogical_state,_ = identify_pedagogical_state(formula, specification_fsm)
-        new_entropy = compute_new_entropy(pedagogical_state, specification_fsm, True, n_threats = n_threats, n_waypoints = n_waypoints)
+    new_dists = [compute_online_bsi_update(state, specification_fsm, True, n_threats, n_waypoints) for state in states]
+    state_entropies = [entropy(dist['probs']) for dist in new_dists]
 
-        entropy_gain = current_entropy - new_entropy
-        entropy_gains.append(entropy_gain)
+    for i in tqdm(range(len(specification_fsm._formulas))):
+        formula = specification_fsm._formulas[i]
+        p_formula = specification_fsm._partial_rewards[i]
 
-        expected_entropy_gain = expected_entropy_gain + entropy_gain*p_formula
+        cross_entropies = [-np.log(new_dist['probs'][i]) for new_dist in new_dists] #because these are the same formulas
+        pedagogical_state_idx = np.argmin(cross_entropies)
+        pedagogical_state = states[np.argmin(cross_entropies)]
+        state_entropy = state_entropies[pedagogical_state_idx]
+        pedagogical_entropy_gain = current_entropy - state_entropy
+        entropy_gains.append(pedagogical_entropy_gain)
+
+        expected_entropy_gain = expected_entropy_gain + pedagogical_entropy_gain*p_formula 
+
 
     if debug:
         return {'expected_entropy_gain': expected_entropy_gain, 'entropy_gain': entropy_gains, 'formulas': specifications_fsm._formulas}
