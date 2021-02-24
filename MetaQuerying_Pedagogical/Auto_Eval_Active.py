@@ -718,7 +718,7 @@ if __name__ == '__main__':
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
     global_params.results_path = f'/home/ajshah/Results/Test'
-    run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
+    run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling')
 
 
     # batches = 50

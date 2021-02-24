@@ -10,7 +10,7 @@ if __name__ == '__main__':
     with open(os.path.join(directory, 'run_config.pkl'), 'rb') as file:
         args = dill.load(file)
     args = args['args']
-    run_args = args[5]
+    run_args = args[4]
 
     run_data = run_active_trial(directory, **run_args)
 
