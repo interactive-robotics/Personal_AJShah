@@ -58,15 +58,17 @@ def get_similarities(data, format = 'long'):
 
     return results
 
-def plot_similarities(directory, data):
+def plot_similarities(directory, data ,savename = 'similarity.png'):
     results = get_similarities(data, format = 'long')
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
         plt.figure(figsize = [48,18])
-        #sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition')
+        #sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = False, whis = 0)
+        #sns.lineplot(data = results, x = 'da')
+        #sns.swarmplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', dodge = True)
         sns.lineplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', err_style = 'bars',
-        err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
-        plt.savefig(os.path.join(directory, 'similarity.png'), dpi = 500, bbox_inches = 'tight')
+        err_kws = {'capsize':10, 'capthick':3}, estimator = np.mean, ci = 95, alpha = 0.85)
+        plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
 
 # with sns.plotting_context('poster', rc = {'axes.labelsize': 28, 'axes.titlesize': 32, 'legend.fontsize': 24, 'xtick.labelsize': 24, 'ytick.labelsize': 22}):
 #         with sns.color_palette('dark'):
@@ -83,7 +85,7 @@ def plot_similarities(directory, data):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_meta'
+    directory = f'/home/ajshah/Results/Results_15_pedagogical'
     data = read_data(directory)
     results = get_similarities(data, format = 'long')
     plot_similarities(directory, data)

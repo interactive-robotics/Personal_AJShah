@@ -33,6 +33,15 @@ def identify_pedagogical_state(ground_truth, prior_specification_fsm, debug = Fa
     else:
         return desired_state, bread_crumb_states
 
+def identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, debug = False):
+
+    concept_probs = []
+    states = list(prior_specification_fsm.states2id.keys())
+
+    for state in states:
+        new_dist = compute_online_bsi_update(state, prior)
+    return
+
 def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, n_waypoints = 5, debug = False):
 
     current_entropy = entropy(specification_fsm._partial_rewards)
@@ -64,11 +73,6 @@ def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, 
 
 
 
-
-
-
-def recompile_reward_function_2(spec_fsm:SpecificationFSM, desired_states, breadcrumbs):
-    a=1
 
 
 def create_pedagogical_demo(ground_truth, MDP, n_threats = 0, non_terminal = True, verbose = True):

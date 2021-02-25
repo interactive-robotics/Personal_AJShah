@@ -30,8 +30,8 @@ def run_single_trial(directory):
     args3 = {'n_query': n_query, 'mode': mode}
     args4 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling'}
     args5 = {'n_query': n_query,}
-    args4 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'pedagogical': True}
-    args = [args1, args2, args3, args4, args5]
+    args6 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'pedagogical': True}
+    args = [args1, args2, args3, args4, args5, args6]
 
     run_id = batch_id
     print(f'Running Trial {run_id}')
@@ -51,8 +51,9 @@ def run_single_trial(directory):
                 f'python info_gain_trial.py {directory}',
                 f'python batch_trial.py {directory}',
                 f'python meta_selection_trial.py {directory}',
-                f'python pedagogical_trial.py {directory}']
-    with Pool(processes = 5) as pool:
+                f'python pedagogical_trial.py {directory}',
+                f'python meta_pedagogical_trial.py {directory}']
+    with Pool(processes = 6) as pool:
         returnvals = pool.map(os.system, commands)
 
     for (retval, command) in zip(returnvals, commands):
@@ -61,7 +62,7 @@ def run_single_trial(directory):
 
     # Read the respective files from 'Run_Config'
     run_data = []
-    files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl']
+    files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl', 'meta_pedagogical.pkl']
     for file in files:
         with open(os.path.join(directory, file), 'rb') as f:
             data = dill.load(f)
@@ -78,7 +79,7 @@ def run_single_trial(directory):
 
         out_data['similarity'][condition] = rd['similarity']
         out_data['entropy'][condition] = rd['entropy']
-        out_data['results'][condition] = rd['Distributions'][-1]
+        out_data['results'][condition] = rd['Distributions']
 
     with open(os.path.join(directory, 'trial_out_data.pkl'), 'wb') as file:
         dill.dump(out_data, file)

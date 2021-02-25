@@ -80,8 +80,8 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
             #Record all individual runs
             run_id = start_id + workers*batch_id + k
             run_data = []
-            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl']
-            typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection', 'Pedagogical Batch']
+            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl', 'meta_pedagogical.pkl']
+            typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection', 'Pedagogical_Batch', 'Meta_Pedagogical']
             for (file, typ) in zip(files, typs):
                 with open(os.path.join(directory, file), 'rb') as f:
                     data = dill.load(f)
@@ -241,6 +241,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
             new_query['agent'] = 1
             new_query['label'] = True
             new_query['type'] = 'Demonstration'
+            Queries.append(new_query)
 
             # Recompile the MDP with the updated specification and add the distributions
             spec_file = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
@@ -355,6 +356,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
             new_query['label'] = True
             new_query['agent'] = 1
             new_query['type'] = 'Demonstration'
+            Queries.append(new_query)
 
             # Recompile the MDP with the updated specification and add the distributions
             spec_file  = os.path.join(directory, params.distributions_path, 'batch_posterior.json')
@@ -625,7 +627,9 @@ def create_run_log(run_id, type = 'Active'):
             #plot the query_
             plt.figure(figsize=(5,5))
             visualize_query(data['Queries'][i]['trace'])
-            plt.title(f'{data['Queries'][i]['type']} {i+1}: {data['Queries'][i]['label']}')
+            type = data['Queries'][i]['type']
+            label = data['Queries'][i]['label']
+            plt.title(f'{type} {i+1}: {label}')
             pdf.savefig()
             plt.close()
 
@@ -757,21 +761,22 @@ if __name__ == '__main__':
     #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
 
 
-    directory = 'Run_Config/trial_0'
-    create_trial_directory('Run_Config',0)
-    run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
-    run_id = 1, ground_truth_formula = None, pedagogical=True, write_file = True, verbose=True)
-'''
+    # directory = 'Run_Config/trial_0'
+    # global_params.results_path = f'/home/ajshah/Results/Test'
+    # create_trial_directory('Run_Config',0)
+    # out_data = run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
+    # run_id = 1, ground_truth_formula = None, pedagogical=True, write_file = True, verbose=True)
+    '''
     global_params.results_path = f'/home/ajshah/Results/Test'
     run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling')
-'''
+    '''
 
-    # batches = 50
-    # n_demo = 2
-    # n_query = [13]
-    #
-    # for n_q in n_query:
-    #     n_data = n_demo + n_q
-    #     global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
-    #     check_results_path(global_params.results_path)
-    #     results = run_parallel_trials(batches = batches, workers = 4, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
+    batches = 200
+    n_demo = 2
+    n_query = [13]
+    
+    for n_q in n_query:
+        n_data = n_demo + n_q
+        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical'
+        check_results_path(global_params.results_path)
+        results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')

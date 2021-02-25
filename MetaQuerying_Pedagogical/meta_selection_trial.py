@@ -15,5 +15,5 @@ if __name__ == '__main__':
     run_data = run_meta_selection_trials(directory, **run_args)
 
     #Save the run information
-    with open(os.path.join(directory, 'meta_pedagogical.pkl'),'wb') as file:
+    with open(os.path.join(directory, 'meta_selection.pkl'),'wb') as file:
         dill.dump(run_data, file)
