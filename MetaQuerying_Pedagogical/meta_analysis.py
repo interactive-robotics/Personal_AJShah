@@ -85,7 +85,7 @@ def plot_similarities(directory, data ,savename = 'similarity.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_pedagogical'
+    directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
     data = read_data(directory)
     results = get_similarities(data, format = 'long')
-    plot_similarities(directory, data)
+    #plot_similarities(directory, data)
