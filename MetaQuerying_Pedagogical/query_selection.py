@@ -308,6 +308,7 @@ def likelihood_factor(formula, label, sat_check, n_threats=5, n_waypoints=5):
             factor = 0
     return factor
 
+
 def compute_online_bsi_update(state, specification_fsm: SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
     logprobs = np.log(specification_fsm._partial_rewards)
 
@@ -457,6 +458,7 @@ if __name__ == '__main__':
     a=1
 
     #
+
     #
     # ''' Filter the trajectories while retaining only the time stamps with changes '''
     # #Import the traj Data
