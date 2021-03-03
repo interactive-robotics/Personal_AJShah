@@ -2,6 +2,7 @@ from probability_tools import *
 from query_selection import *
 from utils import *
 from pedagogical_demo import *
+import trial_config
 
 from formula_utils import *
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
@@ -30,7 +31,7 @@ from itertools import repeat
 def apply(f,x):
     return f(**x)
 
-def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
+def run_parallel_trials(args, command_headers, conditions, batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
 
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
@@ -59,6 +60,9 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
                     'n_query': n_query,
                     'given_ground_truth': given_ground_truth,
                     'mode': mode,
+                    'args': args,
+                    'command_headers': command_headers,
+                    'conditions': conditions
                     }
 
     for batch_id in range(batches):
@@ -69,7 +73,7 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
             with open(os.path.join(directory, 'trial_config.pkl'),'wb') as file:
                 dill.dump(trial_config, file)
 
-        commands = [f'python trial.py {directory}' for directory in directories]
+        trial_commands = [f'python trial.py {directory}' for directory in directories]
         with Pool(processes = workers) as pool:
             returnvals = pool.map(os.system, commands)
 
@@ -82,9 +86,11 @@ def run_parallel_trials(batches = 100, workers = 2, n_demo = 2, n_query = 4, giv
             #Record all individual runs
             run_id = start_id + workers*batch_id + k
             run_data = []
-            files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl', 'meta_pedagogical.pkl']
-            typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection', 'Pedagogical_Batch', 'Meta_Pedagogical']
-            for (file, typ) in zip(files, typs):
+            files = [f'condition_{i}.pkl' for i in range(len(conditions))]
+
+            #files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl', 'meta_pedagogical.pkl']
+            #typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection', 'Pedagogical_Batch', 'Meta_Pedagogical']
+            for (file, typ) in zip(files, conditions):
                 with open(os.path.join(directory, file), 'rb') as f:
                     data = dill.load(f)
                 write_run_data_new(data, run_id, typ = typ)
@@ -179,7 +185,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
 
 def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
-run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, verbose=True):
+run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True):
 
     params = meta_params
     MDPs = []
@@ -208,10 +214,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
         state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = query_strategy)
         query_gain = compute_expected_entropy_gain(state, MDPs[-1].specification_fsm)
         print('Query Gain:', query_gain)
-        if pedagogical:
-            demonstration_gain = compute_expected_entropy_gain_pedagogical(MDPs[-1].specification_fsm)
-        else:
-            demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm)
+        demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm, pedagogical, selectivity)
         print('Demonstration Gain:', demonstration_gain)
         demo = True if demonstration_gain >= query_gain else False
 
@@ -752,34 +755,18 @@ def check_results_path(results_path):
 
 if __name__ == '__main__':
 
-
-    # batches = 20
-    # n_demo = 2
-    # n_query = [3]
-    #
-    # for n_q in n_query:
-    #     n_data = n_demo + n_q
-    #     global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_meta'
-    #     check_results_path(global_params.results_path)
-    #     results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
+    import trial_config as trial_config
 
 
-    # directory = 'Run_Config/trial_0'
-    # global_params.results_path = f'/home/ajshah/Results/Test'
-    # create_trial_directory('Run_Config',0)
-    # out_data = run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
-    # run_id = 1, ground_truth_formula = None, pedagogical=True, write_file = True, verbose=True)
-    '''
-    global_params.results_path = f'/home/ajshah/Results/Test'
-    run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling')
-    '''
+    args = trial_config.args
+    command_headers = trial_config.command_headers
+    conditions = trial_config.conditions
 
-    batches = 118
-    n_demo = 2
-    n_query = [13]
+    batches = trial_config.batches
+    n_demo = trial_config.n_demo
+    n_query = trial_config.n_query
 
-    for n_q in n_query:
-        n_data = n_demo + n_q
-        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical2'
-        check_results_path(global_params.results_path)
-        results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
+
+    global_params.results_path = trial_config.result_path
+    check_results_path(global_params.results_path)
+    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = 2, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = 'incremental')

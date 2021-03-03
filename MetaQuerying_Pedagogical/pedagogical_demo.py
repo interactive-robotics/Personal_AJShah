@@ -129,7 +129,7 @@ def identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, sele
 def compute_expected_entropy_gain_demonstrations(specification_fsm, pedagogical = True, selectivity = None, n_threats=5, n_waypoints=5, debug=False):
     if pedagogical:
         if selectivity == None:
-            return compute_expected_entropy_gain_pedagogical(specification_fsm, n_theats, n_waypoints)
+            return compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats, n_waypoints)
         else:
             return compute_expected_entropy_gain_noisy_pedagogical(specification_fsm, selectivity, n_threats, n_waypoints)
     else:
