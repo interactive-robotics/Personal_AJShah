@@ -1,6 +1,6 @@
 # from Auto_Eval_Active import *
 from formula_utils import compare_formulas, compare_distribution
-from query_selection import *
+from query_selection import recompile_reward_function
 import networkx as nx
 from tqdm import tqdm
 from puns.utils import IsSafe
@@ -152,6 +152,54 @@ def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, 
         return {'expected_entropy_gain': expected_entropy_gain, 'entropy_gain': entropy_gains, 'formulas': specifications_fsm._formulas}
     else:
         return expected_entropy_gain
+def compute_expected_entropy_gain_demonstrations_independent(specification_fsm, n_threats=5, n_waypoints=5, debug=False):
+
+    states = specification_fsm.states2id.keys()
+    current_entropy = entropy(specification_fsm._partial_rewards)
+
+    expected_entropies = [compute_new_entropy(state, specification_fsm, True,
+    n_threats, n_waypoints) for state in states]
+
+    expected_entropies = current_entropy - np.array(expected_entropies)
+
+    #for each formula construct set of accepting states
+    accepting_states = {}
+
+    for (i,formula) in tqdm(list(enumerate(specification_fsm._formulas))):
+        accepting_states[json.dumps(formula)] = list()
+        for state in states:
+            if IsSafe(json.loads(state[i]))[0] and json.loads(state[i]) != [False] or json.loads(state[i]) == [True]:
+                #add state to the accepting states list
+                accepting_states[json.dumps(formula)].append(state)
+
+    #start with expected entropy gain 0
+    expected_entropy_gain = 0
+    p_state = {}
+
+    #for all states, for all formulas compute P(state | formula) evenly divided
+    #among number of accepting state if the state is an accepting state for that formula
+
+    for (i,state) in tqdm(list(enumerate(states))):
+        for (j,formula) in enumerate(specification_fsm._formulas):
+            state_entropy = expected_entropies[i]
+            p_state[state] = 0
+            if state in accepting_states[json.dumps(formula)]:
+                p_state_given_formula = 1/(len(accepting_states[json.dumps(formula)]))
+                p_formula = specification_fsm._partial_rewards[j]
+                p_state[state] = p_state[state] + p_state_given_formula*p_formula
+                increment = state_entropy*p_state_given_formula*p_formula
+                expected_entropy_gain = expected_entropy_gain + increment
+
+    if debug:
+        return {
+        'accepting_states': accepting_states,
+        'formulas': specification_fsm._formulas,
+        'entropy_gains': expected_entropies,
+        'states': states,
+        'return_val': expected_entropy_gain,
+        'p_state': p_state
+        }
+    return expected_entropy_gain
 
 
 def create_pedagogical_demo(ground_truth, MDP, n_threats = 0, non_terminal = True, verbose = True):

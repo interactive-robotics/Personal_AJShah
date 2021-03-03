@@ -1,6 +1,7 @@
 from query_selection import *
 from utils import *
 from pedagogical_demo import *
+from information_gain import *
 from formula_utils import *
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 from puns.SpecificationMDP import *
@@ -775,7 +776,7 @@ if __name__ == '__main__':
     batches = 118
     n_demo = 2
     n_query = [13]
-    
+
     for n_q in n_query:
         n_data = n_demo + n_q
         global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical2'
