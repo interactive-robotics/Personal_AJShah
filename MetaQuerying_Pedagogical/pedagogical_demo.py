@@ -157,7 +157,7 @@ def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, 
         return expected_entropy_gain
 
 
-def compute_expected_entropy_gain_demonstration()
+
 
 
 

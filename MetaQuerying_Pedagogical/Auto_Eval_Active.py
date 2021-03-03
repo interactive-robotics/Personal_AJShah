@@ -772,12 +772,13 @@ if __name__ == '__main__':
     run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling')
     '''
 
-    batches = 118
-    n_demo = 2
-    n_query = [13]
+    batches = 1
+    n_demo = 4
+    n_query = [1]
     
     for n_q in n_query:
         n_data = n_demo + n_q
-        global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical2'
+        #global_params.results_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical2'
+        global_params.results_path = f'/home/ajshah/Results/Test_Meta'
         check_results_path(global_params.results_path)
-        results = run_parallel_trials(batches = batches, workers = 2, n_demo = 2, n_query = n_q, given_ground_truth = None, mode = 'incremental')
+        results = run_parallel_trials(batches = batches, workers = 2, n_demo = n_demo, n_query = n_q, given_ground_truth = None, mode = 'incremental')
