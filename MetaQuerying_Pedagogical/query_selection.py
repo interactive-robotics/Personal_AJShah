@@ -8,7 +8,7 @@ Created on Wed Aug 28 11:50:47 2019
 
 import json
 from os import listdir
-from information_gain import compute_expected_entropy_gain
+from probability_tools import *
 import os
 import pandas as pd
 import numpy as np
@@ -25,6 +25,105 @@ from puns.SpecificationFSMTools import CreateReward
 from scipy.special import softmax
 from scipy.stats import entropy
 from tqdm import tqdm
+
+def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True, query_type = 'uncertainty_sampling'):
+
+    states = list(specification_fsm.states2id.keys()) if non_terminal else specification_fsm.terminal_states
+
+    if query_type == 'uncertainty_sampling':
+        rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
+        desired_state = states[np.argmin(np.abs(rewards))]
+    elif query_type == 'info_gain':
+        entropy_gains = [compute_expected_entropy_gain(state, specification_fsm) for state in states]
+        desired_state = states[np.argmax(entropy_gains)]
+
+    path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
+    bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
+    return desired_state, bread_crumb_states
+
+def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose = True, non_terminal=True):
+    ''' A query generated as per the most informative heuristic based on the
+    identified final state'''
+
+    # Identify desired final state and recompile reward
+    desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
+    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+    for state_id in breadcrumbs:
+        if spec_fsm2.id2states[state_id] in spec_fsm2.terminal_states:
+            spec_fsm2.terminal_states.remove(spec_fsm2.id2states[state_id])
+    if non_terminal:
+        spec_fsm2.terminal_states.append(desired_state)
+
+    # Re-define MDP and learning agent
+    MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
+    agent = QLearningAgent(MDP2)
+
+    # Train learning agent to produce a query
+    agent.explore(episode_limit = 5000, action_limit = 1000000, verbose = verbose)
+    eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
+
+    # Generate a query with the trained agent and visualize query
+    eval_agent.explore(episode_limit = 1)
+    #_ = eval_agent.visualize_exploration()
+
+    # Create proposition trace slices
+    episode_record = eval_agent.episodic_record[0]
+    trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
+    trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
+
+    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
+
+
+def create_baseline_query(MDP, verbose = True):
+    '''Creates a query by randomly removing a conjunctive clause from the MAP
+    formula'''
+
+    specification_fsm = MDP.specification_fsm
+    control_mdp = deepcopy(MDP.control_mdp)
+
+    map_formula = specification_fsm._formulas[0]
+    modified_formula = modify_formula(map_formula)
+
+    if modified_formula != [True]:
+        spec_fsm2 = SpecificationFSM(formulas = [modified_formula], probs = [1])
+        MDP2 = SpecificationMDP(spec_fsm2, control_mdp)
+        agent = QLearningAgent(MDP2)
+        agent.explore(episode_limit=5000, action_limit = 100000, verbose = verbose)
+
+        eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
+        eval_agent.explore(episode_limit = 1)
+
+        #Create the proposition trace_slices
+        episode_record = eval_agent.episodic_record[0]
+        trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
+        trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
+
+        return {'trace': trace_slices, 'agent': eval_agent, 'modified_formula': modified_formula}
+    else:
+        query = create_random_query(MDP, verbose=True)
+        query['modified_formula'] = [True]
+        return query
+
+
+
+def create_random_query(MDP, verbose=True):
+
+    ''' Creates a randomly generated query obtained by randomly sampling
+    control MDP actions till a terminal state is reached'''
+
+    #Generate a random demonstration
+    MDP2 = deepcopy(MDP)
+    random_agent = ExplorerAgent(MDP2)
+    random_agent.explore(episode_limit = 1)
+    #_ = random_agent.visualize_exploration()
+
+    # Create the proposition trace for the generated demonstration
+    episode_record = random_agent.episodic_record[0]
+    trace_slices = [MDP2.control_mdp.create_observations(record[0][1]) for record in episode_record]
+    trace_slices.append(MDP2.control_mdp.create_observations(episode_record[-1][2][1]))
+
+    return {'trace': trace_slices, 'agent': random_agent}
+
 
 def plot_probs(MDP, show_cdf = False):
     Probs = MDP.specification_fsm._partial_rewards
@@ -96,22 +195,6 @@ def sort_formulas(formulas, probs):
     formulas = sorted_formulas
     return sorted_formulas, probs
 
-def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True, query_type = 'uncertainty_sampling'):
-
-    states = list(specification_fsm.states2id.keys()) if non_terminal else specification_fsm.terminal_states
-
-    if query_type == 'uncertainty_sampling':
-        rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
-        desired_state = states[np.argmin(np.abs(rewards))]
-    elif query_type == 'info_gain':
-        entropy_gains = [compute_expected_entropy_gain(state, specification_fsm) for state in states]
-        desired_state = states[np.argmax(entropy_gains)]
-
-    path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
-    bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
-    return desired_state, bread_crumb_states
-
-
 
 def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state, breadcrumb_states):
     spec_fsm2 = deepcopy(specification_fsm)
@@ -157,89 +240,11 @@ def modify_formula(formula):
 
     return modified_formula
 
-def create_baseline_query(MDP, verbose = True):
-    '''Creates a query by randomly removing a conjunctive clause from the MAP
-    formula'''
-
-    specification_fsm = MDP.specification_fsm
-    control_mdp = deepcopy(MDP.control_mdp)
-
-    map_formula = specification_fsm._formulas[0]
-    modified_formula = modify_formula(map_formula)
-
-    if modified_formula != [True]:
-        spec_fsm2 = SpecificationFSM(formulas = [modified_formula], probs = [1])
-        MDP2 = SpecificationMDP(spec_fsm2, control_mdp)
-        agent = QLearningAgent(MDP2)
-        agent.explore(episode_limit=5000, action_limit = 100000, verbose = verbose)
-
-        eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
-        eval_agent.explore(episode_limit = 1)
-
-        #Create the proposition trace_slices
-        episode_record = eval_agent.episodic_record[0]
-        trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
-        trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
-
-        return {'trace': trace_slices, 'agent': eval_agent, 'modified_formula': modified_formula}
-    else:
-        query = create_random_query(MDP, verbose=True)
-        query['modified_formula'] = [True]
-        return query
 
 
 
-def create_random_query(MDP, verbose=True):
-
-    ''' Creates a randomly generated query obtained by randomly sampling
-    control MDP actions till a terminal state is reached'''
-
-    #Generate a random demonstration
-    MDP2 = deepcopy(MDP)
-    random_agent = ExplorerAgent(MDP2)
-    random_agent.explore(episode_limit = 1)
-    #_ = random_agent.visualize_exploration()
-
-    # Create the proposition trace for the generated demonstration
-    episode_record = random_agent.episodic_record[0]
-    trace_slices = [MDP2.control_mdp.create_observations(record[0][1]) for record in episode_record]
-    trace_slices.append(MDP2.control_mdp.create_observations(episode_record[-1][2][1]))
-
-    return {'trace': trace_slices, 'agent': random_agent}
 
 
-
-def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose = True, non_terminal=True):
-    ''' A query generated as per the most informative heuristic based on the
-    identified final state'''
-
-    # Identify desired final state and recompile reward
-    desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
-    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
-    for state_id in breadcrumbs:
-        if spec_fsm2.id2states[state_id] in spec_fsm2.terminal_states:
-            spec_fsm2.terminal_states.remove(spec_fsm2.id2states[state_id])
-    if non_terminal:
-        spec_fsm2.terminal_states.append(desired_state)
-
-    # Re-define MDP and learning agent
-    MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
-    agent = QLearningAgent(MDP2)
-
-    # Train learning agent to produce a query
-    agent.explore(episode_limit = 5000, action_limit = 1000000, verbose = verbose)
-    eval_agent = ExplorerAgent(MDP2, input_policy = agent.create_learned_softmax_policy(0.001))
-
-    # Generate a query with the trained agent and visualize query
-    eval_agent.explore(episode_limit = 1)
-    #_ = eval_agent.visualize_exploration()
-
-    # Create proposition trace slices
-    episode_record = eval_agent.episodic_record[0]
-    trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
-    trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
-
-    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
 
 def create_query_demo(trace_slices):
     ''' Reformats the generated demonstration into a form readable by the webppl
@@ -288,43 +293,6 @@ def create_signal(trace_slices):
         for slice in trace_slices:
             signal[key].append(slice[key])
     return signal
-
-#Functions for entropy computation and modification
-
-def likelihood_factor(formula, label, sat_check, n_threats=5, n_waypoints=5):
-    if formula[0] == 'and':
-        n_conjuncts = len(formula[1::])
-    else:
-        n_conjuncts = 1
-
-    if label:
-        if sat_check:
-            factor = np.log(2)*(n_conjuncts)
-        else:
-            factor = -4*np.log(2)*(n_threats + n_waypoints + 0.5*(n_waypoints)*(n_waypoints-1))
-    else:
-        if sat_check:
-            factor = -4*np.log(2)*(n_threats + n_waypoints + 0.5*(n_waypoints)*(n_waypoints-1))
-        else:
-            factor = 0
-    return factor
-
-
-def compute_online_bsi_update(state, specification_fsm: SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
-    logprobs = np.log(specification_fsm._partial_rewards)
-
-    #for each state in the FSM
-    for (i,formula) in enumerate(state):
-        formula = json.loads(formula)
-        #Check if the formula is satisfied
-
-        sat_check = (IsSafe(formula)[0] and formula != [False]) or formula == [True]
-        factor = likelihood_factor(formula, label, sat_check, n_threats, n_waypoints)
-        logprobs[i] = logprobs[i] + factor
-
-    #the log probs should now be updated and unnormalized
-    new_probs = softmax(logprobs)
-    return {'formulas': specification_fsm._formulas, 'probs': new_probs}
 
 
 def identify_desired_state_non_terminal(specification_fsm:SpecificationFSM):

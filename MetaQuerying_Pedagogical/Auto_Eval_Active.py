@@ -1,7 +1,8 @@
+from probability_tools import *
 from query_selection import *
 from utils import *
 from pedagogical_demo import *
-from information_gain import *
+
 from formula_utils import *
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 from puns.SpecificationMDP import *
