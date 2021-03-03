@@ -1,4 +1,4 @@
-from query_selection import *
+qpwoeirutyfrom query_selection import *
 from utils import *
 from pedagogical_demo import *
 from formula_utils import *
@@ -226,7 +226,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, write_file = False, 
                 MDP = eval_agent.MDP
                 record = eval_agent.episodic_record[-1]
                 trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
-                trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+          qpwoeirutyqpwoeirutyqpwoeirutyqpwoeirutyqpwoeirutyqpwoeirutyqpwoeirutyqpwoeiruty      trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
 
             new_traj = create_query_demo(trace_slices)
             write_demo_query_data(new_traj, True, os.path.join(directory, params.compressed_data_path), query_number=i+1)
@@ -772,7 +772,7 @@ if __name__ == '__main__':
     run_parallel_trials(batches = 1, workers = 1, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling')
     '''
 
-    batches = 118
+    batches = 200
     n_demo = 2
     n_query = [13]
     

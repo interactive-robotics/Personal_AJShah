@@ -12,7 +12,7 @@ if __name__ == '__main__':
     args = args['args']
     run_args = args[4]
 
-    run_data = run_active_trial(directory, **run_args)
+    run_data = run_pedagogical_trials(directory, **run_args)
 
     #Save the run information
     with open(os.path.join(directory, 'pedagogical.pkl'),'wb') as file:
