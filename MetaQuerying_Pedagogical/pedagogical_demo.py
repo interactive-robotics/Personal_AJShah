@@ -27,8 +27,6 @@ def is_formula_satisfied_in_state(formula, state, spec_fsm):
     sat_check = (IsSafe(progressed_formula)[0] and progressed_formula != [False]) or progressed_formula == [True]
     return sat_check
 
-
-
 def identify_pedagogical_state(ground_truth, prior_specification_fsm, debug = False):
 
     cross_entropies = []
@@ -54,6 +52,7 @@ def identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, debu
     formula_probs = []
     states = list(prior_specification_fsm.states2id.keys())
     allowed_states = []
+
     for state in states:
         new_dist = compute_online_bsi_update(state, prior_specification_fsm, True)
         if is_formula_satisfied_in_state(ground_truth, state, prior_specification_fsm):
@@ -125,8 +124,6 @@ def compute_expected_entropy_gain_noisy_pedagogical(specification_fsm, selectivi
     else:
         return expected_entropy_gain
 
-
-
 def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, n_waypoints = 5, debug = False):
 
     current_entropy = entropy(specification_fsm._partial_rewards)
@@ -155,10 +152,6 @@ def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, 
         return {'expected_entropy_gain': expected_entropy_gain, 'entropy_gain': entropy_gains, 'formulas': specifications_fsm._formulas}
     else:
         return expected_entropy_gain
-
-
-def compute_expected_entropy_gain_demonstration()
-
 
 
 def create_pedagogical_demo(ground_truth, MDP, n_threats = 0, non_terminal = True, verbose = True):
