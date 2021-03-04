@@ -498,6 +498,22 @@ verbose = True, write_file = False):
     return out_data
 
 
+def create_trial_directory(directory, i, conditions):
+
+    n_conditions = len(conditions)
+
+    trial_dir = os.path.join(directory, f'trial_{i}')
+    if not os.path.exists(trial_dir):
+        os.mkdir(trial_dir)
+
+    for cid in range(len(conditions)):
+        condition_path = os.path.join(trial_dir, f'condition_{cid}')
+        if not os.path.exists(condition_path):
+            os.mkdir(condition_path)
+            os.mkdir(os.path.join(condition_path, global_params.raw_data_path))
+            os.mkdir(os.path.join(condition_apth, global_params.compressed_data_path))
+            os.
+
 
 def create_trial_directory(directory, i):
     trial_dir = os.path.join(directory, f'trial_{i}')

@@ -4,13 +4,12 @@ n_waypoints = 5
 
 # File paths
 results_path = '/home/ajshah/Results/Results_5_with_baseline'
-# if not os.path.exists(results_path):
-#    os.mkdir(results_path)
-#    os.mkdir(os.path.join(results_path, 'Runs'))
-# data_path = 'Active_Data'
-# raw_data_path = data_path+'/RawData'
-# compressed_data_path = data_path + '/CompressedData'
-# distributions_path = data_path + '/Distributions'
+
+#data_path = 'Batch_Data'
+raw_data_path = 'RawData'
+compressed_data_path = 'CompressedData'
+distributions_path = 'Distributions'
+
 
 # Inference parameters
 n_samples = 20000
