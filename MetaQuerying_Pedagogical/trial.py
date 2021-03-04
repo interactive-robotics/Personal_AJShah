@@ -13,6 +13,9 @@ def run_single_trial(directory):
     mode = data['mode']
     given_ground_truth = data['given_ground_truth']
     batch_id = data['batch_id']
+    command_headers = data['command_headers']
+    args = data['args']
+    conditions = data['conditions']
 
 
     out_data = {}
@@ -23,19 +26,10 @@ def run_single_trial(directory):
     out_data['entropy'] = {}
     out_data['results'] = {}
 
-    trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials, run_pedagogical_trials]
-    conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection', 'Pedagogical Batch', 'Meta Pedagogical']
-    args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
-    args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
-    args3 = {'n_query': n_query, 'mode': mode}
-    args4 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling'}
-    args5 = {'n_query': n_query,}
-    args6 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'pedagogical': True}
-    args = [args1, args2, args3, args4, args5, args6]
-
     run_id = batch_id
     print(f'Running Trial {run_id}')
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth)
+    demo_directory = os.path.join(directory, 'condition_0', global_params.compressed_data_path)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo=n_demo, ground_truth_formula = given_ground_truth)
 
     out_data['results']['ground_truth'] = ground_truth_formula
     for arg in args:
@@ -47,13 +41,12 @@ def run_single_trial(directory):
     with open(os.path.join(directory, 'run_config.pkl'), 'wb') as file:
         dill.dump({'args': args}, file)
 
-    commands = [f'python uncertainty_sampling_trial.py {directory}',
-                f'python info_gain_trial.py {directory}',
-                f'python batch_trial.py {directory}',
-                f'python meta_selection_trial.py {directory}',
-                f'python pedagogical_trial.py {directory}',
-                f'python meta_pedagogical_trial.py {directory}']
-    with Pool(processes = 6) as pool:
+    condition_dirs = [os.path.join(directory, f'condition_{i}') for i in range(len(conditions))]
+    print(len(condition_dirs))
+    print(len(command_headers))
+    commands = [f'{c} {condition_dirs[i]} {i}' for (i,c) in enumerate(command_headers)]
+
+    with Pool(processes = len(commands)) as pool:
         returnvals = pool.map(os.system, commands)
 
     for (retval, command) in zip(returnvals, commands):
@@ -62,18 +55,18 @@ def run_single_trial(directory):
 
     # Read the respective files from 'Run_Config'
     run_data = []
-    files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl', 'meta_pedagogical.pkl']
+    files = [f'condition_{i}.pkl' for i in range(len(conditions))]
     for file in files:
         with open(os.path.join(directory, file), 'rb') as f:
             data = dill.load(f)
         #os.remove(os.path.join(directory,file))
         run_data.append(data)
 
-    for (condition, rd) in zip(conditions, run_data):
+    for (c, rd, condition) in zip(command_headers, run_data, conditions):
 
-        if condition == 'Active: Uncertainty Sampling' or condition == 'Active: Info Gain':
+        if 'active' in c:
             out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
-        if condition == 'Meta-Selection':
+        if 'meta' in c:
             out_data['queries_chosen'] = out_data['queries_chosen'] + rd['queries_performed']
             out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] = rd['demonstrations_requested']
 
