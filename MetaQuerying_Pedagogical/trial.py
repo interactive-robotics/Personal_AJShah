@@ -28,7 +28,8 @@ def run_single_trial(directory):
 
     run_id = batch_id
     print(f'Running Trial {run_id}')
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, uncertainty_sampling_params, demo=n_demo, ground_truth_formula = given_ground_truth)
+    demo_directory = os.path.join(directory, 'condition_0', global_params.compressed_data_path)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo=n_demo, ground_truth_formula = given_ground_truth)
 
     out_data['results']['ground_truth'] = ground_truth_formula
     for arg in args:
@@ -40,7 +41,8 @@ def run_single_trial(directory):
     with open(os.path.join(directory, 'run_config.pkl'), 'wb') as file:
         dill.dump({'args': args}, file)
 
-    commands = [f'{c} {directory} {i}' for (i,c) in enumerate(command_headers)]
+    condition_dirs = [os.path.join(directory, f'condition_{i}') for i in range(len(conditions))]
+    commands = [f'{c} {condition_dirs[i]} {i}' for (i,c) in enumerate(command_headers)]
 
     with Pool(processes = len(commands)) as pool:
         returnvals = pool.map(os.system, commands)

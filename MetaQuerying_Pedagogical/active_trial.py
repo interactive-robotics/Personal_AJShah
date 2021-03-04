@@ -17,5 +17,5 @@ if __name__ == '__main__':
     run_data = run_active_trial(directory, **run_args)
 
     #Save the run information
-    with open(os.path.join(directory, f'condition_{arg_id}.pkl'),'wb') as file:
+    with open(os.path.join(directory, '..', f'condition_{arg_id}.pkl'),'wb') as file:
         dill.dump(run_data, file)

@@ -119,7 +119,7 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
 def run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
 run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
-    params = pedagogical_params
+    params = global_params
     MDPs = []
     Distributions = []
     Queries = []
@@ -128,7 +128,8 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     demonstrations_requested = []
 
     clear_demonstrations(directory, params)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
 
     # Run Batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -187,7 +188,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
 run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True):
 
-    params = meta_params
+    params = global_params
     MDPs = []
     Distributions = []
     Queries = []
@@ -196,7 +197,8 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     demonstrations_requested = 0
 
     clear_demonstrations(directory, params)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -314,7 +316,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     return out_data
 
 def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = False, verbose=True):
-    params = batch_params
+    params = global_params
     MDPs = []
     Distributions = []
     Queries = []
@@ -322,7 +324,8 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
 
     clear_demonstrations(directory, params)
 
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
 
     if mode == 'incremental':
 
@@ -411,11 +414,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
 def run_active_trial(directory, query_strategy = 'uncertainty_sampling', demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None,
 verbose = True, write_file = False):
 
-    if query_strategy == 'uncertainty_sampling':
-        params = uncertainty_sampling_params
-    else:
-        params = info_gain_params
-
+    params = global_params
     MDPs = []
     Distributions = []
     Queries = []
@@ -423,9 +422,10 @@ verbose = True, write_file = False):
 
     clear_demonstrations(directory, params)
 
-    print(f'Trial {run_id}: Running Active trial {query_strategy}')
+    print(f'Trial {run_id}: Running Active trial {query_strategy}')\
 
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -511,58 +511,8 @@ def create_trial_directory(directory, i, conditions):
         if not os.path.exists(condition_path):
             os.mkdir(condition_path)
             os.mkdir(os.path.join(condition_path, global_params.raw_data_path))
-            os.mkdir(os.path.join(condition_apth, global_params.compressed_data_path))
-            os.
-
-
-def create_trial_directory(directory, i):
-    trial_dir = os.path.join(directory, f'trial_{i}')
-    if not os.path.exists(trial_dir):
-        os.mkdir(trial_dir)
-
-    from os.path import exists
-
-    if not exists(os.path.join(trial_dir, uncertainty_sampling_params.data_path)):
-        new_dir = os.path.join(trial_dir, uncertainty_sampling_params.data_path)
-        os.mkdir(new_dir)
-        os.mkdir(os.path.join(trial_dir, uncertainty_sampling_params.raw_data_path))
-        os.mkdir(os.path.join(trial_dir, uncertainty_sampling_params.compressed_data_path))
-        os.mkdir(os.path.join(trial_dir, uncertainty_sampling_params.distributions_path))
-
-    if not exists(os.path.join(trial_dir, info_gain_params.data_path)):
-        new_dir = os.path.join(trial_dir, info_gain_params.data_path)
-        os.mkdir(new_dir)
-        os.mkdir(os.path.join(trial_dir, info_gain_params.raw_data_path))
-        os.mkdir(os.path.join(trial_dir, info_gain_params.compressed_data_path))
-        os.mkdir(os.path.join(trial_dir, info_gain_params.distributions_path))
-
-    if not exists(os.path.join(trial_dir, batch_params.data_path)):
-        new_dir = os.path.join(trial_dir, batch_params.data_path)
-        os.mkdir(new_dir)
-        os.mkdir(os.path.join(trial_dir, batch_params.raw_data_path))
-        os.mkdir(os.path.join(trial_dir, batch_params.compressed_data_path))
-        os.mkdir(os.path.join(trial_dir, batch_params.distributions_path))
-
-    if not exists(os.path.join(trial_dir, meta_params.data_path)):
-        new_dir = os.path.join(trial_dir, meta_params.data_path)
-        os.mkdir(new_dir)
-        os.mkdir(os.path.join(trial_dir, meta_params.raw_data_path))
-        os.mkdir(os.path.join(trial_dir, meta_params.compressed_data_path))
-        os.mkdir(os.path.join(trial_dir, meta_params.distributions_path))
-
-    if not exists(os.path.join(trial_dir, pedagogical_params.data_path)):
-        new_dir = os.path.join(trial_dir, pedagogical_params.data_path)
-        os.mkdir(new_dir)
-        os.mkdir(os.path.join(trial_dir, pedagogical_params.raw_data_path))
-        os.mkdir(os.path.join(trial_dir, pedagogical_params.compressed_data_path))
-        os.mkdir(os.path.join(trial_dir, pedagogical_params.distributions_path))
-
-    if not exists(os.path.join(trial_dir, meta_pedagogical_params.data_path)):
-        new_dir = os.path.join(trial_dir, meta_pedagogical_params.data_path)
-        os.mkdir(new_dir)
-        os.mkdir(os.path.join(trial_dir, meta_pedagogical_params.raw_data_path))
-        os.mkdir(os.path.join(trial_dir, meta_pedagogical_params.compressed_data_path))
-        os.mkdir(os.path.join(trial_dir, meta_pedagogical_params.distributions_path))
+            os.mkdir(os.path.join(condition_path, global_params.compressed_data_path))
+            os.mkdir(os.path.join(condition_path, global_params.distributions_path))
 
 
 
@@ -579,20 +529,20 @@ def write_run_data_new(out_data, run_id, typ):
 
 
 
-def ground_truth_selector(directory, params, demo = 2, ground_truth_formula = None):
+def ground_truth_selector(demo_directory, params, demo = 2, ground_truth_formula = None):
     if ground_truth_formula == None:
         ground_truth_formula = sample_ground_truth(threats = True)
 
     if type(demo) == int:
         n_demo = demo
-        eval_agent = create_demonstrations(ground_truth_formula, n_demo, params, directory)
+        eval_agent = create_demonstrations(ground_truth_formula, n_demo, demo_directory)
     else:
         n_demo = len(demo.episodic_record)
-        record_agent_episodes(demo, params, directory)
+        record_agent_episodes(demo, demo_directory)
         eval_agent = deepcopy(demo)
     return n_demo, eval_agent, ground_truth_formula
 
-def record_agent_episodes(eval_agent, params, directory):
+def record_agent_episodes(eval_agent, demo_directory):
     MDP = eval_agent.MDP
     for record in eval_agent.episodic_record:
 
@@ -601,7 +551,7 @@ def record_agent_episodes(eval_agent, params, directory):
 
         new_traj = create_query_demo(trace_slices)
 
-        write_demo_query_data(new_traj, True, os.path.join(directory, params.compressed_data_path), filename='demo')
+        write_demo_query_data(new_traj, True, demo_directory, filename='demo')
 
 def write_run_data(Distributions, MDPs, Queries, ground_truth_formula, run_id, type = 'Active'):
     if not os.path.exists(os.path.join(global_params.results_path,'Runs')): os.mkdir(os.path.join(global_params.results_path,'Runs'))
@@ -684,7 +634,7 @@ def extract_dist(MDP:SpecificationMDP):
     new_dist['probs'] = MDP.specification_fsm._all_probs
     return new_dist
 
-def create_demonstrations(formula, nDemo, params, directory,  verbose = True, n_threats = 0):
+def create_demonstrations(formula, nDemo, demo_directory,  verbose = True, n_threats = 0):
 
     specification_fsm = SpecificationFSM(formulas=[formula], probs = [1])
     control_mdp = SyntheticMDP(0,global_params.n_waypoints)
@@ -704,7 +654,7 @@ def create_demonstrations(formula, nDemo, params, directory,  verbose = True, n_
 
         new_traj = create_query_demo(trace_slices)
 
-        write_demo_query_data(new_traj, True, os.path.join(directory, params.compressed_data_path), filename='demo')
+        write_demo_query_data(new_traj, True, demo_directory, filename='demo')
     return eval_agent
 
 
