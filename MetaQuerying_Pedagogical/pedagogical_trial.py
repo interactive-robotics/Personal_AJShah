@@ -9,7 +9,7 @@ if __name__ == '__main__':
     arg_id = int(arg_id)
 
     #Read the run config
-    with open(os.path.join(directory, 'run_config.pkl'), 'rb') as file:
+    with open(os.path.join(directory, '..', 'run_config.pkl'), 'rb') as file:
         args = dill.load(file)
     args = args['args']
     run_args = args[arg_id]

@@ -50,7 +50,7 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
 
     #Create the trial directories
     for i in range(workers):
-        create_trial_directory('Run_Config', i)
+        create_trial_directory('Run_Config', i, conditions)
 
     directories = [os.path.join('Run_Config', f'trial_{i}') for i in range(workers)]
 
@@ -128,8 +128,8 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     demonstrations_requested = []
 
     clear_demonstrations(directory, params)
-    demo_directory = os.path.join(directory, params.compressed_data)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data_path)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
 
     # Run Batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -197,8 +197,8 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     demonstrations_requested = 0
 
     clear_demonstrations(directory, params)
-    demo_directory = os.path.join(directory, params.compressed_data)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data_path)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -324,8 +324,8 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
 
     clear_demonstrations(directory, params)
 
-    demo_directory = os.path.join(directory, params.compressed_data)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data_path)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
 
     if mode == 'incremental':
 
@@ -424,8 +424,8 @@ verbose = True, write_file = False):
 
     print(f'Trial {run_id}: Running Active trial {query_strategy}')\
 
-    demo_directory = os.path.join(directory, params.compressed_data)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, params, demo, ground_truth_formula)
+    demo_directory = os.path.join(directory, params.compressed_data_path)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -529,7 +529,7 @@ def write_run_data_new(out_data, run_id, typ):
 
 
 
-def ground_truth_selector(demo_directory, params, demo = 2, ground_truth_formula = None):
+def ground_truth_selector(demo_directory, demo = 2, ground_truth_formula = None):
     if ground_truth_formula == None:
         ground_truth_formula = sample_ground_truth(threats = True)
 
@@ -735,4 +735,4 @@ if __name__ == '__main__':
 
     global_params.results_path = trial_config.result_path
     check_results_path(global_params.results_path)
-    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = 2, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = 'incremental')
+    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = 1, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = 'incremental')

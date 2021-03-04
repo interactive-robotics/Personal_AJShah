@@ -15,7 +15,7 @@ def run_single_trial(directory):
     batch_id = data['batch_id']
     command_headers = data['command_headers']
     args = data['args']
-    conditions = ['conditions']
+    conditions = data['conditions']
 
 
     out_data = {}
@@ -42,6 +42,8 @@ def run_single_trial(directory):
         dill.dump({'args': args}, file)
 
     condition_dirs = [os.path.join(directory, f'condition_{i}') for i in range(len(conditions))]
+    print(len(condition_dirs))
+    print(len(command_headers))
     commands = [f'{c} {condition_dirs[i]} {i}' for (i,c) in enumerate(command_headers)]
 
     with Pool(processes = len(commands)) as pool:
@@ -60,7 +62,7 @@ def run_single_trial(directory):
         #os.remove(os.path.join(directory,file))
         run_data.append(data)
 
-    for (c, rd) in zip(command_headers, run_data):
+    for (c, rd, condition) in zip(command_headers, run_data, conditions):
 
         if 'active' in c:
             out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
