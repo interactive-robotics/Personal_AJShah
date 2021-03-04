@@ -7,10 +7,10 @@ from tqdm import tqdm
 from puns.utils import IsSafe
 import json
 
-def create_pedagogical_demo(ground_truth, MDP, n_threats = 0, non_terminal = True, verbose = True):
+def create_pedagogical_demo(ground_truth, MDP, selectivity = None, n_threats = 0, non_terminal = True, verbose = True):
 
     #Identify desired state in the current FSM
-    desired_state, bread_crumb_states = identify_pedagogical_state(ground_truth, MDP.specification_fsm)
+    desired_state, bread_crumb_states = identify_pedagogical_state(ground_truth, MDP.specification_fsm, selectivity)
 
     #Recompile the spec_fsm with the new reward`
     spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, bread_crumb_states)

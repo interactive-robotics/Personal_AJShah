@@ -11,7 +11,7 @@ args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
 args3 = {'n_query': n_query, 'mode': mode}
 args4 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling'}
 args5 = {'n_query': n_query,}
-args6 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'pedagogical': True}
+args6 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'pedagogical': True, 'selectivity': None}
 args = [args1, args2, args3, args4, args5, args6]
 
 

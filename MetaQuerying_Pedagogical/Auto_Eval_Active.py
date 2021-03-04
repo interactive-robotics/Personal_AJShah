@@ -26,10 +26,14 @@ import json
 from copy import deepcopy
 from multiprocessing import Pool
 from itertools import repeat
+import re
 
 
 def apply(f,x):
     return f(**x)
+
+def strip(string):
+    return re.sub('[^A-Za-z0-9 ]+', '', string)
 
 def run_parallel_trials(args, command_headers, conditions, batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
 
@@ -90,7 +94,8 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
 
             #files = ['uncertainty_sampling.pkl','info_gain.pkl','batch.pkl','meta_selection.pkl', 'pedagogical.pkl', 'meta_pedagogical.pkl']
             #typs = ['Active_uncertainty_sampling', 'Active_info_gain', 'Batch', 'Meta_Selection', 'Pedagogical_Batch', 'Meta_Pedagogical']
-            for (file, typ) in zip(files, conditions):
+            typs = [strip(x).replace(' ', '_') for x in conditions]
+            for (file, typ) in zip(files, typs):
                 with open(os.path.join(directory, file), 'rb') as f:
                     data = dill.load(f)
                 write_run_data_new(data, run_id, typ = typ)
@@ -116,7 +121,7 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
     return out_data
 
 
-def run_pedagogical_trials(directory, demo = 2, n_query = 4, query_strategy = 'info_gain',
+def run_pedagogical_trials(directory, demo = 2, n_query = 4, selectivity = None, query_strategy = 'info_gain',
 run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
     params = global_params
@@ -142,7 +147,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     Distributions.append(extract_dist(MDPs[-1]))
 
     for i in range(n_query):
-        demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1])
+        demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1], selectivity)
         label = True
         demo['label'] = True
 
@@ -225,7 +230,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             demonstrations_requested = demonstrations_requested + 1
 
             if pedagogical:
-                demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1])
+                demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1], selectivity)
                 trace_slices = demo['trace']
             else:
             #create a demonstration as a positive query
@@ -736,4 +741,3 @@ if __name__ == '__main__':
     global_params.results_path = trial_config.result_path
     check_results_path(global_params.results_path)
     results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = 1, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = 'incremental')
-
