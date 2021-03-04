@@ -1,7 +1,7 @@
 # from Auto_Eval_Active import *
 from formula_utils import compare_formulas, compare_distribution
 from probability_tools import *
-from query_selection import recompile_reward_function
+from query_selection import *
 import networkx as nx
 from tqdm import tqdm
 from puns.utils import IsSafe

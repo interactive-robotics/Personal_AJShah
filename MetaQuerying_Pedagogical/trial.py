@@ -40,7 +40,7 @@ def run_single_trial(directory):
     with open(os.path.join(directory, 'run_config.pkl'), 'wb') as file:
         dill.dump({'args': args}, file)
 
-    commands = [f'{c} {directory} {i}' for (i,c) in enumerate(command_headers)']
+    commands = [f'{c} {directory} {i}' for (i,c) in enumerate(command_headers)]
 
     with Pool(processes = len(commands)) as pool:
         returnvals = pool.map(os.system, commands)
@@ -51,7 +51,7 @@ def run_single_trial(directory):
 
     # Read the respective files from 'Run_Config'
     run_data = []
-    files = [f'condition_{i}' for i in range(len(conditions))]
+    files = [f'condition_{i}.pkl' for i in range(len(conditions))]
     for file in files:
         with open(os.path.join(directory, file), 'rb') as f:
             data = dill.load(f)

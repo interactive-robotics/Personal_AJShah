@@ -6,6 +6,7 @@ if __name__ == '__main__':
 
     directory = sys.argv[1]
     arg_id = sys.argv[2]
+    arg_id = int(arg_id)
 
     #Read the run config
     with open(os.path.join(directory, 'run_config.pkl'), 'rb') as file:
