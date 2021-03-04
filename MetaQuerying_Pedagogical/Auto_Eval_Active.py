@@ -736,3 +736,4 @@ if __name__ == '__main__':
     global_params.results_path = trial_config.result_path
     check_results_path(global_params.results_path)
     results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = 1, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = 'incremental')
+
