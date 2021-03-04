@@ -1,10 +1,11 @@
-batches = 1
-n_demo = 7
-n_query = 1
+batches = 200
+workers = 2
+n_demo = 2
+n_query = 3
 mode = 'incremental'
 
-#conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection', 'Pedagogical Batch', 'Meta Pedagogical']
-conditions = ['A','B','C','D','E','F']
+conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection', 'Pedagogical Batch', 'Meta Pedagogical']
+#conditions = ['A','B','C','D','E','F']
 
 args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
 args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}
@@ -24,6 +25,7 @@ command_headers = [f'python active_trial.py',
             f'python meta_trial.py']
 
 
+n_data = n_demo + n_query
 
-result_path = f'/home/ajshah/Results/Test_Custom'
-#result_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical2'
+#result_path = f'/home/ajshah/Results/Test_Custom'
+result_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical'

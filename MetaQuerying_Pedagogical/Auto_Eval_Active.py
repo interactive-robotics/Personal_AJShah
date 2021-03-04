@@ -736,8 +736,10 @@ if __name__ == '__main__':
     batches = trial_config.batches
     n_demo = trial_config.n_demo
     n_query = trial_config.n_query
+    workers = trial_config.workers
+    mode = trial_config.mode
 
 
     global_params.results_path = trial_config.result_path
     check_results_path(global_params.results_path)
-    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = 1, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = 'incremental')
+    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = workers, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = mode)
