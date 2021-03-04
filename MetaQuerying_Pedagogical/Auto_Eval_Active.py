@@ -75,10 +75,10 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
 
         trial_commands = [f'python trial.py {directory}' for directory in directories]
         with Pool(processes = workers) as pool:
-            returnvals = pool.map(os.system, commands)
+            returnvals = pool.map(os.system, trial_commands)
 
         #If any run did not succeed, run it in series
-        for (retval, command) in zip(returnvals, commands):
+        for (retval, command) in zip(returnvals, trial_commands):
             if retval:
                 retval = os.system(command)
 

@@ -1,5 +1,7 @@
-
-
+batches = 200
+n_demo = 7
+n_query = 1
+mode = 'incremental'
 
 
 #trial_functions = [run_active_trial, run_active_trial, run_batch_trial, run_meta_selection_trials, run_pedagogical_trials]
@@ -23,9 +25,7 @@ command_headers = [f'python active_trial.py',
             f'python pedagogical_trial.py',
             f'python meta_trial.py']
 
-batches = 200
-n_demo = 7
-n_queries = 1
+
 
 result_path = f'/home/ajshah/Results/Test_Meta'
 #result_path = f'/home/ajshah/Results/Results_{n_data}_pedagogical2'
