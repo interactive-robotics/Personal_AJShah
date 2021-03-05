@@ -36,6 +36,9 @@ def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True
     elif query_type == 'info_gain':
         entropy_gains = [compute_expected_entropy_gain(state, specification_fsm) for state in states]
         desired_state = states[np.argmax(entropy_gains)]
+    elif query_type == 'max_model_change':
+        model_changes = [compute_expected_model_change(state, specification_fsm) for state in states]
+        desired_state = states[np.argmax(model_changes)]
 
     path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])

@@ -211,7 +211,6 @@ def compute_expected_entropy_gain_pedagogical(specification_fsm, n_threats = 5, 
 
 
 def compute_expected_entropy_gain_demonstrations_independent(specification_fsm, n_threats=5, n_waypoints=5, debug=False):
-
     states = specification_fsm.states2id.keys()
     current_entropy = entropy(specification_fsm._partial_rewards)
 
@@ -258,6 +257,144 @@ def compute_expected_entropy_gain_demonstrations_independent(specification_fsm, 
         'p_state': p_state
         }
     return expected_entropy_gain
+
+'''##################### Expected Model Change ###################'''
+
+def compute_expected_model_change_demonstrations(spec_fsm, pedagogical=True, selectivity=None, n_threats=5, n_waypoints=5):
+    if pedagogical:
+        if selectivity == None:
+            return compute_expected_model_change_optimal(spec_fsm, n_threats, n_waypoints)
+        else:
+            return compute_expected_model_change_noisy(spec_fsm, selectivity, n_threats, n_waypoints)
+    else:
+        return compute_expected_model_change_independent(spec_fsm, n_threats, n_waypoints)
+
+
+def compute_expected_model_change_independent(spec_fsm:SpecificationFSM, n_threats=5, n_waypoints=5, debug=False):
+    states = list(spec_fsm.states2id.keys())
+    old_probs = spec_fsm._partial_rewards
+    new_dists = [compute_online_bsi_update(state, spec_fsm, True) for state in states]
+    model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    expected_model_change = 0
+
+    allowed_states = []
+    state_probs = []
+    selected_state_model_changes = []
+
+    for i in tqdm(range(len(spec_fsm._formulas))):
+
+        formula = specification_fsm._formulas[i]
+        p_formula = specification_fsm._partial_rewards[i]
+        old_dist = specification_fsm._partial_rewards
+
+        allowed_states.append([])
+        #state_probs.append([])
+        selected_state_model_changes.append([])
+
+        for (state, new_dist, state_model_change) in zip(states, new_dists, model_changes):
+            progressed_formula = json.loads(state[i])
+            sat_check = (IsSafe(progressed_formula)[0] and progressed_formula != [False]) or progressed_formula == [True]
+            if sat_check:
+                allowed_states[i].append(state)
+                #formula_probs[i].append(new_dist['probs'][i])
+                selected_state_model_changes[i].append(state_model_change)
+
+        if len(allowed_states[i]) > 0:
+            state_probs.append(np.ones(len(allowed_states[i]))/len(allowed_states[i]))
+            increment = np.dot(state_probs[i], selected_state_model_changes[i])
+        else:
+            increment = 0
+
+        expected_model_change = expected_model_change + p_formula*increment
+
+    if debug:
+        return {'expected_model_change': expected_model_change,
+                'allowed_states': allowed_state,
+                'state_probs': state_probs,
+                'selected_model_changes': selected_model_changes,
+                }
+    else:
+        return expected_model_change
+
+
+def compute_expected_model_change_optimal(spec_fsm:SpecificationFSM, n_threats=5, n_waypoints=5, debug=False):
+    states = list(spec_fsm.states2id.keys())
+    old_probs = spec_fsm._partial_rewards
+    new_dists = [compute_online_bsi_update(state, spec_fsm, True) for state in states]
+    model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    expected_model_change = 0
+
+    #allowed_states = []
+    #state_probs = []
+    #selected_state_model_changes = []
+    formula_model_changes = []
+
+    for i in tqdm(range(len(spec_fsm._formulas))):
+        p_formula = old_probs[i]
+        formula = spec_fsm._formulas[i]
+
+        cross_entropies = [-np.log(new_dist['probs'][i]) for new_dist in new_dists] #because these are the same formulas
+        pedagogical_state_idx = np.argmin(cross_entropies)
+        pedagogical_state = states[np.argmin(cross_entropies)]
+        formula_model_change = model_changes[pedagogical_state_idx]
+        formula_model_changes.append(formula_model_change)
+
+        expected_model_change = expected_model_change + p_formula*formula_model_change
+
+    if debug:
+        return {'expected_model_change': expected_model_change,
+                'model_changes': state_model_changes,
+                'states': states,
+                'formula_model_changes': formula_model_changes,
+                'formulas': spec_fsm._formulas}
+    else:
+        return expected_model_change
+
+def compute_expected_model_change_noisy(spec_fsm:SpecificationFSM, selectivity = 5, n_threats=5, n_waypoints=5, debug=False):
+    current_entropy = entropy(spec_fsm._partial_rewards)
+    old_probs = spec_fsm._partial_rewards
+    expected_entropy_gain = 0
+    states = list(spec_fsm.states2id.keys())
+
+    new_dists = [compute_online_bsi_update(state, spec_fsm, True, n_threats, n_waypoints) for state in states]
+    state_model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+
+    allowed_states = []
+    formula_probs = []
+    selected_model_changes = []
+
+    for i in tqdm(range(len(spec_fsm._formulas))):
+        formula = spec_fsm._formulas[i]
+        p_formula = spec_fsm._partial_rewards[i]
+
+        old_dist = spec_fsm._partial_rewards
+
+        allowed_states.append([])
+        formula_probs.append([])
+        selected_model_changes.append([])
+
+        for (state, new_dist, state_model_change) in zip(states, new_dists, state_model_changes):
+            progressed_formula = json.loads(state[i])
+            sat_check = (IsSafe(progressed_formula)[0] and progressed_formula != [False]) or progressed_formula == [True]
+            if sat_check:
+                allowed_states[i].append(state)
+                formula_probs[i].append(new_dist['probs'][i])
+                selected_model_changes[i].append(state_model_change)
+
+        if len(allowed_states[i]) > 0:
+            temp = np.power(formula_probs[i], selectivity)
+            state_probs = temp/np.sum(temp)
+            increment = np.dot(selected_model_changes[i], state_probs)
+        else:
+            increment = 0
+
+        expected_entropy_gain = expected_entropy_gain + p_formula*increment
+
+    if debug:
+        return {'expected_entropy_gain': expected_entropy_gain, 'formulas': specification_fsm._formulas, 'allowed_states': allowed_states, 'formula_probs': formula_probs, 'selected_model_changes': selected_model_changes}
+    else:
+        return expected_entropy_gain
+
 
 
 '''##################### Utility Functions ###################'''

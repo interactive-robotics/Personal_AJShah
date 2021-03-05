@@ -16,12 +16,16 @@ def run_single_trial(directory):
     command_headers = data['command_headers']
     args = data['args']
     conditions = data['conditions']
+    p_threats = data['p_threats']
+    p_orders = data['p_orders']
+    p_waypoints = data['p_waypoints']
 
 
     out_data = {}
-    out_data['queries_chosen'] = 0
-    out_data['demonstrations_chosen'] = 0
-    out_data['query_mismatch'] = 0
+    out_data['queries_chosen'] = {}
+    out_data['demonstrations_chosen'] = {}
+    out_data['query_mismatch_info_gain'] = {}
+    out_data['query_mismatch_model_change'] = {}
     out_data['similarity'] = {}
     out_data['entropy'] = {}
     out_data['results'] = {}
@@ -29,7 +33,7 @@ def run_single_trial(directory):
     run_id = batch_id
     print(f'Running Trial {run_id}')
     demo_directory = os.path.join(directory, 'condition_0', global_params.compressed_data_path)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo=n_demo, ground_truth_formula = given_ground_truth)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo=n_demo, ground_truth_formula = given_ground_truth, p_threats, p_waypoints, p_orders)
 
     out_data['results']['ground_truth'] = ground_truth_formula
     for arg in args:
@@ -65,10 +69,11 @@ def run_single_trial(directory):
     for (c, rd, condition) in zip(command_headers, run_data, conditions):
 
         if 'active' in c:
-            out_data['query_mismatch'] = out_data['query_mismatch'] + rd['query_mismatches']
+            out_data['query_mismatch_info_gain'][condition] = rd['query_mismatches_info_gain']
+            out_data['query_mismatch_model_change'][condition] = rd['query_mismatches_model_change']
         if 'meta' in c:
-            out_data['queries_chosen'] = out_data['queries_chosen'] + rd['queries_performed']
-            out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] = rd['demonstrations_requested']
+            out_data['queries_chosen'][condition] = rd['queries_performed']
+            out_data['demonstrations_chosen'][condition] = rd['demonstrations_requested']
 
         out_data['similarity'][condition] = rd['similarity']
         out_data['entropy'][condition] = rd['entropy']

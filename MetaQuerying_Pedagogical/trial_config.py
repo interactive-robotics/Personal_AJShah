@@ -1,8 +1,11 @@
 batches = 200
 workers = 2
 n_demo = 2
-n_query = 3
+n_query = 13
 mode = 'incremental'
+p_threats = 0.5
+p_waypoints = 0.5
+p_orders = 0.5
 
 conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Batch', 'Meta-Selection', 'Pedagogical Batch', 'Meta Pedagogical']
 #conditions = ['A','B','C','D','E','F']

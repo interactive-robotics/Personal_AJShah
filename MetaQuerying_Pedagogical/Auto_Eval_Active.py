@@ -35,7 +35,8 @@ def apply(f,x):
 def strip(string):
     return re.sub('[^A-Za-z0-9 ]+', '', string)
 
-def run_parallel_trials(args, command_headers, conditions, batches = 100, workers = 2, n_demo = 2, n_query = 4, given_ground_truth = None, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
+def run_parallel_trials(args, command_headers, conditions, batches = 100, workers = 2, n_demo = 2, n_query = 4,
+given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
 
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
     if os.path.exists(summary_file):
@@ -45,9 +46,10 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
     else:
         out_data = {}
         start_id = 0
-        out_data['queries_chosen'] = 0
-        out_data['demonstrations_chosen'] = 0
-        out_data['query_mismatch'] = 0
+        out_data['queries_chosen'] = {}
+        out_data['demonstrations_chosen'] = {}
+        out_data['query_mismatch_info_gain'] = {}
+        out_data['query_mismatch_model_change'] = {}
         out_data['similarity'] = {}
         out_data['entropy'] = {}
         out_data['results'] = {}
@@ -66,7 +68,10 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
                     'mode': mode,
                     'args': args,
                     'command_headers': command_headers,
-                    'conditions': conditions
+                    'conditions': conditions,
+                    'p_threats': p_threats,
+                    'p_waypoints': p_waypoints,
+                    'p_orders': p_orders
                     }
 
     for batch_id in range(batches):
@@ -110,9 +115,10 @@ def run_parallel_trials(args, command_headers, conditions, batches = 100, worker
             out_data['similarity'][run_id] = trial_out_data['similarity']
             out_data['entropy'][run_id] = trial_out_data['entropy']
             out_data['results'][run_id] = trial_out_data['results']
-            out_data['query_mismatch'] = out_data['query_mismatch'] + trial_out_data['query_mismatch']
-            out_data['demonstrations_chosen'] = out_data['demonstrations_chosen'] + trial_out_data['demonstrations_chosen']
-            out_data['queries_chosen'] = out_data['queries_chosen'] + trial_out_data['queries_chosen']
+            out_data['query_mismatch_info_gain'][run_id] = trial_out_data['query_mismatch_info_gain']
+            out_data['query_mismatch_model_change'][run_id] = trial_out_data['query_mismatch_model_change']
+            out_data['demonstrations_chosen']['run_id'] = trial_out_data['demonstrations_chosen']
+            out_data['queries_chosen'][run_id] = trial_out_data['queries_chosen']
 
             summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
             with open(summary_file,'wb') as file:
@@ -190,7 +196,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
 
 
-def run_meta_selection_trials(directory, demo = 2, n_query = 4, query_strategy = 'uncertainty_sampling',
+def run_meta_selection_trials(directory, demo = 2, n_query = 4, meta_policy = 'info_gain,' query_strategy = 'uncertainty_sampling',
 run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True):
 
     params = global_params
@@ -218,12 +224,9 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     for i in range(n_query):
 
         #Determine if additional demonstration or query will yield larger entropy gain
-        state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = query_strategy)
-        query_gain = compute_expected_entropy_gain(state, MDPs[-1].specification_fsm)
+        demo, demonstration_gain, query_gain = meta_policy(spec_fsm, meta_policy, query_strategy, pedagogical, selectivity)
         print('Query Gain:', query_gain)
-        demonstration_gain = compute_expected_entropy_gain_demonstrations(MDPs[-1].specification_fsm, pedagogical, selectivity)
         print('Demonstration Gain:', demonstration_gain)
-        demo = True if demonstration_gain >= query_gain else False
 
         if demo:
             if verbose: print('Selecting demonstration for next data point')
@@ -423,7 +426,8 @@ verbose = True, write_file = False):
     MDPs = []
     Distributions = []
     Queries = []
-    query_mismatches = 0
+    query_mismatches_info_gain = 0
+    query_mismatches_model_change = 0
 
     clear_demonstrations(directory, params)
 
@@ -448,7 +452,9 @@ verbose = True, write_file = False):
         #Check for mismatch between info gain and uncertainty Sampling
         uncertainty_sampling_desired_state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = 'uncertainty_sampling')
         infogain_desired_state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type='info_gain')
-        if uncertainty_sampling_desired_state != infogain_desired_state: query_mismatches = query_mismatches + 1
+        max_model_change_desired_state,_ = identify_desired_state(MDPs[-1].speciification_fsm, query_type = 'max_model_change')
+        if uncertainty_sampling_desired_state != infogain_desired_state: query_mismatches_info_gain = query_mismatches_model_change + 1
+        if uncertainty_sampling_desired_state != max_model_change_desired_state: query_mismatches_model_change = query_mismatches_model_change + 1
 
         #Create the query
         if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
@@ -493,7 +499,8 @@ verbose = True, write_file = False):
     out_data['ground_truth_formula'] = ground_truth_formula
     out_data['run_id'] = run_id
     out_data['type'] = f'Active_{query_strategy}'
-    out_data['query_mismatches'] = query_mismatches
+    out_data['query_mismatches_info_gain'] = query_mismatches_info_gain
+    out_data['query_mismatches_model_change'] = query_mismatches_model_change
 
 
 
@@ -501,6 +508,19 @@ verbose = True, write_file = False):
         write_run_data_new(out_data, run_id, typ = f'Active_{query_strategy}')
         create_run_log(run_id, f'Active_{query_strategy}')
     return out_data
+
+def meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+    query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
+    if meta_policy == 'information_gain':
+        query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
+        demonstration_gain = compute_expected_entropy_gain_demonstrations(spec_fsm, pedagogical, selectivity)
+        #demo = True if demonstration_entropy_gain >= query_entropy_gain
+    elif meta_policy == 'max_model_change':
+        query_gain = compute_expected_model_change(state, spec_fsm)
+        demonstration_gain = compute_expected_model_change_demonstrations(spec_fsm, pedagogical, selectivity)
+
+    demo = True if demonstration_gain >= query_gain else False
+    return demo, demonstration_gain, query_gain
 
 
 def create_trial_directory(directory, i, conditions):
@@ -520,11 +540,6 @@ def create_trial_directory(directory, i, conditions):
             os.mkdir(os.path.join(condition_path, global_params.distributions_path))
 
 
-
-
-
-
-
 def write_run_data_new(out_data, run_id, typ):
     if not os.path.exists(os.path.join(global_params.results_path,'Runs')): os.mkdir(os.path.join(global_params.results_path,'Runs'))
     filename = os.path.join(global_params.results_path, 'Runs', f'{typ}_Run_{run_id}.pkl')
@@ -534,9 +549,9 @@ def write_run_data_new(out_data, run_id, typ):
 
 
 
-def ground_truth_selector(demo_directory, demo = 2, ground_truth_formula = None):
+def ground_truth_selector(demo_directory, demo = 2, ground_truth_formula = None, p_threats=0.5, p_waypoints = 0.5, p_orders = 0.5):
     if ground_truth_formula == None:
-        ground_truth_formula = sample_ground_truth(threats = True)
+        ground_truth_formula = sample_ground_truth(threats = True, p_threats, p_waypoints, p_orders)
 
     if type(demo) == int:
         n_demo = demo
@@ -738,8 +753,13 @@ if __name__ == '__main__':
     n_query = trial_config.n_query
     workers = trial_config.workers
     mode = trial_config.mode
+    p_threats = trial_config.p_threats
+    p_order = trial_config.p_orders
+    p_waypoints = trial_config.p_waypoints
 
 
     global_params.results_path = trial_config.result_path
     check_results_path(global_params.results_path)
-    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = workers, n_demo = n_demo, n_query = n_query, given_ground_truth = None, mode = mode)
+    results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = workers, n_demo = n_demo, n_query = n_query,
+    given_ground_truth = None, p_threats = p_threats, p_waypoints = p_waypoints, p_orders = p_orders
+    mode = mode)
