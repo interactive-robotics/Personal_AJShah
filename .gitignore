@@ -2,6 +2,8 @@ puns-bsi-client/Agents/*
 puns-bsi-client/demos/*
 puns-bsi-client/Distributions/*
 puns-bsi-client/logs/*
+MetaQuerying_Parallel2/Run_Config/*
+MetaQuerying_Pedagogical/Run_Config/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
