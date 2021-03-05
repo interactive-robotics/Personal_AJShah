@@ -37,18 +37,18 @@ def create_orders(subsets):
     return orders
 
 
-def sample_ground_truth(n_waypoints = 5, threats = False):
+def sample_ground_truth(n_waypoints = 5, threats = False, p_threats=0.5, p_waypoints=0.5, p_order=0.5):
 
     values = [f'W{i}' for i in range(n_waypoints)]
-    waypoints = sample_subset(values)
-    orders = create_orders(divide_into_subsets(values))
+    waypoints = sample_subset(values, p_waypoint)
+    orders = create_orders(divide_into_subsets(values, p_order))
     order_waypoints = [o[0] for o in orders]
     waypoints = list(set(waypoints) | set(order_waypoints))
 
     if threats:
         threat_candidates = list(set(values) - set(waypoints))
         if len(threat_candidates) > 0:
-            threats = sample_subset(threat_candidates)
+            threats = sample_subset(threat_candidates, p_threats)
         else:
             threats = []
     else:

@@ -4,7 +4,12 @@ from puns.SpecificationFSMTools import *
 from formula_utils import *
 from scipy.stats import entropy
 from scipy.special import softmax
+from scipy.spatial.distance import jensenshannon
 import json
+
+####
+## Online BSI Tools
+####
 
 def compute_online_bsi_update(state, specification_fsm: SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
     logprobs = np.log(specification_fsm._partial_rewards)
@@ -41,6 +46,10 @@ def likelihood_factor(formula, label, sat_check, n_threats=5, n_waypoints=5):
             factor = 0
     return factor
 
+####
+## Entropy calculations
+####
+
 def compute_new_entropy(state, specification_fsm:SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
     #take log of all probabilities and convert to a numpy array
     logprobs = np.log(specification_fsm._partial_rewards)
@@ -72,3 +81,28 @@ def compute_expected_entropy_gain(state, specification_fsm, n_threats=5, n_waypo
     expected_entropy = p_true*true_entropy + p_false*false_entropy
 
     return current_entropy - expected_entropy
+
+####
+## Model Change calculation
+####
+
+def compute_model_change(state, spec_fsm:SpecificationFSM, label, n_threats = 5, n_waypoints = 5):
+
+    old_probs = spec_fsm._partial_rewards
+    new_dist = compute_online_bsi_update(state, spec_fsm, label, n_threats, n_waypoints)
+    new_probs = new_dist['probs']
+
+    #Computing model change as per the Jensen Shannon distance
+    model_change = jensenshannon(old_probs, new_probs)
+
+    return model_change
+
+def compute_expected_model_change(state, spec_fsm:SpecificationFSM, n_threats=5, n_waypoints=5):
+    reward_func = CreateReward(spec_fsm._partial_rewards)
+    p_true = 0.5*(reward_func(state, force_terminal=True)) + 0.5
+    p_false = 1 - p_true
+
+    true_model_change = compute_model_change(state, spec_fsm, True, n_threats, n_waypoints)
+    false_model_change = compute_model_change(state, spec_fsm, False, n_threats, n_waypoints)
+
+    return p_true*true_model_change + p_false*false_model_change
