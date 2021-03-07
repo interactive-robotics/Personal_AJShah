@@ -120,12 +120,12 @@ def plot_similarities_CI(directory, data, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_pedagogical2'
+    directory = f'/home/ajshah/Results/Results_15_Active_Trials'
     data = read_data(directory)
     results = get_similarities(data, format = 'queries')
-    # plot_similarities_mean(directory, data)
-    # plot_similarities_median(directory, data)
-    # plot_similarities_box(directory, data)
+    plot_similarities_mean(directory, data)
+    plot_similarities_median(directory, data)
+    plot_similarities_box(directory, data)
     plot_similarities_CI(directory, data)
 
 

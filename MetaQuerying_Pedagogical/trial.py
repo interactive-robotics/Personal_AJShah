@@ -33,7 +33,7 @@ def run_single_trial(directory):
     run_id = batch_id
     print(f'Running Trial {run_id}')
     demo_directory = os.path.join(directory, 'condition_0', global_params.compressed_data_path)
-    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo=n_demo, ground_truth_formula = given_ground_truth, p_threats, p_waypoints, p_orders)
+    n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo=n_demo, ground_truth_formula = given_ground_truth, p_threats = p_threats, p_waypoints = p_waypoints, p_orders = p_orders)
 
     out_data['results']['ground_truth'] = ground_truth_formula
     for arg in args:

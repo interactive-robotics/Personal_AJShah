@@ -196,7 +196,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
 
 
-def run_meta_selection_trials(directory, demo = 2, n_query = 4, meta_policy = 'info_gain,' query_strategy = 'uncertainty_sampling',
+def run_meta_selection_trials(directory, demo = 2, n_query = 4, meta_policy = 'info_gain,', query_strategy = 'uncertainty_sampling',
 run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True):
 
     params = global_params
@@ -224,7 +224,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     for i in range(n_query):
 
         #Determine if additional demonstration or query will yield larger entropy gain
-        demo, demonstration_gain, query_gain = meta_policy(spec_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+        demo, demonstration_gain, query_gain = run_meta_policy(MDPs[-1].specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
         print('Query Gain:', query_gain)
         print('Demonstration Gain:', demonstration_gain)
 
@@ -452,7 +452,7 @@ verbose = True, write_file = False):
         #Check for mismatch between info gain and uncertainty Sampling
         uncertainty_sampling_desired_state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type = 'uncertainty_sampling')
         infogain_desired_state, _ = identify_desired_state(MDPs[-1].specification_fsm, query_type='info_gain')
-        max_model_change_desired_state,_ = identify_desired_state(MDPs[-1].speciification_fsm, query_type = 'max_model_change')
+        max_model_change_desired_state,_ = identify_desired_state(MDPs[-1].specification_fsm, query_type = 'max_model_change')
         if uncertainty_sampling_desired_state != infogain_desired_state: query_mismatches_info_gain = query_mismatches_model_change + 1
         if uncertainty_sampling_desired_state != max_model_change_desired_state: query_mismatches_model_change = query_mismatches_model_change + 1
 
@@ -509,14 +509,14 @@ verbose = True, write_file = False):
         create_run_log(run_id, f'Active_{query_strategy}')
     return out_data
 
-def meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
     query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
-    if meta_policy == 'information_gain':
+    if meta_policy == 'info_gain':
         query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
         demonstration_gain = compute_expected_entropy_gain_demonstrations(spec_fsm, pedagogical, selectivity)
         #demo = True if demonstration_entropy_gain >= query_entropy_gain
     elif meta_policy == 'max_model_change':
-        query_gain = compute_expected_model_change(state, spec_fsm)
+        query_gain = compute_expected_model_change(query_state, spec_fsm)
         demonstration_gain = compute_expected_model_change_demonstrations(spec_fsm, pedagogical, selectivity)
 
     demo = True if demonstration_gain >= query_gain else False
@@ -551,7 +551,7 @@ def write_run_data_new(out_data, run_id, typ):
 
 def ground_truth_selector(demo_directory, demo = 2, ground_truth_formula = None, p_threats=0.5, p_waypoints = 0.5, p_orders = 0.5):
     if ground_truth_formula == None:
-        ground_truth_formula = sample_ground_truth(threats = True, p_threats, p_waypoints, p_orders)
+        ground_truth_formula = sample_ground_truth(threats = True, p_threats = p_threats, p_waypoints = p_waypoints, p_orders = p_orders)
 
     if type(demo) == int:
         n_demo = demo
@@ -739,11 +739,7 @@ def check_results_path(results_path):
        os.mkdir(results_path)
        os.mkdir(os.path.join(results_path, 'Runs'))
 
-if __name__ == '__main__':
-
-    import trial_config as trial_config
-
-
+def run_trial(trial_config):
     args = trial_config.args
     command_headers = trial_config.command_headers
     conditions = trial_config.conditions
@@ -754,12 +750,33 @@ if __name__ == '__main__':
     workers = trial_config.workers
     mode = trial_config.mode
     p_threats = trial_config.p_threats
-    p_order = trial_config.p_orders
+    p_orders = trial_config.p_orders
     p_waypoints = trial_config.p_waypoints
 
 
     global_params.results_path = trial_config.result_path
     check_results_path(global_params.results_path)
     results = run_parallel_trials(args, command_headers, conditions, batches = batches, workers = workers, n_demo = n_demo, n_query = n_query,
-    given_ground_truth = None, p_threats = p_threats, p_waypoints = p_waypoints, p_orders = p_orders
+    given_ground_truth = None, p_threats = p_threats, p_waypoints = p_waypoints, p_orders = p_orders,
     mode = mode)
+
+
+
+if __name__ == '__main__':
+
+    import trial_config2, trial_config1
+    from meta_analysis import *
+
+    for trial_config in [trial_config2]:
+        run_trial(trial_config)
+        directory = trial_config.result_path
+        data = read_data(directory)
+        results = get_similarities(data, format = 'queries')
+        plot_similarities_mean(directory, data)
+        plot_similarities_median(directory, data)
+        plot_similarities_box(directory, data)
+        plot_similarities_CI(directory, data)
+
+
+
+    

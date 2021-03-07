@@ -6,6 +6,7 @@ from scipy.stats import entropy
 from scipy.special import softmax
 from scipy.spatial.distance import jensenshannon
 import json
+import dill
 
 ####
 ## Online BSI Tools
@@ -94,6 +95,7 @@ def compute_model_change(state, spec_fsm:SpecificationFSM, label, n_threats = 5,
 
     #Computing model change as per the Jensen Shannon distance
     model_change = jensenshannon(old_probs, new_probs)
+    if np.isnan(model_change): model_change = 0
 
     return model_change
 

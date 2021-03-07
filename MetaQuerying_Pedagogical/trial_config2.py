@@ -22,20 +22,22 @@ args.append({'n_query': n_query, 'query_strategy': 'info_gain', 'meta_policy': '
 args.append({'n_query': n_query, 'query_strategy': 'info_gain', 'meta_policy': 'info_gain', 'pedagogical': True, 'selectivity': 2})
 args.append({'n_query': n_query, 'query_strategy': 'info_gain', 'meta_policy': 'info_gain', 'pedagogical': False})
 
-args = [args1, args2, args3, args4]
+#args = [args1, args2, args3, args4]
 
 
 
-command_headers = [f'python meta_selection_trial.py',
-            f'python meta_selection_trial.py',
-            f'python meta_selection_trial.py',
-            f'python meta_selection_trial.py',
-            f'python meta_selection_trial.py',
-            f'python meta_selection_trial.py',
+command_headers = [f'python meta_trial.py',
+            f'python meta_trial.py',
+            f'python meta_trial.py',
+            f'python meta_trial.py',
+            f'python meta_trial.py',
+            f'python meta_trial.py',
+            f'python meta_trial.py',
+            f'python meta_trial.py',
             ]
 
 
 n_data = n_demo + n_query
 
 #result_path = f'/home/ajshah/Results/Test_Custom'
-result_path = f'/home/ajshah/Results/Results_15_Active_Trials'
+result_path = f'/home/ajshah/Results/Results_15_Meta_Trials'

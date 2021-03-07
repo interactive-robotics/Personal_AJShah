@@ -9,7 +9,7 @@ p_threats = 0.5
 p_waypoints = 0.5
 p_orders = 0.5
 
-conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Active: Model Change]
+conditions = ['Active: Uncertainty Sampling', 'Active: Info Gain', 'Active: Model Change']
 
 args1 = {'n_query': n_query, 'query_strategy': 'uncertainty_sampling',}
 args2 = {'n_query': n_query, 'query_strategy': 'info_gain',}

@@ -6,6 +6,7 @@ import networkx as nx
 from tqdm import tqdm
 from puns.utils import IsSafe
 import json
+import numpy as np
 
 def create_pedagogical_demo(ground_truth, MDP, selectivity = None, n_threats = 0, non_terminal = True, verbose = True):
 
@@ -275,6 +276,7 @@ def compute_expected_model_change_independent(spec_fsm:SpecificationFSM, n_threa
     old_probs = spec_fsm._partial_rewards
     new_dists = [compute_online_bsi_update(state, spec_fsm, True) for state in states]
     model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    model_changes = [0 if np.isnan(x) else x for x in model_changes]
     expected_model_change = 0
 
     allowed_states = []
@@ -283,9 +285,9 @@ def compute_expected_model_change_independent(spec_fsm:SpecificationFSM, n_threa
 
     for i in tqdm(range(len(spec_fsm._formulas))):
 
-        formula = specification_fsm._formulas[i]
-        p_formula = specification_fsm._partial_rewards[i]
-        old_dist = specification_fsm._partial_rewards
+        formula = spec_fsm._formulas[i]
+        p_formula = spec_fsm._partial_rewards[i]
+        old_dist = spec_fsm._partial_rewards
 
         allowed_states.append([])
         #state_probs.append([])
@@ -304,6 +306,7 @@ def compute_expected_model_change_independent(spec_fsm:SpecificationFSM, n_threa
             increment = np.dot(state_probs[i], selected_state_model_changes[i])
         else:
             increment = 0
+            state_probs.append([])
 
         expected_model_change = expected_model_change + p_formula*increment
 
@@ -322,6 +325,7 @@ def compute_expected_model_change_optimal(spec_fsm:SpecificationFSM, n_threats=5
     old_probs = spec_fsm._partial_rewards
     new_dists = [compute_online_bsi_update(state, spec_fsm, True) for state in states]
     model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    model_changes = [0 if np.isnan(x) else x for x in model_changes]
     expected_model_change = 0
 
     #allowed_states = []
@@ -353,11 +357,12 @@ def compute_expected_model_change_optimal(spec_fsm:SpecificationFSM, n_threats=5
 def compute_expected_model_change_noisy(spec_fsm:SpecificationFSM, selectivity = 5, n_threats=5, n_waypoints=5, debug=False):
     current_entropy = entropy(spec_fsm._partial_rewards)
     old_probs = spec_fsm._partial_rewards
-    expected_entropy_gain = 0
+    expected_model_change = 0
     states = list(spec_fsm.states2id.keys())
 
     new_dists = [compute_online_bsi_update(state, spec_fsm, True, n_threats, n_waypoints) for state in states]
     state_model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    state_model_changes = [0 if np.isnan(x) else x for x in state_model_changes]
 
     allowed_states = []
     formula_probs = []
@@ -388,12 +393,12 @@ def compute_expected_model_change_noisy(spec_fsm:SpecificationFSM, selectivity =
         else:
             increment = 0
 
-        expected_entropy_gain = expected_entropy_gain + p_formula*increment
+        expected_model_change = expected_model_change + p_formula*increment
 
     if debug:
-        return {'expected_entropy_gain': expected_entropy_gain, 'formulas': specification_fsm._formulas, 'allowed_states': allowed_states, 'formula_probs': formula_probs, 'selected_model_changes': selected_model_changes}
+        return {'expected_model_change': expected_model_change, 'formulas': specification_fsm._formulas, 'allowed_states': allowed_states, 'formula_probs': formula_probs, 'selected_model_changes': selected_model_changes}
     else:
-        return expected_entropy_gain
+        return expected_model_change
 
 
 
