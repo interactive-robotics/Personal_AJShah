@@ -71,7 +71,7 @@ def identify_pedagogical_state(ground_truth, prior_specification_fsm, selectivit
     if selectivity == None:
         return identify_pedagogical_state_optimal(ground_truth, prior_specification_fsm, n_threats, n_waypoints)
     else:
-        return identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, n_threats, n_waypoints)
+        return identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, selectivity, n_threats, n_waypoints)
 
 def identify_pedagogical_state_optimal(ground_truth, prior_specification_fsm, n_threats = 5, n_waypoints = 5, debug = False):
 
