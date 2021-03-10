@@ -53,6 +53,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
         out_data['similarity'] = {}
         out_data['entropy'] = {}
         out_data['results'] = {}
+        out_data['meta_selections'] = {}
 
     #Create the trial directories
     for i in range(workers):
@@ -769,10 +770,10 @@ def run_trial(trial_config):
 
 if __name__ == '__main__':
 
-    import trial_config2, trial_config1
+    import trial_config3
     from meta_analysis import *
 
-    for trial_config in [trial_config2]:
+    for trial_config in [trial_config3]:
         run_trial(trial_config)
         directory = trial_config.result_path
         data = read_data(directory)
