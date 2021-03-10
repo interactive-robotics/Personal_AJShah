@@ -29,6 +29,7 @@ def run_single_trial(directory):
     out_data['similarity'] = {}
     out_data['entropy'] = {}
     out_data['results'] = {}
+    out_data['meta_selections'] = {}
 
     run_id = batch_id
     print(f'Running Trial {run_id}')
@@ -74,6 +75,7 @@ def run_single_trial(directory):
         if 'meta' in c:
             out_data['queries_chosen'][condition] = rd['queries_performed']
             out_data['demonstrations_chosen'][condition] = rd['demonstrations_requested']
+            out_data['meta_selections'][condition] = rd['meta_selections']
 
         out_data['similarity'][condition] = rd['similarity']
         out_data['entropy'][condition] = rd['entropy']

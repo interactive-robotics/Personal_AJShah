@@ -119,6 +119,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
             out_data['query_mismatch_model_change'][run_id] = trial_out_data['query_mismatch_model_change']
             out_data['demonstrations_chosen']['run_id'] = trial_out_data['demonstrations_chosen']
             out_data['queries_chosen'][run_id] = trial_out_data['queries_chosen']
+            out_data['meta_selections'][run_id] = trial_out_data['meta_selections']
 
             summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
             with open(summary_file,'wb') as file:
@@ -206,6 +207,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     query_mismatches = 0
     queries_performed = 0
     demonstrations_requested = 0
+    meta_selections = []
 
     clear_demonstrations(directory, params)
     demo_directory = os.path.join(directory, params.compressed_data_path)
@@ -229,6 +231,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
         print('Demonstration Gain:', demonstration_gain)
 
         if demo:
+            meta_selections.append('demo')
             if verbose: print('Selecting demonstration for next data point')
             demonstrations_requested = demonstrations_requested + 1
 
@@ -264,6 +267,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             MDPs.append(CreateSpecMDP(spec_file, n_threats = 0, n_waypoints = global_params.n_waypoints))
             Distributions.append(extract_dist(MDPs[-1]))
         else:
+            meta_selections.append('query')
             #learn from an active info gain query
             if verbose: print(f'Trial {run_id}: Selecting Query for next data point')
             queries_performed = queries_performed + 1
@@ -313,6 +317,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     out_data['query_mismatches'] = query_mismatches
     out_data['demonstrations_requested'] = demonstrations_requested
     out_data['queries_performed'] = queries_performed
+    out_data['meta_selections'] = meta_selections
 
     if write_file:
         if pedagogical:
@@ -776,7 +781,3 @@ if __name__ == '__main__':
         plot_similarities_median(directory, data)
         plot_similarities_box(directory, data)
         plot_similarities_CI(directory, data)
-
-
-
-    
