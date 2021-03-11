@@ -74,6 +74,7 @@ def find_query_mismatches(d, strat1, strat2):
     return diverging_dists
 
 
+
 if __name__ == '__main__':
 
     print('Reading Results file \n')
