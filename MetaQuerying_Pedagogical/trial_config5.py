@@ -1,6 +1,6 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 50
+batches = 1
 workers = 2
 n_demo = 2
 n_query = 13
@@ -9,14 +9,15 @@ p_threats = 0.5
 p_waypoints = 0.5
 p_orders = 0.5
 
-conditions = ['Non Pedagogical', 'Noisy Pedagogical 0.1', 'Noisy Pedagogical 0.5', 'Noisy Pedagogical 1', 'Noisy Pedagogical 5', 'Pedagogical',]
+conditions = ['Non Pedagogical 1', 'Non Pedagogical 2', 'Noisy Pedagogical 0.01', 'Noisy Pedagogical 0.1', 'Noisy Pedagogical 0.5', 'Noisy Pedagogical 1', 'Pedagogical',]
 
 args = []
+args.append({'n_query': n_query,})
 args.append({'n_query': n_query, 'selectivity': 0 })
+args.append({'n_query': n_query, 'selectivity': 0.01})
 args.append({'n_query': n_query, 'selectivity': 0.1})
 args.append({'n_query': n_query, 'selectivity': 0.5})
 args.append({'n_query': n_query, 'selectivity': 1})
-args.append({'n_query': n_query, 'selectivity': 5})
 args.append({'n_query': n_query,})
 
 
@@ -24,7 +25,8 @@ args.append({'n_query': n_query,})
 
 
 
-command_headers = [f'python pedagogical_trial.py',
+command_headers = [f'python batch_trial.py',
+            f'python pedagogical_trial.py',
             f'python pedagogical_trial.py',
             f'python pedagogical_trial.py',
             f'python pedagogical_trial.py',
