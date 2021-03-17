@@ -110,9 +110,19 @@ def identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, sele
         new_dist = compute_online_bsi_update(prior_specification_fsm.id2states[0], prior_specification_fsm, True, n_threats = n_threats, n_waypoints = n_waypoints)
         formula_probs.append(get_formula_probability(ground_truth, new_dist))
 
-    state_probs = np.power(formula_probs, selectivity)/np.sum(np.power(formula_probs, selectivity))
-    desired_state_idx = np.random.choice(len(allowed_states), p = state_probs)
-    desired_state = allowed_states[desired_state_idx]
+    # Add multiples of states for which there are more than a single simple path
+    final_allowed_states = []
+    final_formula_probs = []
+
+    for (state, val) in zip(allowed_states, formula_probs):
+        n_paths = len(list(nx.all_simple_paths(prior_specification_fsm.graph, 0, prior_specification_fsm.states2id[state])))
+        n_paths = n_paths if n_paths > 0 else 1
+        final_allowed_states.extend([state]*n_paths)
+        final_formula_probs.extend([val]*n_paths)
+
+    state_probs = np.power(final_formula_probs, selectivity)/np.sum(np.power(final_formula_probs, selectivity))
+    desired_state_idx = np.random.choice(len(final_allowed_states), p = state_probs)
+    desired_state = final_allowed_states[desired_state_idx]
     #print(selected_state_idx)
 
     #desired_state = states[selected_state_idx]
@@ -121,7 +131,7 @@ def identify_noisy_pedagogical_state(ground_truth, prior_specification_fsm, sele
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([prior_specification_fsm.states2id[desired_state]])
 
     if debug:
-        return {'desired_state': desired_state, 'breadcrumbs': bread_crumb_states, 'allowed_states': allowed_states, 'formula_probs': formula_probs, 'state_probs': state_probs}
+        return {'desired_state': desired_state, 'breadcrumbs': bread_crumb_states, 'allowed_states': final_allowed_states, 'formula_probs': final_formula_probs, 'state_probs': state_probs}
     else:
         return desired_state, bread_crumb_states
 

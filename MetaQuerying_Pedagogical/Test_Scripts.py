@@ -11,6 +11,7 @@ from Auto_Eval_Active import *
 from tqdm import tqdm
 from itertools import product
 from multiprocessing import Pool
+import seaborn as sns
 import os
 import dill
 
@@ -73,13 +74,64 @@ def find_query_mismatches(d, strat1, strat2):
 
     return diverging_dists
 
+def get_selections(dat, format = 'long'):
+    selections = dat['meta_selections']
+    
+    if format == 'long':
+        out_data = {}
+        idx = 0
+        for  i in selections.keys():
+            for c in selections[i].keys():
+                for q in range(len(selections[i][c])):
+                    out_data[idx] = {}
+                    out_data[idx]['Condition'] = c
+                    out_data[idx]['Query'] = q
+                    out_data[idx]['Selection'] = selections[i][c][q]
+                    idx = idx+1
+        out_data = pd.DataFrame.from_dict(out_data, orient = 'index')
+        return out_data
+    
+    if format == 'condition':
+        out_data = {}
+        idx = 0
+        
+        for c in selections[0].keys():
+            out_data[c] = {}
+            for i in selections.keys():
+                out_data[c][i] = {}
+                for q in range(len(selections[i][c])):
+                    out_data[c][i][q] = selections[i][c][q]
+            
+            out_data[c] = pd.DataFrame.from_dict(out_data[c], orient = 'index')
+        return out_data
+        
+                    
+def plot_selections(data):
+    
+    selections = get_selections(data, format = 'condition')
+    
+    for c in selections.keys():
+         raw_frame = selections[c]
+         index = raw_frame.columns
+         query_counts = [raw_frame[x].value_counts()['query'] if 'query' in raw_frame[x].value_counts().index else 0 for x in index]
+         demo_counts = [raw_frame[x].value_counts()['demo'] if 'demo' in raw_frame[x].value_counts().index else 0 for x in index]
+         
+         plot_frame = pd.DataFrame({'Queries': query_counts, 'Demonstrations': demo_counts}, index = index)
+         from sns_defaults import rc
+         with sns.plotting_context('poster', rc = rc):
+             plt.figure(figsize = [16, 9])
+             plot_frame.plot.bar(stacked = True, ax = plt.gca())
+             plt.title(f'{c}')
+
 
 
 if __name__ == '__main__':
 
     print('Reading Results file \n')
-    with open(os.path.join(directory, 'active_paired_summary.pkl'),'rb') as file:
+    with open(os.path.join(directory, 'comparison_paired_summary.pkl'),'rb') as file:
         d = dill.load(file)
 
     #ret, dists = find_query_mismatches_parallel(d, 'uncertainty_sampling', 'max_model_change')
-    dists = find_query_mismatches(d, 'uncertainty_sampling', 'max_model_change')
+    #dists = find_query_mismatches(d, 'uncertainty_sampling', 'max_model_change')
+    data = get_selections(d, format = 'condition')
+    
