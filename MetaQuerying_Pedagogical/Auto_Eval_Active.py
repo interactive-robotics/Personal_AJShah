@@ -54,6 +54,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
         out_data['entropy'] = {}
         out_data['results'] = {}
         out_data['meta_selections'] = {}
+        out_data['query_flags' ] = {}
 
     #Create the trial directories
     for i in range(workers):
@@ -121,6 +122,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
             out_data['demonstrations_chosen']['run_id'] = trial_out_data['demonstrations_chosen']
             out_data['queries_chosen'][run_id] = trial_out_data['queries_chosen']
             out_data['meta_selections'][run_id] = trial_out_data['meta_selections']
+            out_data['query_flags'][run_id] = trial_out_data['query_flags']
 
             summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
             with open(summary_file,'wb') as file:
@@ -158,6 +160,15 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
         demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1], selectivity)
         label = True
         demo['label'] = True
+
+        final_state = MDPs[-1].specification_fsm.id2states[0]
+        for slice in demo['trace']:
+            final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
+
+        if final_state == demo['desired_state'] and demo['desired_state']!= MDPs[-1].specification_fsm.id2states[0]:
+            demo['flag'] = True
+        else:
+            demo['flag'] = False
 
         new_traj = create_query_demo(demo['trace'])
         write_demo_query_data(new_traj, label, os.path.join(directory, params.compressed_data_path), query_number = i+1)
@@ -239,6 +250,14 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             if pedagogical:
                 demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1], selectivity)
                 trace_slices = demo['trace']
+                final_state = MDPs[-1].specification_fsm.id2states[0]
+                for slice in demo['trace']:
+                    final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
+
+                if final_state == demo['desired_state'] and demo['desired_state']!= MDPs[-1].specification_fsm.id2states[0]:
+                    demo['flag'] = True
+                else:
+                    demo['flag'] = False
             else:
             #create a demonstration as a positive query
                 eval_agent.explore(1)
@@ -246,6 +265,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
                 record = eval_agent.episodic_record[-1]
                 trace_slices = [MDP.control_mdp.create_observations(rec[0][1]) for rec in record]
                 trace_slices.append(MDP.control_mdp.create_observations(record[-1][2][1]))
+                demo = {'flag': True}
 
             new_traj = create_query_demo(trace_slices)
             write_demo_query_data(new_traj, True, os.path.join(directory, params.compressed_data_path), query_number=i+1)
@@ -257,6 +277,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             if returnval: Exception('Inference failure')
 
             new_query = {}
+            new_query['flag'] = demo['flag']
             new_query['trace'] = trace_slices
             new_query['agent'] = 1
             new_query['label'] = True
@@ -277,6 +298,15 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
             Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy))
             Queries[-1]['agent'] = 1
+
+            final_state = MDPs[-1].specification_fsm.id2states[0]
+            for slice in Queries[-1]['trace']:
+                final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
+
+            if final_state == Queries[-1]['desired_state'] and Queries[-1]['desired_state']!= MDPs[-1].specification_fsm.id2states[0]:
+                Queries[-1]['flag'] = True
+            else:
+                Queries[-1]['flag'] = False
 
 
             #Elicit label feedback from the ground truth
@@ -375,6 +405,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
             if returnval: Exception('Inference failure')
 
             new_query = {}
+            new_query['flag'] = True
             new_query['trace'] = trace_slices
             new_query['label'] = True
             new_query['agent'] = 1
@@ -466,6 +497,15 @@ verbose = True, write_file = False):
         if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
         Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy))
         Queries[-1]['agent'] = 1
+
+        final_state = MDPs[-1].specification_fsm.id2states[0]
+        for slice in Queries[-1]['trace']:
+            final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
+
+        if final_state == Queries[-1]['desired_state'] and Queries[-1]['desired_state']!= MDPs[-1].specification_fsm.id2states[0]:
+            Queries[-1]['flag'] = True
+        else:
+            Queries[-1]['flag'] = False
 
         #Elicit label feedback from the ground truth
         signal = create_signal(Queries[-1]['trace'])
