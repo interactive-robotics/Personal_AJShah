@@ -31,8 +31,7 @@ command_headers = [
             f'python meta_trial.py',
             f'python meta_trial.py',
             f'python meta_trial.py',
-            f'python meta_trial.py',
-            f'python meta_trial.py',
+           
             ]
 
 
