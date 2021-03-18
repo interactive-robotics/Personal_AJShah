@@ -239,6 +239,8 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
 
         #Determine if additional demonstration or query will yield larger entropy gain
         demo, demonstration_gain, query_gain = run_meta_policy(MDPs[-1].specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+        if demonstration_gain <= 0 and query_gain <= 0:
+            break
         print('Query Gain:', query_gain)
         print('Demonstration Gain:', demonstration_gain)
 
@@ -564,6 +566,9 @@ def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain',
     elif meta_policy == 'max_model_change':
         query_gain = compute_expected_model_change(query_state, spec_fsm)
         demonstration_gain = compute_expected_model_change_demonstrations(spec_fsm, pedagogical, selectivity)
+    elif meta_policy == 'uncertainty_sampling':
+        query_gain = -np.abs(spec_fsm.reward_function(query_state, force_terminal = True))
+        demonstration_gain = -np.abs(compute_expected_reward(spec_fsm, pedagogical, selectivity))
 
     demo = True if demonstration_gain >= query_gain else False
     return demo, demonstration_gain, query_gain

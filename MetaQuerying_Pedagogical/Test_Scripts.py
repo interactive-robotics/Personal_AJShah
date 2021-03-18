@@ -128,10 +128,11 @@ def plot_selections(data):
 if __name__ == '__main__':
 
     print('Reading Results file \n')
-    with open(os.path.join(directory, 'comparison_paired_summary.pkl'),'rb') as file:
+    with open(os.path.join(directory, 'meta_paired_summary.pkl'),'rb') as file:
         d = dill.load(file)
 
     #ret, dists = find_query_mismatches_parallel(d, 'uncertainty_sampling', 'max_model_change')
     #dists = find_query_mismatches(d, 'uncertainty_sampling', 'max_model_change')
-    data = get_selections(d, format = 'condition')
+    #data = get_selections(d, format = 'condition')
+    plot_selections(d)
     

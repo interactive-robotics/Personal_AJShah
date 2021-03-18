@@ -410,6 +410,150 @@ def compute_expected_model_change_noisy(spec_fsm:SpecificationFSM, selectivity =
     else:
         return expected_model_change
 
+'''######################## Expected Reward #####################'''
+
+def compute_expected_reward(spec_fsm: SpecificationFSM, pedagogical = True, selectivity = None, n_threats = 5, n_waypoints = 5, debug=False):
+    if pedagogical:
+        if selectivity == None:
+            return compute_expected_reward_optimal(spec_fsm, n_threats, n_waypoints)
+        else:
+            return compute_expected_reward_noisy(spec_fsm, selectivity, n_threats, n_waypoints)
+    else:
+        return compute_expected_reward_independent(spec_fsm, n_threats, n_waypoints)
+
+def compute_expected_reward_independent(spec_fsm:SpecificationFSM, n_threats = 5, n_waypoints = 5, debug = False):
+    states = list(spec_fsm.states2id.keys())
+    old_probs = spec_fsm._partial_rewards
+    #new_dists = [compute_online_bsi_update(state, spec_fsm, True) for state in states]
+    #model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    #model_changes = [0 if np.isnan(x) else x for x in model_changes]
+    rewards = [spec_fsm.reward_function(state, force_terminal=True) for state in states]
+    expected_reward = 0
+
+    allowed_states = []
+    state_probs = []
+    selected_rewards = []
+
+    for i in tqdm(range(len(spec_fsm._formulas))):
+
+        formula = spec_fsm._formulas[i]
+        p_formula = spec_fsm._partial_rewards[i]
+        old_dist = spec_fsm._partial_rewards
+
+        allowed_states.append([])
+        #state_probs.append([])
+        selected_rewards.append([])
+
+        for (state, reward) in zip(states, rewards):
+            progressed_formula = json.loads(state[i])
+            sat_check = (IsSafe(progressed_formula)[0] and progressed_formula != [False]) or progressed_formula == [True]
+            if sat_check:
+                allowed_states[i].append(state)
+                #formula_probs[i].append(new_dist['probs'][i])
+                selected_rewards[i].append(reward)
+
+        if len(allowed_states[i]) > 0:
+            state_probs.append(np.ones(len(allowed_states[i]))/len(allowed_states[i]))
+            increment = np.dot(state_probs[i], selected_rewards[i])
+        else:
+            increment = 0
+            state_probs.append([])
+
+        expected_reward = expected_reward + p_formula*increment
+
+    if debug:
+        return {'expected_reward': expected_reward,
+                'allowed_states': allowed_states,
+                'state_probs': state_probs,
+                'selected_rewards': selected_rewards,
+                }
+    else:
+        return expected_reward
+
+def compute_expected_reward_optimal(spec_fsm:SpecificationFSM, n_threats = 5, n_waypoints = 5, debug = False):
+
+    states = list(spec_fsm.states2id.keys())
+    old_probs = spec_fsm._partial_rewards
+    new_dists = [compute_online_bsi_update(state, spec_fsm, True) for state in states]
+    rewards = [spec_fsm.reward_function(s, force_terminal=True) for s in states]
+    #model_changes = [0 if np.isnan(x) else x for x in model_changes]
+    expected_reward = 0
+
+    #allowed_states = []
+    #state_probs = []
+    #selected_state_model_changes = []
+    formula_rewards = []
+
+    for i in tqdm(range(len(spec_fsm._formulas))):
+        p_formula = old_probs[i]
+        formula = spec_fsm._formulas[i]
+
+        cross_entropies = [-np.log(new_dist['probs'][i]) for new_dist in new_dists] #because these are the same formulas
+        pedagogical_state_idx = np.argmin(cross_entropies)
+        pedagogical_state = states[np.argmin(cross_entropies)]
+        formula_reward = rewards[pedagogical_state_idx]
+        formula_rewards.append(formula_reward)
+
+        expected_reward = expected_reward + p_formula*formula_reward
+
+    if debug:
+        return {'expected_reward': expected_reward,
+                'rewards': rewards,
+                'states': states,
+                'formula_rewards': formula_rewards,
+                'formulas': spec_fsm._formulas}
+    else:
+        return expected_reward
+
+def compute_expected_reward_noisy(spec_fsm:SpecificationFSM, selectivity = 5, n_threats=5, n_waypoints=5, debug=False):
+    current_entropy = entropy(spec_fsm._partial_rewards)
+    old_probs = spec_fsm._partial_rewards
+    expected_reward = 0
+    states = list(spec_fsm.states2id.keys())
+
+    new_dists = [compute_online_bsi_update(state, spec_fsm, True, n_threats, n_waypoints) for state in states]
+    # state_model_changes = [jensenshannon(old_probs, d['probs']) for d in new_dists]
+    # state_model_changes = [0 if np.isnan(x) else x for x in state_model_changes]
+    rewards = [spec_fsm.reward_function(s, force_terminal = True) for s in states]
+
+    allowed_states = []
+    formula_probs = []
+    selected_rewards = []
+
+    for i in tqdm(range(len(spec_fsm._formulas))):
+        formula = spec_fsm._formulas[i]
+        p_formula = spec_fsm._partial_rewards[i]
+
+        old_dist = spec_fsm._partial_rewards
+
+        allowed_states.append([])
+        formula_probs.append([])
+        selected_rewards.append([])
+
+        for (state, new_dist, state_reward) in zip(states, new_dists, rewards):
+            progressed_formula = json.loads(state[i])
+            sat_check = (IsSafe(progressed_formula)[0] and progressed_formula != [False]) or progressed_formula == [True]
+            if sat_check:
+                allowed_states[i].append(state)
+                formula_probs[i].append(new_dist['probs'][i])
+                selected_rewards[i].append(state_reward)
+
+        if len(allowed_states[i]) > 0:
+            temp = np.power(formula_probs[i], selectivity)
+            state_probs = temp/np.sum(temp)
+            increment = np.dot(selected_rewards[i], state_probs)
+        else:
+            increment = 0
+
+        expected_reward = expected_reward + p_formula*increment
+
+    if debug:
+        return {'expected_reward': expected_reward, 'formulas': specification_fsm._formulas, 'allowed_states': allowed_states, 'formula_probs': formula_probs, 'selected_rewards': selected_rewards}
+    else:
+        return expected_reward
+
+
+
 
 
 '''##################### Utility Functions ###################'''
