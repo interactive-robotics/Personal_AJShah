@@ -1,9 +1,9 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 1
+batches = 30
 workers = 2
 n_demo = 2
-n_query = 13
+n_query = 10
 mode = 'incremental'
 p_threats = 0.5
 p_waypoints = 0.5

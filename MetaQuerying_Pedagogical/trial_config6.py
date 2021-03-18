@@ -1,9 +1,9 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 1
+batches = 30
 workers = 2
 n_demo = 2
-n_query = 13
+n_query = 10
 mode = 'incremental'
 p_threats = 0.5
 p_waypoints = 0.5
@@ -44,4 +44,4 @@ command_headers = [f'python pedagogical_trial.py',
 n_data = n_demo + n_query
 
 #result_path = f'/home/ajshah/Results/Test_Custom'
-result_path = f'/home/ajshah/Results/Results_15_Meta_Batch_Comparison3'
+result_path = f'/home/ajshah/Results/Results_15_Meta_Batch_Comparison'
