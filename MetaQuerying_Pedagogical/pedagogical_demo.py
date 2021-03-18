@@ -479,22 +479,40 @@ def compute_expected_reward_optimal(spec_fsm:SpecificationFSM, n_threats = 5, n_
     #model_changes = [0 if np.isnan(x) else x for x in model_changes]
     expected_reward = 0
 
-    #allowed_states = []
+    allowed_states = []
     #state_probs = []
     #selected_state_model_changes = []
     formula_rewards = []
+    selected_rewards = []
 
     for i in tqdm(range(len(spec_fsm._formulas))):
         p_formula = old_probs[i]
         formula = spec_fsm._formulas[i]
+        allowed_states.append([])
+        #formula_probs.append([])
+        selected_rewards.append([])
+        cross_entropies = []
 
-        cross_entropies = [-np.log(new_dist['probs'][i]) for new_dist in new_dists] #because these are the same formulas
-        pedagogical_state_idx = np.argmin(cross_entropies)
-        pedagogical_state = states[np.argmin(cross_entropies)]
-        formula_reward = rewards[pedagogical_state_idx]
-        formula_rewards.append(formula_reward)
+        for (state, reward, dist) in zip(states, rewards, new_dists):
+            progressed_formula = json.loads(state[i])
+            sat_check = (IsSafe(progressed_formula)[0] and progressed_formula != [False]) or progressed_formula == [True]
 
-        expected_reward = expected_reward + p_formula*formula_reward
+            if sat_check:
+                allowed_states[i].append(state)
+                selected_rewards[i].append(reward)
+                cross_entropies.append(-np.log(dist['probs'][i]))
+
+        if len(allowed_states[i]) > 0:
+            pedagogical_state_idx = np.argmin(cross_entropies)
+            pedagogical_state = states[pedagogical_state_idx]
+            selected_reward = selected_rewards[i][pedagogical_state_idx]
+            formula_rewards.append(selected_reward)
+            increment = p_formula*selected_reward
+        else:
+            increment = -p_formula
+            formula_rewards.append(-1)
+
+        expected_reward = expected_reward + increment
 
     if debug:
         return {'expected_reward': expected_reward,

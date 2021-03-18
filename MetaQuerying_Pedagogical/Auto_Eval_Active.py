@@ -239,8 +239,11 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
 
         #Determine if additional demonstration or query will yield larger entropy gain
         demo, demonstration_gain, query_gain = run_meta_policy(MDPs[-1].specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
-        if demonstration_gain <= 0 and query_gain <= 0:
-            break
+        if meta_policy == 'uncertainty_sampling':
+            if query_gain == -1: break
+        else:
+            if demonstration_gain <= 0 and query_gain <= 0:
+                break
         print('Query Gain:', query_gain)
         print('Demonstration Gain:', demonstration_gain)
 
