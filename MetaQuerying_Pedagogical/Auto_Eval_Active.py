@@ -815,10 +815,10 @@ def run_trial(trial_config):
 
 if __name__ == '__main__':
 
-    import trial_config4, trial_config5, trial_config6, trial_config2
+    import trial_config4, trial_config5, trial_config6, trial_config2, trial_config7
     from meta_analysis import *
 
-    for trial_config in [trial_config4, trial_config5, trial_config6, trial_config2]:
+    for trial_config in [trial_config7]:
         run_trial(trial_config)
         directory = trial_config.result_path
         data = read_data(directory)
