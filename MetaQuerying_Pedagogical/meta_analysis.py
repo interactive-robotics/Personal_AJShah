@@ -8,16 +8,23 @@ from itertools import product
 def read_data(direc):
     with open(os.path.join(direc, 'paired_summary.pkl'), 'rb') as file:
         data = dill.load(file)
-
-    queries = [len(data['results'][i][c]) for (i,c) in product(data['results'].keys(), data['results'][0].keys())]
+    return data
+    
+def pad_data(data):
+    
+    print('Padding Queries')
+    conditions = list(data['results'][0].keys())
+    conditions.remove('ground_truth')
+    
+    queries = [len(data['results'][i][c]) for (i,c) in product(data['results'].keys(), conditions)]
     n_queries = np.max(queries)
 
-    print('Padding Queries')
+    
     for i in tqdm(data['results'].keys()):
-        for c in data['results'][0].keys():
+        for c in conditions:
             if len(data['results'][0][c]) < n_queries:
                 last_dist = data['results'][0][c][-1]
-                data['results'][0][c].extend([last_dist]*(n_queries - len(data['results'][0][c]))
+                data['results'][0][c].extend([last_dist]*(n_queries - len(data['results'][0][c])))
     return data
 
 def get_similarities(data, format = 'long'):
@@ -58,7 +65,7 @@ def get_similarities(data, format = 'long'):
         results = {}
         for t in range(trials):
             for c in conditions:
-                for q in range(len(data[t][c]['results'])):
+                for q in range(len(data['results'][t][c])):
                     results[idx] = {}
                     results[idx]['Similarity'] = compare_distribution(data['results'][t]['ground_truth'], data['results'][t][c][q])
                     results[idx]['Condition'] = c
