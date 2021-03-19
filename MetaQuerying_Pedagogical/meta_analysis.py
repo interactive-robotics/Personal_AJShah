@@ -138,8 +138,9 @@ def plot_similarities_CI(directory, data, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Batch_Noise'
+    directory = f'/home/ajshah/Results/Results_15_Meta'
     data = read_data(directory)
+    data = pad_data(data)
     #results = get_similarities(data, format = 'queries')
     plot_similarities_mean(directory, data)
     plot_similarities_median(directory, data)
