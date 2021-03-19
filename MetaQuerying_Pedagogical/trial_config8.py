@@ -33,4 +33,4 @@ command_headers = [f'python meta_trial.py',
 n_data = n_demo + n_query
 
 #result_path = f'/home/ajshah/Results/Test_Custom'
-result_path = f'/home/ajshah/Results/Results_15_Meta'
+result_path = f'/home/ajshah/Results/Results_15_Meta_Mismatched'

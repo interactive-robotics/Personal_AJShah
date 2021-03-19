@@ -76,8 +76,8 @@ def get_similarities(data, format = 'long'):
 
     return results
 
-def plot_similarities_mean(directory, data ,savename = 'similarity.png'):
-    results = get_similarities(data, format = 'long')
+def plot_similarities_mean(directory, results ,savename = 'similarity.png'):
+    #results = get_similarities(data, format = 'long')
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
         plt.figure(figsize = [48,18])
@@ -85,8 +85,8 @@ def plot_similarities_mean(directory, data ,savename = 'similarity.png'):
         err_kws = {'capsize':10, 'capthick':3}, estimator = np.mean, ci = 95, alpha = 0.85)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
 
-def plot_similarities_median(directory, data ,savename = 'similarity_median.png'):
-    results = get_similarities(data, format = 'long')
+def plot_similarities_median(directory, results ,savename = 'similarity_median.png'):
+    #results = get_similarities(data, format = 'long')
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
         plt.figure(figsize = [48,18])
@@ -94,12 +94,12 @@ def plot_similarities_median(directory, data ,savename = 'similarity_median.png'
         err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
 
-def plot_similarities_box(directory, data ,savename = 'similarity_box.png'):
-    results = get_similarities(data, format = 'long')
+def plot_similarities_box(directory, results ,savename = 'similarity_box.png'):
+    #results = get_similarities(data, format = 'long')
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
         plt.figure(figsize = [48,18])
-        sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = False, whis = 0)
+        sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = True, whis = 0)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
 
 def create_quantile_estimator(q):
@@ -109,9 +109,9 @@ def create_quantile_estimator(q):
 
     return estimator
 
-def plot_similarities_CI(directory, data, savename = 'similarity_range.png'):
+def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 
-    results = get_similarities(data, format = 'long')
+    #results = get_similarities(data, format = 'long')
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
         plt.figure(figsize = [48,18])
@@ -138,11 +138,11 @@ def plot_similarities_CI(directory, data, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Meta'
+    directory = f'/home/ajshah/Results/Results_15_Meta_Mismatched'
     data = read_data(directory)
     data = pad_data(data)
-    #results = get_similarities(data, format = 'queries')
-    plot_similarities_mean(directory, data)
-    plot_similarities_median(directory, data)
-    plot_similarities_box(directory, data)
-    plot_similarities_CI(directory, data)
+    results = get_similarities(data, format = 'long')
+    plot_similarities_mean(directory, results)
+    plot_similarities_median(directory, results)
+    plot_similarities_box(directory, results)
+    plot_similarities_CI(directory, results)
