@@ -22,9 +22,9 @@ def pad_data(data):
     
     for i in tqdm(data['results'].keys()):
         for c in conditions:
-            if len(data['results'][0][c]) < n_queries:
-                last_dist = data['results'][0][c][-1]
-                data['results'][0][c].extend([last_dist]*(n_queries - len(data['results'][0][c])))
+            if len(data['results'][i][c]) < n_queries:
+                last_dist = data['results'][i][c][-1]
+                data['results'][i][c].extend([last_dist]*(n_queries - len(data['results'][i][c])))
     return data
 
 def get_similarities(data, format = 'long'):
