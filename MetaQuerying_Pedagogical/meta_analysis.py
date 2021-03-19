@@ -46,8 +46,8 @@ def get_similarities(data, format = 'long'):
         idx = 0
         results = {}
         for t in range(trials):
-            for q in range(queries):
-                for c in conditions:
+            for c in conditions:
+                for q in range(len(data[t][c]['results'])):
                     results[idx] = {}
                     results[idx]['Similarity'] = compare_distribution(data['results'][t]['ground_truth'], data['results'][t][c][q])
                     results[idx]['Condition'] = c
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
     directory = f'/home/ajshah/Results/Results_15_Batch_Noise'
     data = read_data(directory)
-    results = get_similarities(data, format = 'queries')
+    #results = get_similarities(data, format = 'queries')
     plot_similarities_mean(directory, data)
     plot_similarities_median(directory, data)
     plot_similarities_box(directory, data)
