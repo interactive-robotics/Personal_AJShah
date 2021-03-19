@@ -81,7 +81,7 @@ def run_single_trial(directory):
         out_data['similarity'][condition] = rd['similarity']
         out_data['entropy'][condition] = rd['entropy']
         out_data['results'][condition] = rd['Distributions']
-        out_data['query_flags'] = [q['flag'] for q in rd['Queries']]
+        out_data['query_flags'][condition] = [q['flag'] for q in rd['Queries']]
 
     with open(os.path.join(directory, 'trial_out_data.pkl'), 'wb') as file:
         dill.dump(out_data, file)

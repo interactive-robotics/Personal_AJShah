@@ -3,10 +3,21 @@ import dill
 import pandas as pd
 import numpy as np
 import seaborn as sns
+from itertools import product
 
 def read_data(direc):
     with open(os.path.join(direc, 'paired_summary.pkl'), 'rb') as file:
         data = dill.load(file)
+
+    queries = [len(data['results'][i][c]) for (i,c) in product(data['results'].keys(), data['results'][0].keys())]
+    n_queries = np.max(queries)
+
+    print('Padding Queries')
+    for i in tqdm(data['results'].keys()):
+        for c in data['results'][0].keys():
+            if len(data['results'][0][c]) < n_queries:
+                last_dist = data['results'][0][c][-1]
+                data['results'][0][c].extend([last_dist]*(n_queries - len(data['results'][0][c]))
     return data
 
 def get_similarities(data, format = 'long'):
@@ -88,7 +99,7 @@ def create_quantile_estimator(q):
 
     def estimator(data):
         return np.quantile(data, q)
-    
+
     return estimator
 
 def plot_similarities_CI(directory, data, savename = 'similarity_range.png'):
@@ -127,6 +138,3 @@ if __name__ == '__main__':
     plot_similarities_median(directory, data)
     plot_similarities_box(directory, data)
     plot_similarities_CI(directory, data)
-
-
-
