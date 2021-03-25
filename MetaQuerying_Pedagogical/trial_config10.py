@@ -12,10 +12,10 @@ p_orders = 0.5
 conditions = ['Underestimated','Calibrated','Overestimated 1', 'Overstimated 2']
 
 args = []
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0, 'demonstrator_selectivity': None})
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0,})
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0, 'demonstrator_selectivity': -5})
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 1, 'demonstrator_selectivity': 0})
+args.append({'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0, 'demonstrator_selectivity': None})
+args.append({'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0,})
+args.append({'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0, 'demonstrator_selectivity': -5})
+args.append({'n_query': n_query, 'query_strategy': 'uncertainty_sampling', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 1, 'demonstrator_selectivity': 0})
 #args = [args1, args2, args3, args4]
 
 
