@@ -4,22 +4,23 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 from itertools import product
+import math
 
 def read_data(direc):
     with open(os.path.join(direc, 'paired_summary.pkl'), 'rb') as file:
         data = dill.load(file)
     return data
-    
+
 def pad_data(data):
-    
+
     print('Padding Queries')
     conditions = list(data['results'][0].keys())
     conditions.remove('ground_truth')
-    
+
     queries = [len(data['results'][i][c]) for (i,c) in product(data['results'].keys(), conditions)]
     n_queries = np.max(queries)
 
-    
+
     for i in tqdm(data['results'].keys()):
         for c in conditions:
             if len(data['results'][i][c]) < n_queries:
@@ -76,6 +77,37 @@ def get_similarities(data, format = 'long'):
 
     return results
 
+def extract_selectivity(condition):
+    if 'Meta' in condition:
+        protocol = 'Meta-Selection'
+    else:
+        protocol = 'Demonstrations'
+
+    if condition in ['Meta Pedagogical', 'Pedagogical']:
+        selectivity = math.nan
+    elif condition in ['Meta Non Pedagogical', 'Non Pedagogical']:
+        selectivity = 0
+    else:
+        selectivity = float(condition.split()[-1])
+
+    return (protocol, selectivity)
+
+def create_sims_table(sims, sim_key):
+    #Assume sims in long format
+
+    out_table = {}
+    for idx in sims.index:
+        (protocol, selectivity) = extract_selectivity(sims.loc[idx]['Condition'])
+        out_table[idx] = {}
+        out_table[idx]['Similarity'] = sims.loc[idx]['Similarity']
+        out_table[idx]['Condition'] = protocol
+        out_table[idx]['Selectivity'] = selectivity
+        out_table[idx]['Data Points'] = sims.loc[idx]['Data Points']
+    out_table = pd.DataFrame.from_dict(out_table, orient = 'index')
+    max_selectivity = np.nanmax(sims['Similarity'])
+    out_table.fillna(max_selectivity+1, inplace=True)
+    return out_table
+
 def plot_similarities_mean(directory, results ,savename = 'similarity.png'):
     #results = get_similarities(data, format = 'long')
     from sns_defaults import rc
@@ -101,6 +133,13 @@ def plot_similarities_box(directory, results ,savename = 'similarity_box.png'):
         plt.figure(figsize = [48,18])
         sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = False, whis = 0)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
+
+def plot_similarities_quantitative(sims):
+    from sns_defaults import rc
+    with sns.plotting_context('poster', rc=rc):
+        plt.figure(figsize=[24,9])
+        sns.lineplot(data = sims, x = 'Data Points', y = 'Similarity', hue = 'Selectivity', style='Condition', err_style = 'bars',
+        err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
 
 def create_quantile_estimator(q):
 
@@ -141,8 +180,21 @@ if __name__ == '__main__':
     directory = f'/home/ajshah/Results/Results_15_Meta_Mismatched_Non_Pedagogical'
     data = read_data(directory)
     data = pad_data(data)
-    results = get_similarities(data, format = 'long')
-    plot_similarities_mean(directory, results)
-    plot_similarities_median(directory, results)
-    plot_similarities_box(directory, results)
-    plot_similarities_CI(directory, results)
+    # results = get_similarities(data, format = 'long')
+    # plot_similarities_mean(directory, results)
+    # plot_similarities_median(directory, results)
+    # plot_similarities_box(directory, results)
+    # plot_similarities_CI(directory, results)
+
+    type_key ={
+        'Anchored -1': ('Demonstrations', -1),
+        'Non Pedagogical': ('Demonstrations', 0),
+        'Noisy Pedagogical 1': ('Demonstrations', 1),
+        'Pedagogical': ('Demonstrations', 2),
+        'Meta Anchored -1': ('Meta-Selection', -1),
+        'Meta Non Pedagogical 0': ('Meta-Selection', 0),
+        'Meta Noisy Pedagogical 1': ('Meta-Selection', 1),
+        'Meta Pedagogical': ('Meta-Selection', 2)}
+
+    sims = get_similarities(data)
+    sims = create_sims_table(sims, type_key)

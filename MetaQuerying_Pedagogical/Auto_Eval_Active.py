@@ -210,8 +210,12 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
 
 def run_meta_selection_trials(directory, demo = 2, n_query = 4, meta_policy = 'info_gain,', query_strategy = 'uncertainty_sampling',
-run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True):
+run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True, **kwargs):
 
+    if 'demonstrator_selectivity' not in kwargs:
+        demonstrator_selectivity = selectivity
+    else:
+        demonstrator_selectivity = kwargs['demonstrator_selectivity']
     params = global_params
     MDPs = []
     Distributions = []
@@ -253,7 +257,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             demonstrations_requested = demonstrations_requested + 1
 
             if pedagogical:
-                demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1], selectivity)
+                demo = create_pedagogical_demo(ground_truth_formula, MDPs[-1], demonstrator_selectivity)
                 trace_slices = demo['trace']
                 final_state = MDPs[-1].specification_fsm.id2states[0]
                 for slice in demo['trace']:
