@@ -1,6 +1,6 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 50
+batches = 10
 workers = 2
 n_demo = 2
 n_query = 13
@@ -9,24 +9,24 @@ p_threats = 0.5
 p_waypoints = 0.5
 p_orders = 0.5
 
-conditions = ['Pedagogical', 'Noisy Pedagogical 1', 'Noisy Pedagogical 5', 'Non Pedagogical',
-              'Meta Pedagogical', 'Meta Noisy Pedagogical 1', 'Meta Noisy Pedagogical 5', 'Meta Non Pedagogical']
+conditions = ['Anchored -1', 'Non Pedagogical', 'Noisy Pedagogical 1', 'Pedagogical',
+              'Meta Anchored -1', 'Meta Non Pedagogical 0', 'Meta Noisy Pedagogical 1', 'Meta Pedagogical']
 
 args = []
-args.append({'n_query': n_query, })
+args.append({'n_query': n_query, 'selectivity': -1})
+args.append({'n_query': n_query, 'selectivity': 0})
 args.append({'n_query': n_query, 'selectivity': 1})
-args.append({'n_query': n_query, 'selectivity': 5})
 args.append({'n_query': n_query,})
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True})
+args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': -1})
+args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 0})
 args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 1})
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True, 'selectivity': 5})
-args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': False})
+args.append({'n_query': n_query, 'query_strategy': 'max_model_change', 'meta_policy': 'max_model_change', 'pedagogical': True})
 
 #args = [args1, args2, args3, args4]
 
 
 
-command_headers = [f'python batch_trial.py',
+command_headers = [f'python pedagogical_trial.py',
             f'python pedagogical_trial.py',
             f'python pedagogical_trial.py',
             f'python pedagogical_trial.py',

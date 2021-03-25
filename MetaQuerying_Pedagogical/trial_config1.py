@@ -1,6 +1,6 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 20
+batches = 25
 workers = 2
 n_demo = 2
 n_query = 8

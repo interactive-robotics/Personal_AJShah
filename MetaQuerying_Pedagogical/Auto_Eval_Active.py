@@ -818,15 +818,16 @@ def run_trial(trial_config):
 
 if __name__ == '__main__':
 
-    import trial_config4, trial_config5, trial_config6, trial_config2, trial_config7, trial_config8
+    import trial_config3, trial_config4, trial_config5, trial_config6, trial_config2, trial_config7, trial_config8, trial_config9
     from meta_analysis import *
 
-    for trial_config in [trial_config8]:
+    for trial_config in [trial_config3, trial_config8]:
         run_trial(trial_config)
         directory = trial_config.result_path
         data = read_data(directory)
-        results = get_similarities(data, format = 'queries')
-        plot_similarities_mean(directory, data)
-        plot_similarities_median(directory, data)
-        plot_similarities_box(directory, data)
-        plot_similarities_CI(directory, data)
+        data = pad_data(data)
+        results = get_similarities(data, format = 'long')
+        plot_similarities_mean(directory, results)
+        plot_similarities_median(directory, results)
+        plot_similarities_box(directory, results)
+        plot_similarities_CI(directory, results)

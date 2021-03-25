@@ -99,7 +99,7 @@ def plot_similarities_box(directory, results ,savename = 'similarity_box.png'):
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
         plt.figure(figsize = [48,18])
-        sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = True, whis = 0)
+        sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = False, whis = 0)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
 
 def create_quantile_estimator(q):
@@ -138,7 +138,7 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Meta_Mismatched'
+    directory = f'/home/ajshah/Results/Results_15_Meta_Mismatched_Non_Pedagogical'
     data = read_data(directory)
     data = pad_data(data)
     results = get_similarities(data, format = 'long')
