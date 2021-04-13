@@ -177,24 +177,24 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Meta_Mismatched_Non_Pedagogical'
+    directory = f'/home/ajshah/Results/Results_15_Active2'
     data = read_data(directory)
     data = pad_data(data)
-    # results = get_similarities(data, format = 'long')
-    # plot_similarities_mean(directory, results)
-    # plot_similarities_median(directory, results)
-    # plot_similarities_box(directory, results)
-    # plot_similarities_CI(directory, results)
+    results = get_similarities(data, format = 'long')
+    plot_similarities_mean(directory, results)
+    plot_similarities_median(directory, results)
+    plot_similarities_box(directory, results)
+    plot_similarities_CI(directory, results)
 
-    type_key ={
-        'Anchored -1': ('Demonstrations', -1),
-        'Non Pedagogical': ('Demonstrations', 0),
-        'Noisy Pedagogical 1': ('Demonstrations', 1),
-        'Pedagogical': ('Demonstrations', 2),
-        'Meta Anchored -1': ('Meta-Selection', -1),
-        'Meta Non Pedagogical 0': ('Meta-Selection', 0),
-        'Meta Noisy Pedagogical 1': ('Meta-Selection', 1),
-        'Meta Pedagogical': ('Meta-Selection', 2)}
+    # type_key ={
+    #     'Anchored -1': ('Demonstrations', -1),
+    #     'Non Pedagogical': ('Demonstrations', 0),
+    #     'Noisy Pedagogical 1': ('Demonstrations', 1),
+    #     'Pedagogical': ('Demonstrations', 2),
+    #     'Meta Anchored -1': ('Meta-Selection', -1),
+    #     'Meta Non Pedagogical 0': ('Meta-Selection', 0),
+    #     'Meta Noisy Pedagogical 1': ('Meta-Selection', 1),
+    #     'Meta Pedagogical': ('Meta-Selection', 2)}
 
-    sims = get_similarities(data)
-    sims = create_sims_table(sims, type_key)
+    # sims = get_similarities(data)
+    # sims = create_sims_table(sims, type_key)
