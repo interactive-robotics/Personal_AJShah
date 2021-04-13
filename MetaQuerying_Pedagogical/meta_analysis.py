@@ -6,8 +6,8 @@ import seaborn as sns
 from itertools import product
 import math
 
-def read_data(direc):
-    with open(os.path.join(direc, 'paired_summary.pkl'), 'rb') as file:
+def read_data(direc, file = 'paired_summary.pkl'):
+    with open(os.path.join(direc, file), 'rb') as file:
         data = dill.load(file)
     return data
 
@@ -97,7 +97,7 @@ def create_sims_table(sims, sim_key):
 
     out_table = {}
     for idx in sims.index:
-        (protocol, selectivity) = extract_selectivity(sims.loc[idx]['Condition'])
+        (protocol, selectivity) = extract_selectivity(sims[sel].loc[idx]['Condition'])
         out_table[idx] = {}
         out_table[idx]['Similarity'] = sims.loc[idx]['Similarity']
         out_table[idx]['Condition'] = protocol
@@ -107,6 +107,42 @@ def create_sims_table(sims, sim_key):
     max_selectivity = np.nanmax(sims['Similarity'])
     out_table.fillna(max_selectivity+1, inplace=True)
     return out_table
+
+
+def create_mismatch_table():
+    directory =  'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
+    
+    sims = {}
+    
+    for (filename,sel) in zip(['model_neg5_summary.pkl', 'model_0_summary.pkl', 'model_optimal_summary.pkl'],[-5,0,5]):
+        with open(os.path.join(directory, filename),'rb') as file:
+            data = dill.load(file)
+        data = pad_data(data)
+        sims[sel] = get_similarities(data)
+    
+    idx = 0
+    data = {}
+    for sel in [-5,0,5]:
+        for i in sims[sel].index:
+            
+            data[idx] = {}
+            data[idx]['Similarity'] = sims[sel].loc[i,'Similarity']
+            
+            if sims[sel].loc[i,'Condition'].split()[-1] == 'Optimal':
+                demonstrator_sel = 6
+            else:
+                demonstrator_sel = int(sims[sel].loc[i,'Condition'].split()[-1])
+                
+            
+            data[idx]['Demonstrator Selectivity'] = demonstrator_sel
+            data[idx]['Model Selectivity'] = sel
+            data[idx]['Data Points'] = sims[sel].loc[i,'Data Points']
+            idx=idx+1
+    
+    return pd.DataFrame.from_dict(data, orient = 'index')
+
+        
+        
 
 def plot_similarities_mean(directory, results ,savename = 'similarity.png'):
     #results = get_similarities(data, format = 'long')
@@ -161,6 +197,7 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
         #sns.lineplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', err_style = 'bars',
         #err_kws = {'capsize':10, 'capthick':3}, estimator = create_quantile_estimator(0.9), ci = 95, alpha = 0.3)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
+
 
 # with sns.plotting_context('poster', rc = {'axes.labelsize': 28, 'axes.titlesize': 32, 'legend.fontsize': 24, 'xtick.labelsize': 24, 'ytick.labelsize': 22}):
 #         with sns.color_palette('dark'):
