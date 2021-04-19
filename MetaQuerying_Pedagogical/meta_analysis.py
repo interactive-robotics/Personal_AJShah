@@ -77,6 +77,49 @@ def get_similarities(data, format = 'long'):
 
     return results
 
+def create_query_flags_table():
+    directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
+    data = read_data(directory, file = 'active_summary.pkl')
+    data = pad_data(data)
+    
+    flags = data['query_flags']
+    conditions = flags[0].keys()
+    out_data = {}
+    counts = {}
+    idx = 0
+    
+    for c in conditions:
+        out_data[c] = {}
+        for t in flags.keys():
+            out_data[c][t] = {}
+            for i in range(len(flags[t][c])):
+                
+                out_data[c][t][i] = flags[t][c][i]
+                
+    
+        out_data[c] = pd.DataFrame.from_dict(out_data[c], orient = 'index')
+        counts[c] = pd.DataFrame()
+        for x in out_data[c].columns:
+            counts[c][x] = out_data[c][x].value_counts()
+    return counts
+
+def plot_query_flags():
+    counts = create_query_flags_table()
+    from sns_defaults import rc
+    
+    for c in counts.keys():
+        plot_frame = counts[c].transpose()
+        plot_frame[True] = plot_frame[True]/np.sum(counts[c],axis=0)
+        plot_frame[False] = plot_frame[False]/np.sum(counts[c],axis=0)
+        
+        with sns.plotting_context('poster', rc=rc):
+            plt.figure(figsize = [24,10])
+            plot_frame.plot.bar(stacked = True, ax = plt.gca())
+            plt.title(c)
+            
+        
+        
+
 def extract_selectivity(condition):
     if 'Meta' in condition:
         protocol = 'Meta-Selection'
