@@ -53,7 +53,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
         #print('Press ENTER once complete')
         returnval = 1
-        if returnval:
+        while returnval:
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
             returnval = os.system(command)
             print('Trying again, reset the table and reactivate the robot')
@@ -86,7 +86,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         display_query_waiting()
         #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
         returnval = 1
-        if returnval:
+        while returnval:
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
             returnval = os.system(command)
             if returnval:
@@ -131,7 +131,7 @@ def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
         display_eval_slide(i+1, n_postdemo)
         #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
         returnval = 1
-        if returnval:
+        while returnval:
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
             returnval = os.system(command)
             if returnval:
@@ -208,7 +208,7 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
 
 
             display_query_assessment()
-            #send_text('\nWhat is your label?')
+            # send_text('\nWhat is your label?')
             plt.pause(1)
             # text_label = input()
 
@@ -216,7 +216,7 @@ def random_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
             new_text = f'Your confirmed label is {label}'
             #send_text(new_text)
             assessment = True if label else False
-            display_query_confirmation(assessment)
+            display_query_confirmation(label)
 
             with open(f'logs/query_{i}.pkl','rb') as file:
                 trace_slices = dill.load(file)
