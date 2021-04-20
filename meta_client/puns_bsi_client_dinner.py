@@ -5,6 +5,7 @@ from PUnSClient import *
 from BSIClient import *
 from utils import *
 from query_selection import *
+from pedagogical_demo  import *
 import dill
 import os
 import inputs
@@ -23,9 +24,9 @@ gc = gspread.authorize(cred)
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
 
-#Write recoveries for all of them in the task file to recover from unexpected failures  
+#Write recoveries for all of them in the task file to recover from unexpected failures
 
-def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain'):
+def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain', k = 1):
     clear_demonstrations()
     clear_logs()
     clear_dists()
@@ -46,7 +47,7 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
 
     #For each of the query request an active query and assessment and update the belief
     for i in range(n_query):
-        dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_strategy = query_strategy)
+        dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_strategy = query_strategy, k=k)
         #Recompile the MDP
         MDP = CreateSmallDinnerMDP(specfile)
 
@@ -88,7 +89,7 @@ def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     display_post()
     return
 
-def meta_selection_trials(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
+def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampling', k = 1):
 
     clear_demonstrations()
     clear_logs()
@@ -111,20 +112,21 @@ def meta_selection_trials(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     #For each query opportunity, decide whether to ask for a demonstration or perform a query
     for i in range(n_query):
 
-        state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
-        query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
-        demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
-        print('Query expected gain: ', query_entropy_gain)
-        print('Demo expected gain: ', demonstration_entropy_gain)
+        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
+        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
+        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+        # print('Query expected gain: ', query_entropy_gain)
+        # print('Demo expected gain: ', demonstration_entropy_gain)
 
-        if demonstration_entropy_gain >= query_entropy_gain:
+        demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+
+        if demo:
             #Ask for a demonstration
-
             dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo)
             MDP = CreateSmallDinnerMDP(specfile)
         else:
             #perform a query and ask for a label
-            dist, label, trace_slices, specfile = perform_active_query(i. MDP, query_type = 'Active')
+            dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
             MDP = CreateSmallDinnerMDP(specfile)
 
     #perform the evaluation trials
@@ -197,9 +199,9 @@ def batch_bsi(n_demo = 2):
 
     return demos, dist, specfile
 
-def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Active'):
+def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Active', k = 1):
     display_waiting()
-    puns_request = create_puns_message(MDP, query_type, query_strategy)
+    puns_request = create_puns_message(MDP, query_type, query_strategy, k)
     agent = send_puns_request(puns_request)
 
     display_query_waiting()
@@ -258,6 +260,22 @@ def incremental_demo_update(i, MDP, n_demo = 2):
     with open(specfile,'w') as file:
         json.dump(dist, file)
     return dist, label, trace_slices, specfile
+
+def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+    query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
+    if meta_policy == 'info_gain':
+        query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
+        demonstration_gain = compute_expected_entropy_gain_demonstrations(spec_fsm, pedagogical, selectivity)
+        #demo = True if demonstration_entropy_gain >= query_entropy_gain
+    elif meta_policy == 'max_model_change':
+        query_gain = compute_expected_model_change(query_state, spec_fsm)
+        demonstration_gain = compute_expected_model_change_demonstrations(spec_fsm, pedagogical, selectivity)
+    elif meta_policy == 'uncertainty_sampling':
+        query_gain = -np.abs(spec_fsm.reward_function(query_state, force_terminal = True))
+        demonstration_gain = -np.abs(compute_expected_reward(spec_fsm, pedagogical, selectivity))
+
+    demo = True if demonstration_gain >= query_gain else False
+    return demo, demonstration_gain, query_gain
 
 
 
