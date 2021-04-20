@@ -35,7 +35,7 @@ def apply(f,x):
 def strip(string):
     return re.sub('[^A-Za-z0-9 ]+', '', string)
 
-def run_parallel_trials(args, command_headers, conditions, batches = 100, workers = 2, n_demo = 2, n_query = 4,
+def run_parallel_trials(args, command_headers, conditions, batches = 100, workers = 2, n_demo = 2, n_query = 4, k = 3,
 given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mode = 'incremental', query_strategy = 'uncertainty_sampling'):
 
     summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
@@ -55,6 +55,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
         out_data['results'] = {}
         out_data['meta_selections'] = {}
         out_data['query_flags' ] = {}
+        out_data['labels'] = {}
 
     #Create the trial directories
     for i in range(workers):
@@ -73,7 +74,8 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
                     'conditions': conditions,
                     'p_threats': p_threats,
                     'p_waypoints': p_waypoints,
-                    'p_orders': p_orders
+                    'p_orders': p_orders,
+                    'k': k
                     }
 
     for batch_id in range(batches):
@@ -123,6 +125,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
             out_data['queries_chosen'][run_id] = trial_out_data['queries_chosen']
             out_data['meta_selections'][run_id] = trial_out_data['meta_selections']
             out_data['query_flags'][run_id] = trial_out_data['query_flags']
+            out_data['labels'][run_id] = trial_out_data['labels']
 
             summary_file = os.path.join(global_params.results_path,'paired_summary.pkl')
             with open(summary_file,'wb') as file:
@@ -131,7 +134,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
     return out_data
 
 
-def run_pedagogical_trials(directory, demo = 2, n_query = 4, selectivity = None, query_strategy = 'info_gain',
+def run_pedagogical_trials(directory, demo = 2, n_query = 4, k = 3, selectivity = None, query_strategy = 'info_gain',
 run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
     params = global_params
@@ -207,9 +210,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
         create_run_log(run_id, f'Pedagogical_Batch')
     return out_data
 
-
-
-def run_meta_selection_trials(directory, demo = 2, n_query = 4, meta_policy = 'info_gain,', query_strategy = 'uncertainty_sampling',
+def run_meta_selection_trials(directory, demo = 2, n_query = 4, meta_policy = 'info_gain,', query_strategy = 'uncertainty_sampling', k = 3,
 run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, write_file = False, verbose=True, **kwargs):
 
     if 'demonstrator_selectivity' not in kwargs:
@@ -305,14 +306,14 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
 
             #Create the query
             if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
-            Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy))
+            Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy, k = k))
             Queries[-1]['agent'] = 1
 
             final_state = MDPs[-1].specification_fsm.id2states[0]
             for slice in Queries[-1]['trace']:
                 final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
 
-            if final_state == Queries[-1]['desired_state'] and Queries[-1]['desired_state']!= MDPs[-1].specification_fsm.id2states[0]:
+            if final_state in Queries[-1]['desired_states'] :
                 Queries[-1]['flag'] = True
             else:
                 Queries[-1]['flag'] = False
@@ -368,7 +369,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             create_run_log(run_id, f'Meta_Selection')
     return out_data
 
-def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None, mode = 'incremental', write_file = False, verbose=True):
+def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_truth_formula = None, mode = 'incremental', write_file = False, verbose=True):
     params = global_params
     MDPs = []
     Distributions = []
@@ -465,7 +466,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, ground_truth_f
         create_run_log(run_id, 'Demo')
     return out_data
 
-def run_active_trial(directory, query_strategy = 'uncertainty_sampling', demo = 2, n_query = 4, run_id = 1, ground_truth_formula = None,
+def run_active_trial(directory, query_strategy = 'uncertainty_sampling', demo = 2, n_query = 4, k = 3, run_id = 1, ground_truth_formula = None,
 verbose = True, write_file = False):
 
     params = global_params
@@ -504,14 +505,14 @@ verbose = True, write_file = False):
 
         #Create the query
         if verbose: print(f'Trial {run_id}: Generating query {i+1} demo')
-        Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy))
+        Queries.append(create_active_query(MDPs[-1], verbose=verbose, non_terminal = global_params.non_terminal, query_strategy = query_strategy, k = k))
         Queries[-1]['agent'] = 1
 
         final_state = MDPs[-1].specification_fsm.id2states[0]
         for slice in Queries[-1]['trace']:
             final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
 
-        if final_state == Queries[-1]['desired_state'] and Queries[-1]['desired_state']!= MDPs[-1].specification_fsm.id2states[0]:
+        if final_state in Queries[-1]['desired_states']:
             Queries[-1]['flag'] = True
         else:
             Queries[-1]['flag'] = False
@@ -825,10 +826,11 @@ if __name__ == '__main__':
     import trial_config.trial_config10 as tf10
     import trial_config.trial_config11 as tf11
     import trial_config.trial_config12 as tf12
-    
+    import trial_config.trial_config1 as tf1
+
     from meta_analysis import *
 
-    for trial_config in [tf10, tf11, tf12]:
+    for trial_config in [tf1]:
         run_trial(trial_config)
         directory = trial_config.result_path
         data = read_data(directory)

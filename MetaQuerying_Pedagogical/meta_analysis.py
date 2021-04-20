@@ -111,38 +111,38 @@ def create_sims_table(sims, sim_key):
 
 def create_mismatch_table():
     directory =  'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
-    
+
     sims = {}
-    
+
     for (filename,sel) in zip(['model_neg5_summary.pkl', 'model_0_summary.pkl', 'model_optimal_summary.pkl'],[-5,0,5]):
         with open(os.path.join(directory, filename),'rb') as file:
             data = dill.load(file)
         data = pad_data(data)
         sims[sel] = get_similarities(data)
-    
+
     idx = 0
     data = {}
     for sel in [-5,0,5]:
         for i in sims[sel].index:
-            
+
             data[idx] = {}
             data[idx]['Similarity'] = sims[sel].loc[i,'Similarity']
-            
+
             if sims[sel].loc[i,'Condition'].split()[-1] == 'Optimal':
                 demonstrator_sel = 6
             else:
                 demonstrator_sel = int(sims[sel].loc[i,'Condition'].split()[-1])
-                
-            
+
+
             data[idx]['Demonstrator Selectivity'] = demonstrator_sel
             data[idx]['Model Selectivity'] = sel
             data[idx]['Data Points'] = sims[sel].loc[i,'Data Points']
             idx=idx+1
-    
+
     return pd.DataFrame.from_dict(data, orient = 'index')
 
-        
-        
+
+
 
 def plot_similarities_mean(directory, results ,savename = 'similarity.png'):
     #results = get_similarities(data, format = 'long')
@@ -214,7 +214,7 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Active2'
+    directory = f'/home/ajshah/Results/Results_15_Active3'
     data = read_data(directory)
     data = pad_data(data)
     results = get_similarities(data, format = 'long')

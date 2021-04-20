@@ -26,7 +26,7 @@ from scipy.special import softmax
 from scipy.stats import entropy
 from tqdm import tqdm
 
-def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True, query_type = 'uncertainty_sampling'):
+def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
 
     states = list(specification_fsm.states2id.keys()) if non_terminal else specification_fsm.terminal_states
 
@@ -38,24 +38,61 @@ def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True
         desired_state = states[np.argmax(entropy_gains)]
     elif query_type == 'max_model_change':
         model_changes = [compute_expected_model_change(state, specification_fsm) for state in states]
+        model_changes = [0 if np.isnan(x) else x for x in model_changes]
         desired_state = states[np.nanargmax(model_changes)]
 
     path_to_desired_state = nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[desired_state])
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
     return desired_state, bread_crumb_states
 
-def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose = True, non_terminal=True):
+def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
+
+    #Check the size of the spec FSM if k > size, then reset it to 1
+    if len(specification_fsm.states2id.keys()) <= k:
+        k = 1
+    states = list(specification_fsm.states2id.keys()) if non_terminal else specification_fsm.terminal_states
+
+    if query_type == 'uncertainty_sampling':
+        rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
+        desired_states = [states[s] for s in np.argpartition(np.abs(rewards), k)[0:k]]
+    elif query_type == 'info_gain':
+        entropy_gains = np.array([compute_expected_entropy_gain(state, specification_fsm) for state in states])
+        desired_states = [states[s] for s in np.argpartition(-entropy_gains,k)[0:k]]
+    elif query_type == 'max_model_change':
+        model_changes = [compute_expected_model_change(state, specification_fsm) for state in states]
+        model_changes = np.array([0 if np.isnan(x) else x for x in model_changes])
+        desired_states = [states[s] for s in np.argpartition(-model_changes, k)[0:k]]
+
+    path_to_desired_state = []
+    for s in desired_states:
+        path_to_desired_state.extend(nx.all_simple_paths(specification_fsm.graph, 0, specification_fsm.states2id[s]))
+
+    subtract_set = set([specification_fsm.states2id[s] for s in desired_states])
+    bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - subtract_set
+
+    if debug:
+        return desired_states, bread_crumb_states, path_to_desired_state
+    else:
+        return desired_states, bread_crumb_states
+
+def create_active_query(MDP, query_strategy = 'uncertainty_sampling', k = 3,  verbose = True, non_terminal=True):
     ''' A query generated as per the most informative heuristic based on the
     identified final state'''
 
     # Identify desired final state and recompile reward
-    desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
-    spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+    if k > 1:
+        desired_states, breadcrumbs = identify_desired_state_topk(MDP.specification_fsm, k, non_terminal, query_strategy)
+        spec_fsm2 = recompile_reward_function_topk(MDP.specification_fsm, desired_states, breadcrumbs)
+    else:
+        desired_state, breadcrumbs = identify_desired_state(MDP.specification_fsm, non_terminal, query_strategy)
+        spec_fsm2 = recompile_reward_function(MDP.specification_fsm, desired_state, breadcrumbs)
+        desired_states = [desired_state]
     for state_id in breadcrumbs:
         if spec_fsm2.id2states[state_id] in spec_fsm2.terminal_states:
             spec_fsm2.terminal_states.remove(spec_fsm2.id2states[state_id])
     if non_terminal:
-        spec_fsm2.terminal_states.append(desired_state)
+        for state in desired_states:
+            spec_fsm2.terminal_states.append(state)
 
     # Re-define MDP and learning agent
     MDP2 = SpecificationMDP(spec_fsm2, MDP.control_mdp)
@@ -74,7 +111,7 @@ def create_active_query(MDP, query_strategy = 'uncertainty_sampling',  verbose =
     trace_slices = [MDP.control_mdp.create_observations(record[0][1]) for record in episode_record]
     trace_slices.append(MDP.control_mdp.create_observations(episode_record[-1][2][1]))
 
-    return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
+    return {'trace': trace_slices, 'agent': eval_agent, 'desired_states': desired_states}
 
 
 def create_baseline_query(MDP, verbose = True):
@@ -220,6 +257,28 @@ def recompile_reward_function(specification_fsm:SpecificationFSM, desired_state,
     spec_fsm2.reward_function = Reward
 
     return spec_fsm2
+
+def recompile_reward_function_topk(spec_fsm:SpecificationFSM, desired_states:list, breadcrumb_states:set):
+
+    spec_fsm2 = deepcopy(spec_fsm)
+
+    def Reward(state, prev_state = None, force_terminal = False):
+        if force_terminal:
+            if state in desired_states:
+                return 1
+            else:
+                return -1
+        else:
+            if state in desired_states:
+                return 1
+            elif spec_fsm2.states2id[state] in breadcrumb_states:
+                return 0
+            else:
+                return -1
+    spec_fsm2.reward_function = Reward
+    return spec_fsm2
+
+
 
 def modify_formula(formula):
     if formula[0] == 'and':
