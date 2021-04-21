@@ -83,21 +83,22 @@ def create_query_flags_table(data = None):
         data = read_data(directory, file = 'active_summary.pkl')
         data = pad_data(data)
     
+
     flags = data['query_flags']
     conditions = flags[0].keys()
     out_data = {}
     counts = {}
     idx = 0
-    
+
     for c in conditions:
         out_data[c] = {}
         for t in flags.keys():
             out_data[c][t] = {}
             for i in range(len(flags[t][c])):
-                
+
                 out_data[c][t][i] = flags[t][c][i]
-                
-    
+
+
         out_data[c] = pd.DataFrame.from_dict(out_data[c], orient = 'index')
         counts[c] = pd.DataFrame()
         for x in out_data[c].columns:
@@ -107,19 +108,19 @@ def create_query_flags_table(data = None):
 def plot_query_flags(data = None):
     counts = create_query_flags_table(data)
     from sns_defaults import rc
-    
+
     for c in counts.keys():
         plot_frame = counts[c].transpose()
         plot_frame[True] = plot_frame[True]/np.sum(counts[c],axis=0)
         plot_frame[False] = plot_frame[False]/np.sum(counts[c],axis=0)
-        
+
         with sns.plotting_context('poster', rc=rc):
             plt.figure(figsize = [24,10])
             plot_frame.plot.bar(stacked = True, ax = plt.gca())
             plt.title(c)
-            
-        
-        
+
+
+
 
 def extract_selectivity(condition):
     if 'Meta' in condition:
@@ -136,12 +137,12 @@ def extract_selectivity(condition):
 
     return (protocol, selectivity)
 
-def create_sims_table(sims, sim_key):
+def create_sims_table(sims):
     #Assume sims in long format
 
     out_table = {}
     for idx in sims.index:
-        (protocol, selectivity) = extract_selectivity(sims[sel].loc[idx]['Condition'])
+        (protocol, selectivity) = extract_selectivity(sims.loc[idx]['Condition'])
         out_table[idx] = {}
         out_table[idx]['Similarity'] = sims.loc[idx]['Similarity']
         out_table[idx]['Condition'] = protocol
@@ -184,6 +185,19 @@ def create_mismatch_table():
             idx=idx+1
 
     return pd.DataFrame.from_dict(data, orient = 'index')
+
+def plot_batch_meta_comparison():
+
+    directory =  'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
+    data = read_data(directory, file = 'comparison_summary.pkl')
+    data = pad_data(data)
+    sims = get_similarities(data)
+    data = create_sims_table(sims)
+    from sns_defaults import rc
+    with sns.plotting_context('poster', rc=rc):
+        plt.figure(figsize = [24,12])
+        sns.lineplot(data = data, x = 'Data Points', y = 'Similarity', hue = 'Selectivity', style = 'Condition', err_style = 'bars',
+        err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
 
 
 

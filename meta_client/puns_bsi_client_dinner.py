@@ -5,6 +5,7 @@ from PUnSClient import *
 from BSIClient import *
 from utils import *
 from query_selection import *
+from pedagogical_demo  import *
 import dill
 import os
 import inputs
@@ -23,124 +24,9 @@ gc = gspread.authorize(cred)
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
 
-def active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2, trials = 1):
+#Write recoveries for all of them in the task file to recover from unexpected failures
 
-
-    clear_demonstrations()
-    clear_logs()
-    clear_dists()
-
-
-    display_welcome()
-    #send_text(f'Task A: Starting Learning Phase')
-    plt.pause(5)
-
-    for i in range(trials):
-        returnval = 1
-        while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
-            returnval = os.system(command)
-            if returnval:
-                print('Trying again, reset the table and reactivate robot')
-
-
-    clear_demonstrations()
-
-
-
-    demos = []
-    for i in range(n_demo):
-        #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
-        #print('Press ENTER once complete')
-        returnval = 1
-        if returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
-            returnval = os.system(command)
-            print('Trying again, reset the table and reactivate the robot')
-        trace = parse_demonstration(i)
-        new_demo = {}
-        new_demo['trace'] = trace
-        new_demo['label'] = True
-        demos.append(new_demo)
-
-    send_data = create_batch_message([d['trace'] for d in demos])
-    dist = request_bsi_query(send_data)
-    specfile = 'Distributions/dist_0.json'
-    with open(specfile,'w') as file:
-        json.dump(dist, file)
-
-    #Create MDP from the initial distribution
-    n_form = len(dist['probs'])
-    print(f'Initial Batch distributions has {n_form} formulas')
-    MDP = CreateSmallDinnerMDP(specfile)
-
-    for i in range(nQuery):
-
-        #Get the active query agent
-
-        display_waiting()
-        puns_request = create_puns_message(MDP, 'Active')
-        agent = send_puns_request(puns_request)
-        #Lets assume that the demonstration has been written to './logs/query.pkl'
-
-        display_query_waiting()
-        #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
-        returnval = 1
-        if returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
-            returnval = os.system(command)
-            if returnval:
-                print('Trying again, reset the table and reactivate the robot')
-
-        display_query_assessment()
-        #send_text('\nWhat is your label?')
-        plt.pause(2)
-        # text_label = input()
-
-        label = get_latest_assessment()[0]
-        #new_text = f'Your confirmed label is {label}'
-        #send_text(new_text)
-        assessment = 'Acceptable' if label else 'Unacceptable'
-        display_query_confirmation(assessment)
-
-        with open(f'logs/query_{i}.pkl','rb') as file:
-            trace_slices = dill.load(file)
-        prior_dist = {'formulas': MDP.specification_fsm._formulas,
-        'probs': MDP.specification_fsm._partial_rewards}
-        update_message = create_active_message(trace_slices, label, prior_dist)
-        dist = request_bsi_query(update_message)
-        n_form = len(dist['support'])
-        print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
-        specfile = f'Distributions/dist_{i+1}.json'
-        with open(specfile,'w') as file:
-            json.dump(dist, file)
-
-        #Update the MDP definition
-        MDP = CreateSmallDinnerMDP(specfile)
-
-    display_waiting()
-    puns_request = create_puns_message(MDP, 'Puns')
-    #agent = send_puns_request(puns_request)
-    agent = send_puns_request(puns_request)
-    print('Final Agent saved')
-
-    #send_text('Task B: Start Testing Phase\n')
-    display_questionnaire()
-    plt.pause(10)
-    for i in range(n_postdemo):
-        display_eval_slide(i+1, n_postdemo)
-        #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
-        returnval = 1
-        if returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
-            returnval = os.system(command)
-            if returnval:
-                print('Trying again: Reset the task and reactivate the robot')
-
-    display_post()
-    return
-
-def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain'):
+def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain', k = 1):
     clear_demonstrations()
     clear_logs()
     clear_dists()
@@ -148,10 +34,10 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
     plt.pause(5)
 
     #Run the trial demonstrations
-    trial_demonstration(n_trials = trials)
+    trial_demonstration(n_trial = trials)
 
     #Initialize the specification with batch BSI
-    demos, dist = batch_bsi(n_demo = n_demo)
+    demos, dist, specfile = batch_bsi(n_demo = n_demo)
 
     #Initialize the MDP
     n_form = len(dist['probs'])
@@ -161,12 +47,12 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
 
     #For each of the query request an active query and assessment and update the belief
     for i in range(n_query):
-        dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_strategy = query_strategy)
+        dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_strategy = query_strategy, k=k)
         #Recompile the MDP
         MDP = CreateSmallDinnerMDP(specfile)
 
     #perform the evaluation trials
-    post_demo(n_postdemo)
+    post_demo(MDP, n_postdemo)
 
     display_post()
     return
@@ -180,10 +66,10 @@ def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     plt.pause(5)
 
     #Run the trial demonstrations
-    trial_demonstration(n_trials = trials)
+    trial_demonstration(n_trial = trials)
 
     #Initialize the specification with batch BSI
-    demos, dist = batch_bsi(n_demo = n_demo)
+    demos, dist, specfile = batch_bsi(n_demo = n_demo)
 
     #Initialize the MDP
     n_form = len(dist['probs'])
@@ -198,12 +84,12 @@ def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
         MDP = CreateSmallDinnerMDP(specfile)
 
     #perform the evaluation trials
-    post_demo(n_postdemo)
+    post_demo(MDP, n_postdemo)
 
     display_post()
     return
 
-def meta_selection_trials(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
+def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampling', k = 1):
 
     clear_demonstrations()
     clear_logs()
@@ -212,10 +98,10 @@ def meta_selection_trials(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     plt.pause(5)
 
     #Run the trial demonstrations
-    trial_demonstration(n_trials = trials)
+    trial_demonstration(n_trial = trials)
 
     #Initialize the specification with batch BSI
-    demos, dist = batch_bsi(n_demo = n_demo)
+    demos, dist, specfile = batch_bsi(n_demo = n_demo)
 
     #Initialize the MDP
     n_form = len(dist['probs'])
@@ -226,22 +112,25 @@ def meta_selection_trials(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     #For each query opportunity, decide whether to ask for a demonstration or perform a query
     for i in range(n_query):
 
-        state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
-        query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
-        demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
+        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
+        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+        # print('Query expected gain: ', query_entropy_gain)
+        # print('Demo expected gain: ', demonstration_entropy_gain)
 
-        if demonstration_entropy_gain >= query_entropy_gain:
+        demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+
+        if demo:
             #Ask for a demonstration
-
-            dist, label, trace_slices, specfile = incremental_demp_update(i, MDP, n_demo = n_demo, query_strategy)
+            dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo)
             MDP = CreateSmallDinnerMDP(specfile)
         else:
             #perform a query and ask for a label
-            dist, label, trace_slices, specfile = perform_active_query(i. MDP, query_type = 'Active')
+            dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
             MDP = CreateSmallDinnerMDP(specfile)
 
     #perform the evaluation trials
-    post_demo(n_postdemo)
+    post_demo(MDP, n_postdemo)
 
     display_post()
     return
@@ -251,7 +140,7 @@ def meta_selection_trials(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
 
 ''' %%%%%% High level functions for remote experiments %%%%%%% '''
 
-def post_demo(n_postdemo = 3, MDP):
+def post_demo(MDP, n_postdemo = 3):
     display_waiting()
     puns_request = create_puns_message(MDP, 'Puns')
     #agent = send_puns_request(puns_request)
@@ -265,7 +154,7 @@ def post_demo(n_postdemo = 3, MDP):
         display_eval_slide(i+1, n_postdemo)
         #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
         returnval = 1
-        if returnval:
+        while returnval:
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
             returnval = os.system(command)
             if returnval:
@@ -274,10 +163,10 @@ def post_demo(n_postdemo = 3, MDP):
 
 
 def trial_demonstration(n_trial = 1):
-    for i in range(trials):
+    for i in range(n_trial):
         returnval = 1
         while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo} --trial'
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={1} --trial'
             returnval = os.system(command)
             if returnval:
                 print('Trying again, reset the table and reactivate robot')
@@ -291,10 +180,11 @@ def batch_bsi(n_demo = 2):
         #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
         #print('Press ENTER once complete')
         returnval = 1
-        if returnval:
+        while returnval:
             command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
             returnval = os.system(command)
-            print('Trying again, reset the table and reactivate the robot')
+            if returnval:
+                print('Trying again, reset the table and reactivate the robot')
         trace = parse_demonstration(i)
         new_demo = {}
         new_demo['trace'] = trace
@@ -309,15 +199,15 @@ def batch_bsi(n_demo = 2):
 
     return demos, dist, specfile
 
-def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Active'):
+def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Active', k = 1):
     display_waiting()
-    puns_request = create_puns_message(MDP, query_type, query_strategy)
+    puns_request = create_puns_message(MDP, query_type, query_strategy, k)
     agent = send_puns_request(puns_request)
 
     display_query_waiting()
     #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
     returnval = 1
-    if returnval:
+    while returnval:
         command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
         returnval = os.system(command)
         if returnval:
@@ -347,10 +237,10 @@ def incremental_demo_update(i, MDP, n_demo = 2):
     #Collect the demonstration
     returnval = 1
     demo_id = i + n_demo
-    if returnval:
+    while returnval:
         command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={demo_id} --n-demo={n_demo}'
         returnval = os.system(command)
-        print('Trying again, reset the table and reactivate the robot')
+        if returnval: print('Trying again, reset the table and reactivate the robot')
     trace = parse_demonstration(demo_id)
     new_demo = {}
     new_demo['trace'] = trace
@@ -364,11 +254,28 @@ def incremental_demo_update(i, MDP, n_demo = 2):
 
     #Get response from server
     dist = request_bsi_query(update_message)
+    n_form = len(dist['support'])
     print(f'Received Query {i+1} results. Updated distribution has {n_form} formulas')
     specfile = f'Distributions/dist_{i+1}.json'
     with open(specfile,'w') as file:
         json.dump(dist, file)
     return dist, label, trace_slices, specfile
+
+def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+    query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
+    if meta_policy == 'info_gain':
+        query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
+        demonstration_gain = compute_expected_entropy_gain_demonstrations(spec_fsm, pedagogical, selectivity)
+        #demo = True if demonstration_entropy_gain >= query_entropy_gain
+    elif meta_policy == 'max_model_change':
+        query_gain = compute_expected_model_change(query_state, spec_fsm)
+        demonstration_gain = compute_expected_model_change_demonstrations(spec_fsm, pedagogical, selectivity)
+    elif meta_policy == 'uncertainty_sampling':
+        query_gain = -np.abs(spec_fsm.reward_function(query_state, force_terminal = True))
+        demonstration_gain = -np.abs(compute_expected_reward(spec_fsm, pedagogical, selectivity))
+
+    demo = True if demonstration_gain >= query_gain else False
+    return demo, demonstration_gain, query_gain
 
 
 

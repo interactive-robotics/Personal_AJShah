@@ -20,11 +20,12 @@ HOST = 'ajshah.mit.edu'
 PORT = 10020
 AgentPath = 'Agents'
 
-def create_puns_message(MDP, request_type = 'Puns', query_strategy = 'info_gain'):
+def create_puns_message(MDP, request_type = 'Puns', query_strategy = 'info_gain', k = 1):
     data = {}
     data['request_type'] = request_type
     data['query_strategy'] = query_strategy
     data['MDP'] = MDP
+    data['k'] = k
     return data
 
 def send_puns_request(data, return_agent = True):

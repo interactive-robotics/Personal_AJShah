@@ -1,7 +1,9 @@
 import socket
 import dill
 import json
+from probability_tools import *
 from query_selection import *
+from pedagogical_demo import *
 from puns.SpecificationFSMTools import SpecificationFSM, CreateReward
 from puns.SpecificationMDP import SpecificationMDP
 import auto_eval_params as params
@@ -30,7 +32,7 @@ def active_query(data):
     MDP = data['MDP']
     MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
     print('Training an Active query agent')
-    query = create_active_query(MDP, verbose = True, query_strategy = data['query_strategy'])
+    query = create_active_query(MDP, verbose = True, query_strategy = data['query_strategy'], k = data['k'])
     return query['agent']
 
 def random_query(data):
