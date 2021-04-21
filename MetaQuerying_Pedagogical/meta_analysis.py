@@ -258,7 +258,7 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Active3'
+    directory = f'/home/ajshah/Results/Results_15_Active4'
     data = read_data(directory)
     data = pad_data(data)
     results = get_similarities(data, format = 'long')

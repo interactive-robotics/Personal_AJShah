@@ -313,7 +313,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
             for slice in Queries[-1]['trace']:
                 final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
 
-            if final_state in Queries[-1]['desired_states'] :
+            if final_state in Queries[-1]['desired_states'] or MDPs[-1].specification_fsm.id2states[0] in Queries[-1]['desired_states'] :
                 Queries[-1]['flag'] = True
             else:
                 Queries[-1]['flag'] = False
@@ -512,7 +512,7 @@ verbose = True, write_file = False):
         for slice in Queries[-1]['trace']:
             final_state = MDPs[-1].specification_fsm.transition_function(final_state, slice)
 
-        if final_state in Queries[-1]['desired_states']:
+        if final_state in Queries[-1]['desired_states'] or MDPs[-1].specification_fsm.id2states[0] in Queries[-1]['desired_states']:
             Queries[-1]['flag'] = True
         else:
             Queries[-1]['flag'] = False

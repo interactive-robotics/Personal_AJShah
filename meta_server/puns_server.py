@@ -14,21 +14,11 @@ PORT = 10020
 def decode_data(data):
     #try:
     data = dill.loads(data)
-    # except:
-    #     print('data not readable by dill: ', data)
-    #     print('No action taken')
     return data
 
 def train_puns(data):
     MDP = data['MDP']
     MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
-#    print('Recompiling MDP')
-#    control_mdp = MDP.control_mdp
-#    formulas = MDP.specification_fsm._formulas
-#    probs = MDP.specification_fsm._partial_rewards
-#    spec_fsm = SpecificationFSM(formulas, probs)
-#    MDP = SpecificationMDP(spec_fsm, control_mdp)
-
     agent = QLearningAgent(MDP)
     print('Training Min regret agent')
     agent.explore(episode_limit = 10000, action_limit = 100000, verbose = True)
@@ -39,14 +29,6 @@ def train_puns(data):
 def active_query(data):
     MDP = data['MDP']
     MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
-#
-#    print('Recompiling MDP')
-#    control_mdp = MDP.control_mdp
-#    formulas = MDP.specification_fsm._formulas
-#    probs = MDP.specification_fsm._partial_rewards
-#    spec_fsm = SpecificationFSM(formulas, probs)
-#    MDP = SpecificationMDP(spec_fsm, control_mdp)
-
     print('Training an Active query agent')
     query = create_active_query(MDP, verbose = True, query_strategy = data['query_strategy'])
     return query['agent']
@@ -54,18 +36,9 @@ def active_query(data):
 def random_query(data):
     MDP = data['MDP']
     MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
-#    print('Recompiling MDP')
-#    control_mdp = MDP.control_mdp
-#    formulas = MDP.specification_fsm._formulas
-#    probs = MDP.specification_fsm._partial_rewards
-#    spec_fsm = SpecificationFSM(formulas, probs)
-#    MDP = SpecificationMDP(spec_fsm, control_mdp)
     print('Training a Random query agent')
     query = create_random_query(MDP)
     return query['agent']
-
-
-
 
 def process_puns_request(data):
     data = decode_data(data)
