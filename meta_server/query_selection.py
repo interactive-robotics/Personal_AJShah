@@ -45,7 +45,7 @@ def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
     return desired_state, bread_crumb_states
 
-def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps = 0.02 non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
+def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps = 0.02, non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
 
     #Check the size of the spec FSM if k > size, then reset it to 1
     if len(specification_fsm.states2id.keys()) <= k:

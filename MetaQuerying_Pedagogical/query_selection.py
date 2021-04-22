@@ -45,7 +45,7 @@ def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True
     bread_crumb_states = set([l for sublists in path_to_desired_state for l in sublists]) - set([specification_fsm.states2id[desired_state]])
     return desired_state, bread_crumb_states
 
-def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
+def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps = 0.02, non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
 
     #Check the size of the spec FSM if k > size, then reset it to 1
     if len(specification_fsm.states2id.keys()) <= k:
@@ -54,14 +54,48 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, non_t
 
     if query_type == 'uncertainty_sampling':
         rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
-        desired_states = [states[s] for s in np.argpartition(np.abs(rewards), k)[0:k]]
+        candidate_idx = np.argpartition(np.abs(rewards),k)[0:k]
+        candidate_states = [states[x] for x in candidate_idx]
+        candidate_rewards = [np.abs(rewards[x]) for x in candidate_idx]
+
+        r0 = np.min(np.abs(rewards))
+        optimal_state = states[np.argmin(np.abs(rewards))]
+
+        # print(r0)
+        # print([np.abs(r0-r)/r0 for r in candidate_rewards])
+
+
+        #only retain candidate states that are close to optimal
+        if r0 < 0.01:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_rewards) if r < 0.02]
+        else:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_rewards) if np.abs(r0-r)/r0 <= eps]
+
     elif query_type == 'info_gain':
         entropy_gains = np.array([compute_expected_entropy_gain(state, specification_fsm) for state in states])
-        desired_states = [states[s] for s in np.argpartition(-entropy_gains,k)[0:k]]
+        candidate_idx = np.argpartition(-entropy_gains,k)[0:k]
+        candidate_states = [states[x] for x in candidate_idx]
+        candidate_entropy_gains = [entropy_gains[x] for x in candidate_idx]
+
+        r0 = np.max(entropy_gains)
+        optimal_state = states[np.argmax(entropy_gains)]
+        
+        # print(r0)
+        # print([np.abs(r0-r)/r0 for r in candidate_entropy_gains])
+
+        desired_states = [s for (s,r) in zip(candidate_states, candidate_entropy_gains) if np.abs(r0-r)/r0 <= eps]
+
     elif query_type == 'max_model_change':
         model_changes = [compute_expected_model_change(state, specification_fsm) for state in states]
         model_changes = np.array([0 if np.isnan(x) else x for x in model_changes])
-        desired_states = [states[s] for s in np.argpartition(-model_changes, k)[0:k]]
+        candidate_idx = np.argpartition(-model_changes, k)[0:k]
+        candidate_states = [states[x] for x in candidate_idx]
+        candidate_changes = [model_changes[x] for x in candidate_idx]
+
+        r0 = np.max(model_changes)
+        optimal_state = states[np.argmax(model_changes)]
+
+        desired_states = [s for (s,r) in zip(candidate_states, candidate_changes) if np.abs(r0-r)/r0 <= eps]
 
     path_to_desired_state = []
     for s in desired_states:

@@ -80,7 +80,7 @@ def get_similarities(data, format = 'long'):
 def create_query_flags_table(data = None):
     if data == None:
         directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
-        data = read_data(directory, file = 'active_summary.pkl')
+        data = read_data(directory, file = 'active_summary2.pkl')
         data = pad_data(data)
     
 
