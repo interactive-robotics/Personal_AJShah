@@ -83,7 +83,10 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
         # print(r0)
         # print([np.abs(r0-r)/r0 for r in candidate_entropy_gains])
 
-        desired_states = [s for (s,r) in zip(candidate_states, candidate_entropy_gains) if np.abs(r0-r)/r0 <= eps]
+        if r0 == 0:
+            desired_states = [optimal_state]
+        else:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_entropy_gains) if np.abs(r0-r)/r0 <= eps]
 
     elif query_type == 'max_model_change':
         model_changes = [compute_expected_model_change(state, specification_fsm) for state in states]
@@ -94,8 +97,10 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
 
         r0 = np.max(model_changes)
         optimal_state = states[np.argmax(model_changes)]
-
-        desired_states = [s for (s,r) in zip(candidate_states, candidate_changes) if np.abs(r0-r)/r0 <= eps]
+        if r0 == 0:
+            desired_states = [optimal_state]
+        else:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_changes) if np.abs(r0-r)/r0 <= eps]
 
     path_to_desired_state = []
     for s in desired_states:

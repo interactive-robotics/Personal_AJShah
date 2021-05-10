@@ -1,6 +1,6 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 30
+batches = 100
 workers = 2
 n_demo = 2
 n_query = 8
@@ -42,4 +42,4 @@ command_headers = [f'python active_trial.py',
 n_data = n_demo + n_query
 
 #result_path = f'/home/ajshah/Results/Test_Custom'
-result_path = f'/home/ajshah/Results/Results_15_Active4'
+result_path = f'/home/ajshah/Results/Results_15_Active5'
