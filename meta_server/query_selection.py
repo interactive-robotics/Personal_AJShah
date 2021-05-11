@@ -56,13 +56,20 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
         rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
         candidate_idx = np.argpartition(np.abs(rewards),k)[0:k]
         candidate_states = [states[x] for x in candidate_idx]
-        candidate_rewards = [rewards[x] for x in candidate_idx]
+        candidate_rewards = [np.abs(rewards[x]) for x in candidate_idx]
 
         r0 = np.min(np.abs(rewards))
         optimal_state = states[np.argmin(np.abs(rewards))]
 
+        # print(r0)
+        # print([np.abs(r0-r)/r0 for r in candidate_rewards])
+
+
         #only retain candidate states that are close to optimal
-        desired_states = [states[s] for (s,r) in zip(candidate_states, candidate_rewards) if np.abs(r0-r)/r0 <= eps]
+        if r0 < 0.01:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_rewards) if r < 0.02]
+        else:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_rewards) if np.abs(r0-r)/r0 <= eps]
 
     elif query_type == 'info_gain':
         entropy_gains = np.array([compute_expected_entropy_gain(state, specification_fsm) for state in states])
@@ -72,8 +79,14 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
 
         r0 = np.max(entropy_gains)
         optimal_state = states[np.argmax(entropy_gains)]
+        
+        # print(r0)
+        # print([np.abs(r0-r)/r0 for r in candidate_entropy_gains])
 
-        desired_states = [states[s] for (s,r) in zip(candidate_states, candidate_entropy_gains) if np.abs(r0-r)/r0 <= eps]
+        if r0 == 0:
+            desired_states = [optimal_state]
+        else:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_entropy_gains) if np.abs(r0-r)/r0 <= eps]
 
     elif query_type == 'max_model_change':
         model_changes = [compute_expected_model_change(state, specification_fsm) for state in states]
@@ -84,8 +97,10 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
 
         r0 = np.max(model_changes)
         optimal_state = states[np.argmax(model_changes)]
-
-        desired_states = [states[s] for (s,r) in zip(candidate_states, candidate_changes) if np.abs(r0-r)/r0 <= eps]
+        if r0 == 0:
+            desired_states = [optimal_state]
+        else:
+            desired_states = [s for (s,r) in zip(candidate_states, candidate_changes) if np.abs(r0-r)/r0 <= eps]
 
     path_to_desired_state = []
     for s in desired_states:
