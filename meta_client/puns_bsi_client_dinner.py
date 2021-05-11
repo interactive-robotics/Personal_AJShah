@@ -3,7 +3,7 @@ from puns.utils import CreateSmallDinnerMDP,CreateDinnerMDP, CreateSmallDinnerMD
 from puns.ControlMDP import SmallTableMDP
 from PUnSClient import *
 from BSIClient import *
-from utils import *
+from utils import * #Do I really need this import?
 from query_selection import *
 from pedagogical_demo  import *
 import dill
@@ -26,7 +26,7 @@ TEXT_PORT = 20000
 
 #Write recoveries for all of them in the task file to recover from unexpected failures
 
-def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain', k = 1):
+def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain', k = 2):
     clear_demonstrations()
     clear_logs()
     clear_dists()
@@ -89,7 +89,7 @@ def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     display_post()
     return
 
-def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampling', k = 1):
+def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampling', k = 2):
 
     clear_demonstrations()
     clear_logs()
