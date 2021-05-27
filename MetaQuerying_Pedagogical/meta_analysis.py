@@ -77,14 +77,14 @@ def get_similarities(data, format = 'long'):
 
     return results
 
-def create_query_flags_table(data = None):
+def create_key_table(data = None, key = 'query_flags'):
     if data == None:
         directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
         data = read_data(directory, file = 'active_summary2.pkl')
         data = pad_data(data)
     
 
-    flags = data['query_flags']
+    flags = data[key]
     conditions = flags[0].keys()
     out_data = {}
     counts = {}
@@ -105,8 +105,8 @@ def create_query_flags_table(data = None):
             counts[c][x] = out_data[c][x].value_counts()
     return counts
 
-def plot_query_flags(data = None):
-    counts = create_query_flags_table(data)
+def plot_query_key(data = None, key = 'query_flags'):
+    counts = create_key_table(data, key)
     from sns_defaults import rc
 
     for c in counts.keys():
