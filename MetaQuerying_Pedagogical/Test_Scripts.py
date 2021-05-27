@@ -11,6 +11,7 @@ from Auto_Eval_Active import *
 from tqdm import tqdm
 from itertools import product
 from multiprocessing import Pool
+from meta_analysis import *
 import seaborn as sns
 import os
 import dill
