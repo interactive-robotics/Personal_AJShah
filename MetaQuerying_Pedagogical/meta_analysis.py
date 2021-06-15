@@ -5,6 +5,7 @@ import numpy as np
 import seaborn as sns
 from itertools import product
 import math
+from tqdm import tqdm
 
 def read_data(direc, file = 'paired_summary.pkl'):
     with open(os.path.join(direc, file), 'rb') as file:
@@ -118,6 +119,43 @@ def plot_query_key(data = None, key = 'query_flags'):
             plt.figure(figsize = [24,10])
             plot_frame.plot.bar(stacked = True, ax = plt.gca())
             plt.title(c)
+
+def create_count_table_disambiguity(data, keys = ['Uncertainty Sampling','Info Gain','Model Change']):
+    counts = {}
+    raw_data = {}
+    plot_frame = pd.DataFrame()
+    for key in keys:
+        raw_data[key] = {}
+        idx = 0
+        for run_id in tqdm(range(len(data['results']))):
+        #for run_id in tqdm(range(5)):
+            entry = {}
+            for exec_id in range(len(data['labels'][run_id][key])):
+                dist = data['results'][run_id][key][exec_id+1]
+                fsm = SpecificationFSM(dist['formulas'], dist['probs'])
+                degenerate_state = fsm.id2states[0]
+                state,_ = identify_desired_state(fsm)
+                
+                #check if trivial
+                if state != degenerate_state:    
+                    try:
+                        entry[exec_id] = data['labels'][run_id][key][exec_id]
+                    except:
+                        print('run id: ', run_id, ' key: ', key, ' Exec_id: ', exec_id)
+                else:
+                    entry[exec_id] = None
+            raw_data[key][run_id] = entry
+            #idx = idx+1
+        raw_data[key] = pd.DataFrame.from_dict(raw_data[key], orient='index')
+        counts[key] = pd.DataFrame()
+        for c in raw_data[key].columns:
+            counts[key][c] = raw_data[key][c].value_counts()
+        
+        plot_frame[key] = counts[key].loc[True]/np.sum(counts[key],axis=0)
+    return plot_frame
+                
+    
+    
 
 
 
@@ -272,14 +310,25 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 if __name__ == '__main__':
 
 #    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Active5'
+    directory = f'/home/ajshah/Results/Results_15_Active6'
     data = read_data(directory)
     data = pad_data(data)
-    results = get_similarities(data, format = 'long')
-    plot_similarities_mean(directory, results)
-    plot_similarities_median(directory, results)
-    plot_similarities_box(directory, results)
-    plot_similarities_CI(directory, results)
+    
+    plot_frame = create_count_table_disambiguity(data)
+    savefile = os.path.join(directory, 'label_counts.pkl')
+    with open(savefile, 'wb') as file:
+        dill.dump({'plot_frame': plot_frame}, file)
+    
+    
+    
+    
+    
+#    
+#    results = get_similarities(data, format = 'long')
+#    plot_similarities_mean(directory, results)
+#    plot_similarities_median(directory, results)
+#    plot_similarities_box(directory, results)
+#    plot_similarities_CI(directory, results)
 
     # type_key ={
     #     'Anchored -1': ('Demonstrations', -1),

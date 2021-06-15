@@ -22,6 +22,7 @@ def run_single_trial(directory):
 
 
     out_data = {}
+    out_data['initial_demos'] = {}
     out_data['queries_chosen'] = {}
     out_data['demonstrations_chosen'] = {}
     out_data['query_mismatch_info_gain'] = {}
@@ -79,6 +80,7 @@ def run_single_trial(directory):
             out_data['demonstrations_chosen'][condition] = rd['demonstrations_requested']
             out_data['meta_selections'][condition] = rd['meta_selections']
 
+        out_data['initial_demos'][condition] = rd['initial_demos']
         out_data['similarity'][condition] = rd['similarity']
         out_data['entropy'][condition] = rd['entropy']
         out_data['results'][condition] = rd['Distributions']
