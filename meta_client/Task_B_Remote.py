@@ -5,5 +5,5 @@ if __name__ == '__main__':
 	
 	subject_id = sys.argv[1]
 	#active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2)
-	Active_run(trials=0)
-	record_subject_data(subject_id,'Active')
+	Batch_run(trials=0)
+	record_subject_data(subject_id,'Demo')
