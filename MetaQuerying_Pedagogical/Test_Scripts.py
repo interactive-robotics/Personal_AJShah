@@ -126,7 +126,7 @@ def plot_selections(data):
              plt.title(f'{c}')
              
 def determine_number_mismatches():
-    directory = '/home/ajshah/Results/Results_15_Active6'n
+    directory = '/home/ajshah/Results/Results_15_Active6'
     filename = os.path.join(directory, 'mismatched_dists.pkl')
 
     with open(filename, 'rb') as file:

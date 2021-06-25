@@ -5,7 +5,9 @@ import numpy as np
 import seaborn as sns
 from itertools import product
 import math
+from scipy.stats import entropy
 from tqdm import tqdm
+import matplotlib as mpl
 
 def read_data(direc, file = 'paired_summary.pkl'):
     with open(os.path.join(direc, file), 'rb') as file:
@@ -76,6 +78,26 @@ def get_similarities(data, format = 'long'):
 
         results = pd.DataFrame.from_dict(results, orient = 'index')
 
+    return results
+
+def get_entropies(data):
+    
+    conditions = list(data['results'][0].keys())
+    conditions.remove('ground_truth')
+    trials = len(data['results'])
+    queries = len(data['results'][0][conditions[0]])
+    
+    idx = 0
+    results = {}
+    for t in range(trials):
+        for c in conditions:
+            for q in range(len(data['results'][t][c])):
+                results[idx] = {}
+                results[idx]['Entropy'] = entropy(data['results'][t][c][q]['probs'])
+                results[idx]['Condition'] = c
+                results[idx]['Data Points'] = 2+q
+                idx = idx+1
+    results = pd.DataFrame.from_dict(results, orient = 'index')
     return results
 
 def create_key_table(data = None, key = 'query_flags'):
@@ -187,7 +209,23 @@ def create_sims_table(sims):
         out_table[idx]['Selectivity'] = selectivity
         out_table[idx]['Data Points'] = sims.loc[idx]['Data Points']
     out_table = pd.DataFrame.from_dict(out_table, orient = 'index')
-    max_selectivity = np.nanmax(sims['Similarity'])
+    max_selectivity = np.nanmax(out_table['Selectivity'])
+    out_table.fillna(max_selectivity+1, inplace=True)
+    return out_table
+
+def create_table(data, key = 'Similarity'):
+    #Assume sims in long format
+    sims = data
+    out_table = {}
+    for idx in sims.index:
+        (protocol, selectivity) = extract_selectivity(sims.loc[idx]['Condition'])
+        out_table[idx] = {}
+        out_table[idx][key] = sims.loc[idx][key]
+        out_table[idx]['Condition'] = protocol
+        out_table[idx]['Selectivity'] = selectivity
+        out_table[idx]['Data Points'] = sims.loc[idx]['Data Points']
+    out_table = pd.DataFrame.from_dict(out_table, orient = 'index')
+    max_selectivity = np.nanmax(out_table['Selectivity'])
     out_table.fillna(max_selectivity+1, inplace=True)
     return out_table
 
@@ -258,13 +296,24 @@ def plot_similarities_median(directory, results ,savename = 'similarity_median.p
         err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
 
-def plot_similarities_box(directory, results ,savename = 'similarity_box.png'):
+def plot_similarities_box(directory, results ,savename = 'similarity_box.png', figsize = [10,8]):
     #results = get_similarities(data, format = 'long')
     from sns_defaults import rc
     with sns.plotting_context('poster', rc = rc):
-        plt.figure(figsize = [48,18])
-        sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = False, whis = 0)
+        plt.figure(figsize = figsize)
+        sns.boxplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', showfliers = False, whis = 0, saturation = 0.85, palette='deep')
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
+        
+def plot_box(directory, results , figsize = [10,8], key = 'Similarity', palette = 'deep', hue = 'Condition'):
+    savename = f'{key}_box.png'
+    #results = get_similarities(data, format = 'long')
+    from sns_defaults import rc
+    with sns.plotting_context('poster', rc = rc):
+        plt.figure(figsize = figsize)
+        sns.boxplot(data = results, x = 'Data Points', y = key, hue = hue, showfliers = False, whis = 0, saturation = 0.85, palette=palette)
+        #plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
+        #return cbar
+        
 
 def plot_similarities_quantitative(sims):
     from sns_defaults import rc
@@ -272,6 +321,7 @@ def plot_similarities_quantitative(sims):
         plt.figure(figsize=[24,9])
         sns.lineplot(data = sims, x = 'Data Points', y = 'Similarity', hue = 'Selectivity', style='Condition', err_style = 'bars',
         err_kws = {'capsize':10, 'capthick':3}, estimator = np.median, ci = 95, alpha = 0.85)
+        
 
 def create_quantile_estimator(q):
 
@@ -293,7 +343,73 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
         #sns.lineplot(data = results, x = 'Data Points', y = 'Similarity', hue = 'Condition', err_style = 'bars',
         #err_kws = {'capsize':10, 'capthick':3}, estimator = create_quantile_estimator(0.9), ci = 95, alpha = 0.3)
         plt.savefig(os.path.join(directory, savename), dpi = 500, bbox_inches = 'tight')
+        
+        
 
+def plot_median_IQR(data, key = 'Similarity', savefig = False, savename = 'similarity.png', figsize = [10,8], group_var = 'Condition', palette = 'deep', lower_q = 0.25, upper_q = 0.75):
+    
+    # Get median values and the upper and lower ends of the error bars
+    
+    medians = data.groupby(['Data Points', group_var]).median()
+    lower = data.groupby(['Data Points', group_var]).quantile(q = lower_q)
+    upper = data.groupby(['Data Points', group_var]).quantile(q = upper_q)
+    
+    # Determine palette colors for each group_var value
+    conditions = list(medians.loc[medians.index[0][0]].index)
+    data_points = list(medians[key].loc[:,conditions[0]].index)
+    colors = {}
+    if type(palette) == str:
+        cmap = sns.color_palette(palette, as_cmap = True)
+    else:
+        cmap = palette
+        colorbar = False
+    if type(cmap) == list: #This is a discrete list of colors
+        # Assign colors in order and then cycle
+        cmap = sns.color_palette(palette)
+        colorbar = False
+        for i,c in enumerate(conditions):
+            idx = i%len(cmap)
+            colors[c] = cmap[idx]
+    elif type(cmap) == dict:
+        colors = cmap
+    else: #This is a continuous map
+        #assume that conditions are numbers
+        colorbar = True
+        norm = mpl.colors.Normalize(np.min(conditions), np.max(conditions))
+        colormap = plt.cm.ScalarMappable(norm, cmap = cmap)
+        for c in conditions:
+            colors[c] = colormap.to_rgba(c)
+    
+    #Plot the medians with sns without any error bars
+    from sns_defaults import rc
+    with sns.plotting_context('poster', rc = rc):
+        plt.figure(figsize = figsize)
+        sns.lineplot(data = data, x = 'Data Points', y = key, hue = group_var, ci = None, palette=palette, estimator = np.median)
+
+        #Now plot only the error bars using plt.errorbars but with the predefined colors
+        for c in conditions:
+            med = medians[key].loc[:,c]
+            up = upper[key].loc[:,c] - med
+            low = med - lower[key].loc[:,c]
+            err = np.array(pd.concat([low, up], axis=1)).transpose()
+            plt.errorbar(data_points, med, err, fmt = 'none', ecolor = colors[c], capsize = 10, capthick = 2)
+        
+        # Now create the colorbar if required
+        if colorbar:
+            ax = plt.gca()
+            ax.get_legend().remove()
+            cbar = plt.colorbar(colormap, label = group_var)
+            cbar.ax.set_yticks([-4,-2,0,2,4,6])
+            cbar.ax.set_yticklabels(['-4','-2','0','2','4','inf'])
+            #print(cbar.ax.get_yticklabels())
+            #get and change tick labels
+            #print(cbar.ax.get_yticklabels())
+            #print(plt.gcf().axes[-1].get_yticklabels())
+            #ticklabels = [t.get_text() for t in cbar.ax.get_yticklabels()]
+            #print(ticklabels)
+            #ticklabels[-1] = 'inf'
+            #cbar.ax.set_yticklabels(ticklabels)
+    #return cbar
 
 # with sns.plotting_context('poster', rc = {'axes.labelsize': 28, 'axes.titlesize': 32, 'legend.fontsize': 24, 'xtick.labelsize': 24, 'ytick.labelsize': 22}):
 #         with sns.color_palette('dark'):
@@ -305,19 +421,229 @@ def plot_similarities_CI(directory, results, savename = 'similarity_range.png'):
 #             plt.xlabel('Number of task executions')
 #             plt.legend(loc='upper right')
 #             plt.savefig(os.path.join(params.results_path,'..','Entropy.png'), dpi = 500, bbox_inches = 'tight')
+            
+
+''' Create Thesis figures '''
+directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary\\ThesisResults'
+
+'''Active comparison plots'''
+def load_active_data():
+    #directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
+    filename = os.path.join(directory, 'active_summary.pkl')
+    
+    with open(filename, 'rb') as file:
+        data = dill.load(file)
+    data = pad_data(data)
+    
+    return data
+
+def load_active_plot_frame():
+    filename = os.path.join(directory, 'active_label_counts.pkl')
+    with open(filename, 'rb') as file:
+        data = dill.load(file)
+    plot_frame = data['plot_frame']
+    
+    idx = 0
+    scale_frame = {}
+    
+    for i in plot_frame.index:
+        for c in plot_frame.columns:
+            scale_frame[idx] = {}
+            entry = {}
+            entry['Fraction Acceptable'] = plot_frame.loc[i,c]
+            entry['Query ID'] = i+1
+            entry['Condition'] = c
+            scale_frame[idx] = entry
+            idx = idx + 1
+    scale_frame = pd.DataFrame.from_dict(scale_frame, orient = 'index')
+    
+    from sns_defaults import rc
+    with sns.plotting_context('poster', rc = rc):
+        plt.figure(figsize = [10,8])
+        sns.barplot(data = scale_frame, x = 'Query ID', y = 'Fraction Acceptable', hue = 'Condition',palette = 'deep', ci = None)
+        plt.legend(loc = 'lower left')
+    savefile = os.path.join(directory, 'ThesisFigs','active_acceptable.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    return scale_frame
+
+
+
+def plot_active_similarity(data = None):
+    
+    #directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
+    
+    if data == None:
+        data = load_active_data()
+    
+    sims = get_similarities(data)
+    
+    conditions = ['Uncertainty Sampling','Info Gain', 'Model Change']
+    sims = sims.loc[sims['Condition'].isin(conditions)]
+    
+    #Create the plot
+    plot_median_IQR(sims)
+    
+    #Save the figure
+    save_dir = os.path.join(directory, 'ThesisFigs')
+    savename = os.path.join(save_dir, 'active_similarity.png')
+    plt.savefig(savename, dpi = 500, bbox_inches='tight')
+    return sims
+
+def plot_active_entropy(data = None):
+    #directory = 'C:\\Users\\AJShah\\Documents\\GitHub\\Temporary'
+    if data == None:
+        data = load_active_data()
+    entropy = get_entropies(data)
+    
+    conditions = ['Uncertainty Sampling', 'Info Gain', 'Model Change']
+    entropy = entropy.loc[entropy['Condition'].isin(conditions)]
+    
+    #Create the plot
+    plot_median_IQR(entropy, key = 'Entropy')
+    
+    #Save the plot
+    save_dir = os.path.join(directory,'ThesisFigs')
+    savename = os.path.join(save_dir, 'active_entropy.png')
+    plt.savefig(savename, dpi=500, bbox_inches='tight')
+
+
+'''batch noise plots'''
+
+def load_batch_noise(key = 'Similarity'):
+    filename = os.path.join(directory, 'Batch_noise_summary.pkl')
+    with open(filename,'rb') as file:
+        data = dill.load(file)
+    data = pad_data(data)
+    
+    return data
+
+from sns_defaults import rc
+
+def plot_batch_noise_entropy(data = None):
+    if data is None:
+        data = load_batch_noise_sims()
+    data = get_entropies(data)
+    entropies = create_table(data, key = 'Entropy')
+    
+    plot_median_IQR(entropies, key = 'Entropy', group_var = 'Selectivity', palette = 'flare')
+    ax = plt.gca()
+    # Save the figure
+    savefile = os.path.join(directory,'ThesisFigs','batch_noise_entropy.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    return entropies
+
+
+def plot_batch_noise_similarity(data = None):
+    if data is None:
+        data = load_batch_noise_sims()
+    #Plot the figure
+    
+    data = get_similarities(data)
+    sims = create_sims_table(data)
+    
+    plot_median_IQR(sims, group_var = 'Selectivity', palette = 'flare')
+    # Save the figure
+    savefile = os.path.join(directory,'ThesisFigs','batch_noise_similarity.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    
+'''Meta-Comparison plots'''
+def load_meta_comparison_data():
+    filename = os.path.join(directory, 'meta_comparison.pkl')
+    with open(filename, 'rb') as file:
+        data = dill.load(file)
+    data = pad_data(data)
+    return data
+
+def create_meta_comparison_palette():
+    palette1 = sns.color_palette('dark',3)
+    palette2 = sns.color_palette('muted',3)
+    palette = {}
+    
+    palette['Meta Uncertainty'] = palette2[0]
+    palette['Meta Uncertainty Pedagogical'] = palette1[0]
+    
+    palette['Meta Info Gain'] = palette2[1]
+    palette['Meta Info Gain Pedagogical'] = palette1[1]
+    
+    palette['Meta Model Change Pedagogical'] = palette1[2]
+    palette['Meta Model Change'] = palette2[2]
+    return palette
+    
+
+def plot_meta_comparison_similarity(data=None):
+    if data is None:
+        data = load_meta_comparison_data()
+    
+    sims = get_similarities(data)
+    palette = create_meta_comparison_palette()
+    plot_median_IQR(sims, group_var = 'Condition', key = 'Similarity', palette = palette)
+    
+    #Save the figure
+    savefile = os.path.join(directory,'ThesisFigs','meta_comparison_noise_similarity.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+
+def plot_meta_comparison_entropy(data=None):
+    if data is None:
+        data = load_meta_comparison_data()
+    sims = get_entropies(data)
+    palette = create_meta_comparison_palette()
+    plot_median_IQR(sims, group_var = 'Condition', key = 'Entropy', palette = palette)
+    
+    #Save the figure
+    savefile = os.path.join(directory,'ThesisFigs','meta_comparison_entropy.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    
+def plot_demo_counts(data = None, conditions = None):
+    if data is None:
+        data = load_meta_comparison_data()
+    
+    table = create_key_table(data, key = 'meta_selections')
+    
+    for c in table.keys():
+        table[c] = table[c].transpose().loc[0:8]
+        table[c].fillna(0, inplace=True)
+        table[c]['Demo Fraction'] = table[c]['demo']/np.sum(table[c], axis=1)
+    
+    if conditions is None:
+        conditions = list(table.keys())
+    
+    idx = 0
+    plot_frame = {}
+    for c in conditions:
+        for q in table[c].index:
+            entry = {}
+            entry['Query ID'] = q
+            entry['Condition'] = c
+            entry['Demo Fraction'] = table[c].loc[q,'Demo Fraction']
+            plot_frame[idx] = entry
+            idx = idx+1
+            
+    plot_frame = pd.DataFrame.from_dict(plot_frame, orient = 'index')
+    
+    palette = create_meta_comparison_palette()
+    order = ['Meta Uncertainty','Meta Uncertainty Pedagogical','Meta Info Gain','Meta Info Gain Pedagogical','Meta Model Change','Meta Model Change Pedagogical']
+    sns.barplot(data = plot_frame, x = 'Query ID', y = 'Demo Fraction', hue = 'Condition', palette = palette, ci = None, hue_order =order)
+    return plot_frame
+    
+    
 
 
 if __name__ == '__main__':
 
-#    directory = f'/home/ajshah/Results/Results_15_meta_sampler_no_threats'
-    directory = f'/home/ajshah/Results/Results_15_Active6'
-    data = read_data(directory)
-    data = pad_data(data)
+    A=1
     
-    plot_frame = create_count_table_disambiguity(data)
-    savefile = os.path.join(directory, 'label_counts.pkl')
-    with open(savefile, 'wb') as file:
-        dill.dump({'plot_frame': plot_frame}, file)
+    
+    
+    
+    
+    # directory = f'/home/ajshah/Results/Results_15_Active6'
+    # data = read_data(directory)
+    # data = pad_data(data)
+    
+    # plot_frame = create_count_table_disambiguity(data)
+    # savefile = os.path.join(directory, 'label_counts.pkl')
+    # with open(savefile, 'wb') as file:
+    #     dill.dump({'plot_frame': plot_frame}, file)
     
     
     
