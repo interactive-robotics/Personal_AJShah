@@ -51,6 +51,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
         out_data['query_mismatch_info_gain'] = {}
         out_data['query_mismatch_model_change'] = {}
         out_data['similarity'] = {}
+        out_data['initial_demos'] = {}
         out_data['entropy'] = {}
         out_data['results'] = {}
         out_data['meta_selections'] = {}
@@ -117,6 +118,7 @@ given_ground_truth = None, p_threats = 0.5, p_waypoints=0.5, p_orders = 0.5, mod
                 trial_out_data = dill.load(file)
 
             out_data['similarity'][run_id] = trial_out_data['similarity']
+            out_data['initial_demos'][run_id] = trial_out_data['initial_demos']
             out_data['entropy'][run_id] = trial_out_data['entropy']
             out_data['results'][run_id] = trial_out_data['results']
             out_data['query_mismatch_info_gain'][run_id] = trial_out_data['query_mismatch_info_gain']
@@ -141,13 +143,20 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     MDPs = []
     Distributions = []
     Queries = []
+    initial_demos = []
     query_mismatches = []
     queries_performed = []
     demonstrations_requested = []
 
+
+
     clear_demonstrations(directory, params)
     demo_directory = os.path.join(directory, params.compressed_data_path)
     n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
+
+    for traj in eval_agent.episodic_record:
+        trace = [eval_agent.MDP.control_mdp.create_observations(r[0][1]) for r in traj]
+        initial_demos.append(trace)
 
     # Run Batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -193,6 +202,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
     similarities = [compare_distribution(ground_truth_formula, dist) for dist in Distributions]
     out_data = {}
     out_data['similarities'] = similarities
+    out_data['initial_demos'] = initial_demos
     out_data['similarity'] = similarities[-1]
     out_data['entropy'] = entropy(Distributions[-1]['probs'])
     out_data['Distributions'] = Distributions
@@ -224,11 +234,16 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     query_mismatches = 0
     queries_performed = 0
     demonstrations_requested = 0
+    initial_demos = []
     meta_selections = []
 
     clear_demonstrations(directory, params)
     demo_directory = os.path.join(directory, params.compressed_data_path)
     n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
+
+    for traj in eval_agent.episodic_record:
+        trace = [eval_agent.MDP.control_mdp.create_observations(r[0][1]) for r in traj]
+        initial_demos.append(trace)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -348,6 +363,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
     out_data = {}
     out_data['similarities'] = similarities
     out_data['similarity'] = similarities[-1]
+    out_data['initial_demos'] = initial_demos
     out_data['entropy'] = entropy(Distributions[-1]['probs'])
     out_data['Distributions'] = Distributions
     out_data['MDPs'] = MDPs
@@ -373,6 +389,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_
     params = global_params
     MDPs = []
     Distributions = []
+    initial_demos = []
     Queries = []
     query_mismatches = 0
 
@@ -380,6 +397,10 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_
 
     demo_directory = os.path.join(directory, params.compressed_data_path)
     n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
+
+    for traj in eval_agent.episodic_record:
+        trace = [eval_agent.MDP.control_mdp.create_observations(r[0][1]) for r in traj]
+        initial_demos.append(trace)
 
     if mode == 'incremental':
 
@@ -452,6 +473,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_
     out_data = {}
     out_data['similarities'] = similarities
     out_data['similarity'] = similarities[-1]
+    out_data['initial_demos'] = initial_demos
     out_data['entropy'] = entropy(Distributions[-1]['probs'])
     out_data['Distributions'] = Distributions
     out_data['MDPs'] = MDPs
@@ -473,6 +495,7 @@ verbose = True, write_file = False):
     MDPs = []
     Distributions = []
     Queries = []
+    initial_demos = []
     query_mismatches_info_gain = 0
     query_mismatches_model_change = 0
 
@@ -482,6 +505,11 @@ verbose = True, write_file = False):
 
     demo_directory = os.path.join(directory, params.compressed_data_path)
     n_demo, eval_agent, ground_truth_formula = ground_truth_selector(demo_directory, demo, ground_truth_formula)
+    #control_mdp = eval_agent.MPD.control_mdp
+
+    for traj in eval_agent.episodic_record:
+        trace = [eval_agent.MDP.control_mdp.create_observations(r[0][1]) for r in traj]
+        initial_demos.append(trace)
 
     # Run batch Inference
     infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
@@ -547,6 +575,7 @@ verbose = True, write_file = False):
 
     out_data = {}
     out_data['similarities'] = similarities
+    out_data['initial_demos'] = initial_demos
     out_data['similarity'] = similarities[-1]
     out_data['Distributions'] = Distributions
     out_data['entropy'] = entropy(Distributions[-1]['probs'])
@@ -827,10 +856,11 @@ if __name__ == '__main__':
     import trial_config.trial_config11 as tf11
     import trial_config.trial_config12 as tf12
     import trial_config.trial_config1 as tf1
+    import trial_config.trial_config9 as tf9
 
     from meta_analysis import *
 
-    for trial_config in [tf1]:
+    for trial_config in [tf9]:
         run_trial(trial_config)
         directory = trial_config.result_path
         data = read_data(directory)

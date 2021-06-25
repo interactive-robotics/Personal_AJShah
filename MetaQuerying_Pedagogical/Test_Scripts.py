@@ -11,6 +11,7 @@ from Auto_Eval_Active import *
 from tqdm import tqdm
 from itertools import product
 from multiprocessing import Pool
+from meta_analysis import *
 import seaborn as sns
 import os
 import dill
@@ -123,17 +124,47 @@ def plot_selections(data):
              plt.figure(figsize = [16, 9])
              plot_frame.plot.bar(stacked = True, ax = plt.gca())
              plt.title(f'{c}')
+             
+def determine_number_mismatches():
+    directory = '/home/ajshah/Results/Results_15_Active6'
+    filename = os.path.join(directory, 'mismatched_dists.pkl')
+
+    with open(filename, 'rb') as file:
+        data = dill.load(file)
+    
+    n = {}
+
+    for key in data.keys():
+        retvals = data[key][0]
+        retval = []
+        for x in retvals: retval.extend(x)
+        mismatches = [x for x in retval if x.get('trivial') == False]
+        n[key] = len(mismatches)
+        n_total = len(retval)
+    return n, n_total
+
 
 
 
 if __name__ == '__main__':
 
-    print('Reading Results file \n')
-    with open(os.path.join(directory, 'meta_mismatched_summary.pkl'),'rb') as file:
-        d = dill.load(file)
-
-    #ret, dists = find_query_mismatches_parallel(d, 'uncertainty_sampling', 'max_model_change')
-    #dists = find_query_mismatches(d, 'uncertainty_sampling', 'max_model_change')
-    #data = get_selections(d, format = 'condition')
-    plot_selections(d)
     
+
+    directory = '/home/ajshah/Results/Results_15_Active6'
+    #n, n_total = determine_number_mismatches()
+    
+    
+    
+    data = read_data(directory)
+    data = pad_data(data)
+    
+    
+    
+
+#    dists_us_ig = find_query_mismatches_parallel(data, 'uncertainty_sampling','info_gain')
+#    dists_us_mc = find_query_mismatches_parallel(data, 'uncertainty_sampling','max_model_change')
+#    dists_ig_mc = find_query_mismatches_parallel(data, 'max_model_change','info_gain')
+#    
+#    with open(os.path.join(directory, 'mismatched_dists.pkl'),'wb') as file:
+#        dill.dump({'us-ig': dists_us_ig , 'us-mc': dists_us_mc, 'ig-mc': dists_ig_mc}, file)
+

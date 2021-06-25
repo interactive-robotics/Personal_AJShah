@@ -139,6 +139,48 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     display_post()
     return
 
+    def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampoing', k=2):
+        clear_demonstrations()
+        clear_logs()
+        clear_dists()
+        diplay_welcome()
+        plt.pause(5)
+
+        #Initialize specification with batch BSI
+        demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
+
+        #Initialize the MDP
+        n_form = len(dist['probs'])
+        print(f'Initial Batch distributions has {n_form} formulas')
+        specfile = 'Distributions/dist_0.json'
+        MDP = CreateSmallDinnerMDP(specfile)
+
+        #For each query opportunity, decide whether to ask for a demonstration or perform a query
+        for i in range(n_query):
+
+            # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
+            # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
+            # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+            # print('Query expected gain: ', query_entropy_gain)
+            # print('Demo expected gain: ', demonstration_entropy_gain)
+
+            demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+
+            if demo:
+                #Ask for a demonstration
+                dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
+                MDP = CreateSmallDinnerMDP(specfile)
+            else:
+                #perform a query and ask for a label
+                dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
+                MDP = CreateSmallDinnerMDP(specfile)
+
+        #perform the evaluation trials
+        post_demo(MDP, n_postdemo)
+
+        display_post()
+        return
+
 
 
 
@@ -175,7 +217,7 @@ def trial_demonstration(n_trial = 1):
             if returnval:
                 print('Trying again, reset the table and reactivate robot')
 
-def batch_bsi(n_demo = 2):
+def batch_bsi(n_demo = 2, demo_type = 'virtual'):
     '''returns the demonstrations and the updated posterior distribution after running batch BSI on server'''
     '''Also writes the appropriate file record for the subject'''
     clear_demonstrations()
@@ -183,13 +225,19 @@ def batch_bsi(n_demo = 2):
     for i in range(n_demo):
         #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
         #print('Press ENTER once complete')
-        returnval = 1
-        while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
-            returnval = os.system(command)
-            if returnval:
-                print('Trying again, reset the table and reactivate the robot')
-        trace = parse_demonstration(i)
+        if demo_type == 'virtual':
+
+            returnval = 1
+            while returnval:
+                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
+                returnval = os.system(command)
+                if returnval:
+                    print('Trying again, reset the table and reactivate the robot')
+        else:
+            #We need a physical demonstration
+            display_demo_intro(i, nDemo)
+
+        trace = parse_demonstration(i) #The execution should pause at this step till demonstrations are recorded
         new_demo = {}
         new_demo['trace'] = trace
         new_demo['label'] = True
@@ -237,15 +285,18 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
         json.dump(dist, file)
     return dist, label, trace_slices, specfile
 
-def incremental_demo_update(i, MDP, n_demo = 2):
+def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
     #Collect the demonstration
     returnval = 1
     demo_id = i + n_demo
-    while returnval:
-        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={demo_id+1} --n-demo={n_demo}'
-        returnval = os.system(command)
-        if returnval: print('Trying again, reset the table and reactivate the robot')
-    trace = parse_demonstration(demo_id)
+    if demo_type == 'virtual':
+        while returnval:
+            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={demo_id} --n-demo={n_demo}'
+            returnval = os.system(command)
+            if returnval: print('Trying again, reset the table and reactivate the robot')
+    else:
+        display_demo_intro(demo_id, n_demo)
+    trace = parse_demonstration(demo_id) #The execution should pause here till the demonstrations is recorded
     new_demo = {}
     new_demo['trace'] = trace
     new_demo['label'] = True

@@ -1,9 +1,9 @@
 ######## Comparison between active acquisition functions ########
 
-batches = 30
+batches = 250
 workers = 2
 n_demo = 2
-n_query = 10
+n_query = 8
 mode = 'incremental'
 p_threats = 0.5
 p_waypoints = 0.5
@@ -37,4 +37,4 @@ command_headers = [f'python pedagogical_trial.py',
 n_data = n_demo + n_query
 
 #result_path = f'/home/ajshah/Results/Test_Custom'
-result_path = f'/home/ajshah/Results/Results_15_Batch_Noise'
+result_path = f'/home/ajshah/Results/Batch_Noise'
