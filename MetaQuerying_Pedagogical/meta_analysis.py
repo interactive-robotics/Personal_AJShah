@@ -401,26 +401,7 @@ def plot_median_IQR(data, key = 'Similarity', savefig = False, savename = 'simil
             cbar = plt.colorbar(colormap, label = group_var)
             cbar.ax.set_yticks([-4,-2,0,2,4,6])
             cbar.ax.set_yticklabels(['-4','-2','0','2','4','inf'])
-            #print(cbar.ax.get_yticklabels())
-            #get and change tick labels
-            #print(cbar.ax.get_yticklabels())
-            #print(plt.gcf().axes[-1].get_yticklabels())
-            #ticklabels = [t.get_text() for t in cbar.ax.get_yticklabels()]
-            #print(ticklabels)
-            #ticklabels[-1] = 'inf'
-            #cbar.ax.set_yticklabels(ticklabels)
-    #return cbar
 
-# with sns.plotting_context('poster', rc = {'axes.labelsize': 28, 'axes.titlesize': 32, 'legend.fontsize': 24, 'xtick.labelsize': 24, 'ytick.labelsize': 22}):
-#         with sns.color_palette('dark'):
-#             plt.figure(figsize=[12,9])
-#             #sns.boxplot(data = all_data, x = 'n_data', y = 'Entropy', hue = 'type')
-#             #sns.barplot(data = all_data, x = 'n_data', y = 'Entropy' , hue = 'type', estimator = np.mean, capsize = 0.05, ci = 95, alpha = 0.85)
-#             sns.lineplot(data = all_data, x = 'n_data', y = 'Entropy' , hue = 'Protocol', err_style = 'bars', err_kws = {'capsize':10, 'capthick':3}, estimator = np.mean, ci = 95, alpha = 0.85)
-#             plt.title('Mean Entropy', )
-#             plt.xlabel('Number of task executions')
-#             plt.legend(loc='upper right')
-#             plt.savefig(os.path.join(params.results_path,'..','Entropy.png'), dpi = 500, bbox_inches = 'tight')
             
 
 ''' Create Thesis figures '''
@@ -481,7 +462,7 @@ def plot_active_similarity(data = None):
     sims = sims.loc[sims['Condition'].isin(conditions)]
     
     #Create the plot
-    plot_median_IQR(sims)
+    plot_median_IQR(sims, figsize = [24,9])
     
     #Save the figure
     save_dir = os.path.join(directory, 'ThesisFigs')
@@ -535,13 +516,13 @@ def plot_batch_noise_entropy(data = None):
 
 def plot_batch_noise_similarity(data = None):
     if data is None:
-        data = load_batch_noise_sims()
+        data = load_batch_noise()
     #Plot the figure
     
     data = get_similarities(data)
     sims = create_sims_table(data)
     
-    plot_median_IQR(sims, group_var = 'Selectivity', palette = 'flare')
+    plot_median_IQR(sims, group_var = 'Selectivity', palette = 'flare', figsize = [24,9])
     # Save the figure
     savefile = os.path.join(directory,'ThesisFigs','batch_noise_similarity.png')
     plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
@@ -570,30 +551,53 @@ def create_meta_comparison_palette():
     return palette
     
 
+def filter_sims(sims, conditions):
+    filtered_sims = sims.loc[sims['Condition'].isin(conditions),:]
+    return filtered_sims
+
 def plot_meta_comparison_similarity(data=None):
     if data is None:
         data = load_meta_comparison_data()
     
     sims = get_similarities(data)
-    palette = create_meta_comparison_palette()
-    plot_median_IQR(sims, group_var = 'Condition', key = 'Similarity', palette = palette)
     
-    #Save the figure
-    savefile = os.path.join(directory,'ThesisFigs','meta_comparison_noise_similarity.png')
-    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    query_strats = ['Meta Uncertainty', 'Meta Info Gain', 'Meta Model Change']
+    palette = create_meta_comparison_palette()
+    
+    for q in query_strats:
+        conditions = [q,q+' Pedagogical']
+        filtered_sims = filter_sims(sims, conditions)
+        plot_median_IQR(filtered_sims, group_var = 'Condition', key = 'Similarity', palette = palette)
+        plt.legend(fontsize=18)
+        #Save the figure
+        q_string = q.replace(' ','_')
+        savefile = os.path.join(directory,'ThesisFigs',f'meta_comparison_similarity_{q_string}.png')
+        plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+        
+    
+    
+    
+    
 
 def plot_meta_comparison_entropy(data=None):
     if data is None:
         data = load_meta_comparison_data()
-    sims = get_entropies(data)
+    entropies = get_entropies(data)
+    
+    query_strats = ['Meta Uncertainty', 'Meta Info Gain', 'Meta Model Change']
     palette = create_meta_comparison_palette()
-    plot_median_IQR(sims, group_var = 'Condition', key = 'Entropy', palette = palette)
     
-    #Save the figure
-    savefile = os.path.join(directory,'ThesisFigs','meta_comparison_entropy.png')
-    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    for q in query_strats:
+        conditions = [q,q+' Pedagogical']
+        filtered_sims = filter_sims(entropies, conditions)
+        plot_median_IQR(filtered_sims, group_var = 'Condition', key = 'Entropy', palette = palette)
+        plt.legend(fontsize=18)
+        #Save the figure
+        q_string = q.replace(' ','_')
+        savefile = os.path.join(directory,'ThesisFigs',f'meta_comparison_entropy_{q_string}.png')
+        plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
     
-def plot_demo_counts(data = None, conditions = None):
+def plot_meta_comparison_demo_counts(data = None, conditions = None):
     if data is None:
         data = load_meta_comparison_data()
     
@@ -621,9 +625,136 @@ def plot_demo_counts(data = None, conditions = None):
     plot_frame = pd.DataFrame.from_dict(plot_frame, orient = 'index')
     
     palette = create_meta_comparison_palette()
-    order = ['Meta Uncertainty','Meta Uncertainty Pedagogical','Meta Info Gain','Meta Info Gain Pedagogical','Meta Model Change','Meta Model Change Pedagogical']
-    sns.barplot(data = plot_frame, x = 'Query ID', y = 'Demo Fraction', hue = 'Condition', palette = palette, ci = None, hue_order =order)
+    #conditions = ['Meta Uncertainty','Meta Uncertainty Pedagogical','Meta Info Gain','Meta Info Gain Pedagogical','Meta Model Change','Meta Model Change Pedagogical']
+    
+    query_strats = ['Meta Uncertainty', 'Meta Info Gain', 'Meta Model Change']
+    for q in query_strats:
+        conditions = [q, q+' Pedagogical']
+        
+        filtered_plot_frame = filter_sims(plot_frame, conditions)
+        from sns_defaults import rc
+        with sns.plotting_context('poster', rc = rc):
+            plt.figure(figsize = [10,8])
+            sns.barplot(data = filtered_plot_frame, x = 'Query ID', y = 'Demo Fraction', hue = 'Condition', palette = palette, ci = None)
+            plt.legend(fontsize=18)
+            q_string = q.replace(' ','_')
+            savefile = os.path.join(directory, 'ThesisFigs', f'meta_comparison_demo_counts_{q_string}.png')
+            plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    #savefile = 
     return plot_frame
+
+def load_meta_noise_data():
+    filename = os.path.join(directory, 'meta_noise.pkl')
+    with open(filename, 'rb') as file:
+        data = dill.load(file)
+    data = pad_data(data)
+    return data
+
+def create_meta_noise_palette(sims, cmap = 'crest'):
+    #sims = create_sims_table(get_similarities(data))
+    sels = np.unique(sims['Selectivity'])
+    norm = mpl.colors.Normalize(np.min(sels), np.max(sels))
+    colormap = plt.cm.ScalarMappable(norm, cmap = cmap)
+    colors = {}
+    for c in sels:
+        colors[c] = colormap.to_rgba(c)
+    return colors
+
+def plot_meta_noise_similarity(data = None):
+    if data == None:
+        data = load_meta_noise_data()
+    
+    data = get_similarities(data)
+    sims = create_sims_table(data)
+    
+    plot_median_IQR(sims, group_var = 'Selectivity', palette = 'crest', figsize = [24,9])
+    # Save the figure
+    savefile = os.path.join(directory,'ThesisFigs','meta_noise_similarity.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+
+def plot_meta_noise_entropy(data = None):
+    if data == None:
+        data = load_meta_noise_data()
+    
+    data = get_entropies(data)
+    sims = create_table(data, key = 'Entropy')
+    
+    plot_median_IQR(sims,  key = 'Entropy', group_var = 'Selectivity', palette = 'crest')
+    # Save the figure
+    savefile = os.path.join(directory,'ThesisFigs','meta_noise_entropy.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    
+def plot_meta_noise_demo_counts(data=None):
+    if data == None:
+        data = load_meta_noise_data()
+    
+    sims = create_sims_table(get_similarities(data))
+    table = create_key_table(data, key = 'meta_selections')
+    
+    
+    
+    for c in table.keys():
+        
+        if 'demo' not in table[c].index:
+            table[c] = table[c].append(pd.Series(name = 'demo'))
+        
+        table[c] = table[c].transpose().loc[0:8]
+        table[c].fillna(0, inplace=True)
+        table[c]['Demo Fraction'] = table[c]['demo']/np.sum(table[c], axis=1)
+    
+    
+    conditions = list(table.keys())
+    
+    
+    
+    idx = 0
+    plot_frame = {}
+    for c in conditions:
+        for q in table[c].index:
+            entry = {}
+            entry['Query ID'] = q
+            entry['Condition'] = c
+            entry['Demo Fraction'] = table[c].loc[q,'Demo Fraction']
+            plot_frame[idx] = entry
+            idx = idx+1
+            
+    plot_frame = pd.DataFrame.from_dict(plot_frame, orient = 'index')
+    plot_frame['Selectivity'] = [extract_selectivity(c)[1] for c in plot_frame['Condition']]
+    fillval = np.max(plot_frame['Selectivity'])+1
+    plot_frame['Selectivity'] = plot_frame['Selectivity'].fillna(fillval)
+    
+    palette = create_meta_noise_palette(sims)
+    #conditions = ['Meta Uncertainty','Meta Uncertainty Pedagogical','Meta Info Gain','Meta Info Gain Pedagogical','Meta Model Change','Meta Model Change Pedagogical']
+    
+    # query_strats = ['Meta Uncertainty', 'Meta Info Gain', 'Meta Model Change']
+    # for q in query_strats:
+    #     conditions = [q, q+' Pedagogical']
+        
+    #     filtered_plot_frame = filter_sims(plot_frame, conditions)
+    #     from sns_defaults import rc
+    cmap = sns.color_palette('crest', as_cmap = True)
+    norm = mpl.colors.Normalize(np.min(plot_frame['Selectivity']), np.max(plot_frame['Selectivity']))
+    colormap = plt.cm.ScalarMappable(norm, cmap = cmap)
+    
+    with sns.plotting_context('poster', rc = rc):
+        plt.figure(figsize = [10,8])
+        sns.barplot(data = plot_frame, x = 'Query ID', y = 'Demo Fraction', hue = 'Selectivity', palette = palette, ci = None)
+        plt.legend(fontsize=18)
+        ax = plt.gca()
+        ax.get_legend().remove()
+        cbar = plt.colorbar(colormap, label = 'Selectivity')
+        cbar.ax.set_yticks([-4,-2,0,2,4,6])
+        cbar.ax.set_yticklabels(['-4','-2','0','2','4','inf'])
+        
+        
+        #q_string = q.replace(' ','_')
+    savefile = os.path.join(directory, 'ThesisFigs', f'meta_noise_demo_counts.png')
+    plt.savefig(savefile, dpi = 500, bbox_inches = 'tight')
+    # #savefile = 
+    return plot_frame
+    
+    
+    
     
     
 

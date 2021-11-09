@@ -79,7 +79,7 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
 
         r0 = np.max(entropy_gains)
         optimal_state = states[np.argmax(entropy_gains)]
-
+        
         # print(r0)
         # print([np.abs(r0-r)/r0 for r in candidate_entropy_gains])
 
@@ -435,5 +435,58 @@ def create_active_query_non_terminal(MDP, verbose = True):
 
     return {'trace': trace_slices, 'agent': eval_agent, 'desired_state': desired_state}
 
+
+
+
+
+
+
+
 if __name__ == '__main__':
+
     a=1
+
+    #
+
+    #
+    # ''' Filter the trajectories while retaining only the time stamps with changes '''
+    # #Import the traj Data
+    # raw_data = read_raw_data(params.raw_data_path)
+    #
+    # #Compress data
+    # compressed_data = compress_data(raw_data)
+    #
+    # #Write the compressed data to file
+    # write_data(params.compressed_data_path, compressed_data)
+    #
+    # ''' Perform Specification inference on the compressed data '''
+    # inference_path = 'bsi_batch.js'
+    # print('Executing Bayesian Specification Inference')
+    # infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {params.nSamples}  --nBurn {params.nBurn} --dataPath \'{params.compressed_data_path}\' --outPath \'{params.output_path}\' --nTraj {params.nTraj}'
+    # returnval = os.system(infer_command)
+    # if returnval:
+    #     Exception('Inference Error')
+    #
+    # '''Read specification and plot the formula probabilities'''
+    # specification = json.load(open(os.path.join(params.output_path, 'batch_posterior.json'),'r'))
+    # formulas = specification['support']
+    # probs = specification['probs']
+    #
+    # plt.bar(range(len(probs)), np.sort(probs)[::-1])
+    # f = lambda i: reduce( lambda memo, x: memo+x, np.flip(np.sort(probs),0)[0:i+1], 0)
+    # plt.plot(range(len(probs)), list(map(f, range(len(probs)))))
+    #
+    # ''' Compile an instance of PUNS and plan with 10000 training episode '''
+    # print('Compiling PUnS instance')
+    # MDP = CreateSpecMDP(os.path.join(params.output_path,'batch_posterior.json'), 0, 5)
+    # QAgent = QLearningAgent(MDP)
+    # print('Training PuNS instance')
+    # #QAgent.explore(episode_limit = 10000, action_limit = 100000, verbose=True)
+    #
+    # print('Evaluating trained agent')
+    # #eval_agent = ExplorerAgent(MDP, input_policy = QAgent.create_learned_softmax_policy(0.01))
+    # #eval_agent.explore(episode_limit=100)
+    # #col = eval_agent.visualize_exploration(prog='neato')
+    #
+    # print('Getting desired state for most informative query')
+    # desired_state, bread_crumb_states = identify_desired_state(MDP.specification_fsm)
