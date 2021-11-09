@@ -2,7 +2,7 @@ from numpy.random import binomial
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 import matplotlib.pyplot as plt
 import networkx as nx
-import params.auto_eval_params as global_params
+#import params.auto_eval_params as global_params
 import os
 
 def sample_subset(values, p = 0.5):

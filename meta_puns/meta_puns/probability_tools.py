@@ -1,7 +1,7 @@
 
 #from pedagogical_demo import *
 from puns.SpecificationFSMTools import *
-from formula_utils import *
+from meta_puns.formula_utils import *
 from scipy.stats import entropy
 from scipy.special import softmax
 from scipy.spatial.distance import jensenshannon

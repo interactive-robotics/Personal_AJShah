@@ -8,7 +8,7 @@ Created on Wed Aug 28 11:50:47 2019
 
 import json
 from os import listdir
-from probability_tools import *
+from meta_puns.probability_tools import *
 import os
 import pandas as pd
 import numpy as np
@@ -79,7 +79,7 @@ def identify_desired_state_topk(specification_fsm:SpecificationFSM, k = 3, eps =
 
         r0 = np.max(entropy_gains)
         optimal_state = states[np.argmax(entropy_gains)]
-        
+
         # print(r0)
         # print([np.abs(r0-r)/r0 for r in candidate_entropy_gains])
 
