@@ -26,7 +26,7 @@ TEXT_PORT = 20000
 
 #Write recoveries for all of them in the task file to recover from unexpected failures
 
-def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'info_gain', k = 2):
+def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'uncertainty_sampling', k = 2):
     clear_demonstrations()
     clear_logs()
     clear_dists()
@@ -119,6 +119,10 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
         # print('Demo expected gain: ', demonstration_entropy_gain)
 
         demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+        print('Demonstration Gain: ', demonstration_gain)
+        print('Query Gain: ', query_gain)
+
+        print('Demo' if demo else 'Query')
 
         if demo:
             #Ask for a demonstration
@@ -310,7 +314,7 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
     specfile = f'Distributions/dist_{i+1}.json'
     with open(specfile,'w') as file:
         json.dump(dist, file)
-    return dist, label, trace_slices, specfile
+    return dist, label, trace, specfile
 
 def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
     query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
