@@ -29,8 +29,9 @@ from tqdm import tqdm
 def identify_desired_state(specification_fsm:SpecificationFSM, non_terminal=True, query_type = 'uncertainty_sampling', debug = False):
 
     states = list(specification_fsm.states2id.keys()) if non_terminal else specification_fsm.terminal_states
-
+    print(query_type)
     if query_type == 'uncertainty_sampling':
+        print('here')
         rewards = [specification_fsm.reward_function(state, force_terminal=True) for state in states]
         desired_state = states[np.argmin(np.abs(rewards))]
     elif query_type == 'info_gain':

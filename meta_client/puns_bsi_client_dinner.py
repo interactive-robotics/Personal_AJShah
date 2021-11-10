@@ -37,7 +37,7 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
     trial_demonstration(n_trial = trials)
 
     #Initialize the specification with batch BSI
-    demos, dist, specfile = batch_bsi(n_demo = n_demo)
+    demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
 
     #Initialize the MDP
     n_form = len(dist['probs'])
@@ -139,47 +139,47 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     display_post()
     return
 
-    def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampoing', k=2):
-        clear_demonstrations()
-        clear_logs()
-        clear_dists()
-        diplay_welcome()
-        plt.pause(5)
+def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
+    clear_demonstrations()
+    clear_logs()
+    clear_dists()
+    display_welcome()
+    plt.pause(5)
 
-        #Initialize specification with batch BSI
-        demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
+    #Initialize specification with batch BSI
+    demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
 
-        #Initialize the MDP
-        n_form = len(dist['probs'])
-        print(f'Initial Batch distributions has {n_form} formulas')
-        specfile = 'Distributions/dist_0.json'
-        MDP = CreateSmallDinnerMDP(specfile)
+    #Initialize the MDP
+    n_form = len(dist['probs'])
+    print(f'Initial Batch distributions has {n_form} formulas')
+    specfile = 'Distributions/dist_0.json'
+    MDP = CreateSmallDinnerMDP(specfile)
 
-        #For each query opportunity, decide whether to ask for a demonstration or perform a query
-        for i in range(n_query):
+    #For each query opportunity, decide whether to ask for a demonstration or perform a query
+    for i in range(n_query):
 
-            # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
-            # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
-            # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
-            # print('Query expected gain: ', query_entropy_gain)
-            # print('Demo expected gain: ', demonstration_entropy_gain)
+        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
+        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
+        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+        # print('Query expected gain: ', query_entropy_gain)
+        # print('Demo expected gain: ', demonstration_entropy_gain)
 
-            demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+        demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
 
-            if demo:
-                #Ask for a demonstration
-                dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
-                MDP = CreateSmallDinnerMDP(specfile)
-            else:
-                #perform a query and ask for a label
-                dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
-                MDP = CreateSmallDinnerMDP(specfile)
+        if demo:
+            #Ask for a demonstration
+            dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
+            MDP = CreateSmallDinnerMDP(specfile)
+        else:
+            #perform a query and ask for a label
+            dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
+            MDP = CreateSmallDinnerMDP(specfile)
 
-        #perform the evaluation trials
-        post_demo(MDP, n_postdemo)
+    #perform the evaluation trials
+    post_demo(MDP, n_postdemo)
 
-        display_post()
-        return
+    display_post()
+    return
 
 
 
@@ -235,7 +235,7 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
                     print('Trying again, reset the table and reactivate the robot')
         else:
             #We need a physical demonstration
-            display_demo_intro(i, nDemo)
+            display_demo_intro(i, n_demo)
 
         trace = parse_demonstration(i) #The execution should pause at this step till demonstrations are recorded
         new_demo = {}
@@ -316,7 +316,7 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
         json.dump(dist, file)
     return dist, label, trace, specfile
 
-def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'info_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
     query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
     if meta_policy == 'info_gain':
         query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
