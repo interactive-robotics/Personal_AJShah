@@ -49,7 +49,7 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
     trial_demonstration(n_trial = trials)
 
     #Initialize the specification with batch BSI
-    demos, dist, specfile = batch_bsi(n_demo = n_demo)
+    demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
 
     #Initialize the MDP
     n_form = len(dist['probs'])
@@ -151,11 +151,19 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     display_post()
     return
 
+<<<<<<< HEAD
 def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampoing', k=2):
     clear_demonstrations()
     clear_logs()
     clear_dists()
     diplay_welcome()
+=======
+def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
+    clear_demonstrations()
+    clear_logs()
+    clear_dists()
+    display_welcome()
+>>>>>>> b88df3f55fbfb736baf3d1ff1245b9d1288dcc1f
     plt.pause(5)
 
     #Initialize specification with batch BSI
@@ -250,7 +258,7 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
                     print('Trying again, reset the table and reactivate the robot')
         else:
             #We need a physical demonstration
-            display_demo_intro(i, nDemo)
+            display_demo_intro(i, n_demo)
 
         trace = parse_demonstration(i) #The execution should pause at this step till demonstrations are recorded
         new_demo = {}
@@ -333,7 +341,7 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
         json.dump(dist, file)
     return dist, label, trace, specfile
 
-def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'info_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
     query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
     if meta_policy == 'info_gain':
         query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
