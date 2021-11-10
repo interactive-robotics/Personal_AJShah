@@ -8,7 +8,7 @@ import time
 from puns.Exploration import ExplorerAgent
 from puns.LearningAgents import QLearningAgent
 
-HOST = 'ajshah.mit.edu'
+HOST = 'localhost'
 PORT1 = 10050
 #PORT2 = 10000
 
