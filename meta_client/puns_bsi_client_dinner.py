@@ -151,19 +151,11 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     display_post()
     return
 
-<<<<<<< HEAD
-def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampoing', k=2):
-    clear_demonstrations()
-    clear_logs()
-    clear_dists()
-    diplay_welcome()
-=======
 def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
     clear_demonstrations()
     clear_logs()
     clear_dists()
     display_welcome()
->>>>>>> b88df3f55fbfb736baf3d1ff1245b9d1288dcc1f
     plt.pause(5)
 
     #Initialize specification with batch BSI
