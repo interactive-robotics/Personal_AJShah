@@ -1,26 +1,23 @@
-from probability_tools import *
-from query_selection import *
 from utils import *
-from pedagogical_demo import *
 import trial_config
 
-from formula_utils import *
+from meta_puns.probability_tools import *
+from meta_puns.query_selection import *
+from meta_puns.pedagogical_demo import *
+from meta_puns.formula_utils import *
+
 from puns.utils import CreateSpecMDP, Eventually, Order, Globally
 from puns.SpecificationMDP import *
 from puns.LearningAgents import QLearningAgent
 from puns.Exploration import ExplorerAgent
+
 from numpy.random import binomial
 import numpy as np
 from scipy.stats import entropy
+
 from matplotlib.backends.backend_pdf import PdfPages
 import dill
 import params.auto_eval_params as global_params
-import params.uncertainty_sampling_params as uncertainty_sampling_params
-import params.info_gain_params as info_gain_params
-import params.batch_params as batch_params
-import params.meta_params as meta_params
-import params.pedagogical_params as pedagogical_params
-import params.meta_pedagogical_params as meta_pedagogical_params
 import os
 import json
 from copy import deepcopy

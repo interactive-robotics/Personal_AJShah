@@ -1,1 +1,0 @@
-PlotState(SystemNode);
