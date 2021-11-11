@@ -10,7 +10,7 @@ import auto_eval_params as params
 import os
 import time
 
-HOST = 'ajshah.mit.edu'
+HOST = 'localhost'
 PORT = 10020
 
 def decode_data(data):
