@@ -20,6 +20,18 @@ scope = ['https://spreadsheets.google.com/feeds']
 cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope)
 gc = gspread.authorize(cred)
 
+#COMMAND_SERVER_SCRIPT_PATH = '/media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts' #For Robbie-yuri demo computer
+COMMAND_SERVER_SCRIPT_PATH = '/home/irg/puns_demo/LTL_specification_MDP_control_MDP' #For the 31 Franka computer
+#COMMAND_SERVER_SCRIPT_PATH = '' Make sure to set this whenever you are using a new computer. 
+# TODO: Perhaps we can set up a constants file where all these paths are stored
+
+SUBJECT_DATA_PATH = '/home/shen/TableSetup_SubjectData/' # For Robbit-yuri computer
+SUBJECT_DATA_PATH = '' # Set this for installation to any new computer
+
+
+AUTONOMOUS_SERVER = 'run_q_learning_agent_as_server_interactive.py'
+TELEOP_SERVER = 'run_teleop_agent_as_server.py'
+
 
 TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
@@ -37,7 +49,7 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
     trial_demonstration(n_trial = trials)
 
     #Initialize the specification with batch BSI
-    demos, dist, specfile = batch_bsi(n_demo = n_demo)
+    demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
 
     #Initialize the MDP
     n_form = len(dist['probs'])
@@ -139,47 +151,47 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     display_post()
     return
 
-    def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampoing', k=2):
-        clear_demonstrations()
-        clear_logs()
-        clear_dists()
-        diplay_welcome()
-        plt.pause(5)
+def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
+    clear_demonstrations()
+    clear_logs()
+    clear_dists()
+    display_welcome()
+    plt.pause(5)
 
-        #Initialize specification with batch BSI
-        demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
+    #Initialize specification with batch BSI
+    demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
 
-        #Initialize the MDP
-        n_form = len(dist['probs'])
-        print(f'Initial Batch distributions has {n_form} formulas')
-        specfile = 'Distributions/dist_0.json'
-        MDP = CreateSmallDinnerMDP(specfile)
+    #Initialize the MDP
+    n_form = len(dist['probs'])
+    print(f'Initial Batch distributions has {n_form} formulas')
+    specfile = 'Distributions/dist_0.json'
+    MDP = CreateSmallDinnerMDP(specfile)
 
-        #For each query opportunity, decide whether to ask for a demonstration or perform a query
-        for i in range(n_query):
+    #For each query opportunity, decide whether to ask for a demonstration or perform a query
+    for i in range(n_query):
 
-            # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
-            # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
-            # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
-            # print('Query expected gain: ', query_entropy_gain)
-            # print('Demo expected gain: ', demonstration_entropy_gain)
+        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
+        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
+        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+        # print('Query expected gain: ', query_entropy_gain)
+        # print('Demo expected gain: ', demonstration_entropy_gain)
 
-            demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+        demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
 
-            if demo:
-                #Ask for a demonstration
-                dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
-                MDP = CreateSmallDinnerMDP(specfile)
-            else:
-                #perform a query and ask for a label
-                dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
-                MDP = CreateSmallDinnerMDP(specfile)
+        if demo:
+            #Ask for a demonstration
+            dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
+            MDP = CreateSmallDinnerMDP(specfile)
+        else:
+            #perform a query and ask for a label
+            dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
+            MDP = CreateSmallDinnerMDP(specfile)
 
-        #perform the evaluation trials
-        post_demo(MDP, n_postdemo)
+    #perform the evaluation trials
+    post_demo(MDP, n_postdemo)
 
-        display_post()
-        return
+    display_post()
+    return
 
 
 
@@ -201,7 +213,8 @@ def post_demo(MDP, n_postdemo = 3):
         #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
         returnval = 1
         while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py demo {i}'
+            scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, AUTONOMOUS_SERVER)
+            command = f'python3 {scriptfile} demo {i}'
             returnval = os.system(command)
             if returnval:
                 print('Trying again: Reset the task and reactivate the robot')
@@ -212,7 +225,8 @@ def trial_demonstration(n_trial = 1):
     for i in range(n_trial):
         returnval = 1
         while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={1} --trial'
+            scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
+            command = f'python {scriptfile} --demo={i+1} --n-demo={1} --trial'
             returnval = os.system(command)
             if returnval:
                 print('Trying again, reset the table and reactivate robot')
@@ -229,13 +243,14 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
 
             returnval = 1
             while returnval:
-                command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={i+1} --n-demo={n_demo}'
+                scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
+                command = f'python {scriptfile} --demo={i+1} --n-demo={n_demo}'
                 returnval = os.system(command)
                 if returnval:
                     print('Trying again, reset the table and reactivate the robot')
         else:
             #We need a physical demonstration
-            display_demo_intro(i, nDemo)
+            display_demo_intro(i, n_demo)
 
         trace = parse_demonstration(i) #The execution should pause at this step till demonstrations are recorded
         new_demo = {}
@@ -260,7 +275,8 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
     returnval = 1
     while returnval:
-        command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query {i}'
+        scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, AUTONOMOUS_SERVER)
+        command = f'python {scriptfile} query {i}'
         returnval = os.system(command)
         if returnval:
             print('Trying again, reset the table and reactivate the robot')
@@ -291,7 +307,8 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
     demo_id = i + n_demo
     if demo_type == 'virtual':
         while returnval:
-            command = f'python3.6 /media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts/run_teleop_agent_as_server.py --demo={demo_id} --n-demo={n_demo}'
+            scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
+            command = f'python {scriptfile} --demo={demo_id} --n-demo={n_demo}'
             returnval = os.system(command)
             if returnval: print('Trying again, reset the table and reactivate the robot')
     else:
@@ -316,7 +333,7 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
         json.dump(dist, file)
     return dist, label, trace, specfile
 
-def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'information_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
+def run_meta_policy(spec_fsm:SpecificationFSM, meta_policy = 'info_gain', query_type = 'uncertainty_sampling', pedagogical = True, selectivity = None):
     query_state,_ = identify_desired_state(spec_fsm, query_type = query_type)
     if meta_policy == 'info_gain':
         query_gain = compute_expected_entropy_gain(query_state, spec_fsm)
@@ -358,7 +375,7 @@ def clear_dists():
         os.remove(f)
 
 def record_subject_data(subject_id, execution_type):
-    subjectpath = f'/home/shen/TableSetup_SubjectData/subject_{subject_id}_{execution_type}'
+    subjectpath = os.path.join(SUBJECT_DATA_PATH, f'subject_{subject_id}_{execution_type}')
     if os.path.exists(subjectpath):
         print(f'Data for subject {subject_id} already exists. Please provide alternate subject number. Provide the same subject number to override')
         a = input()
@@ -370,7 +387,7 @@ def record_subject_data(subject_id, execution_type):
             return
         subject_id = a
 
-    subjectpath = f'/home/shen/TableSetup_SubjectData/subject_{subject_id}_{execution_type}'
+    subjectpath = os.path.join(SUBJECT_DATA_PATH, f'subject_{subject_id}_{execution_type}')
     try:
         shutil.rmtree(subjectpath)
     except:
@@ -409,6 +426,7 @@ def parse_demonstration(demo_id = 0):
         with open(demofile,'r') as file:
             lines = file.readlines()
 
+        print([line for line in lines])
         state_tuples = [tuple(json.loads(line)) for line in lines]
         cmdp = SmallTableMDP()
         trace_slices = [cmdp.create_observations(t) for t in state_tuples]

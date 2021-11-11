@@ -12,7 +12,7 @@ import json
 import socket
 import time
 
-HOST = 'ajshah.mit.edu'
+HOST = 'localhost'
 PORT1 = 10050
 #PORT2 = 10000
 

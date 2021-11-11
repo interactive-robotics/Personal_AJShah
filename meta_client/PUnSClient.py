@@ -16,7 +16,7 @@ import os
 import time
 from puns.utils import CreateSampleMDP, CreateSpecMDP
 
-HOST = 'ajshah.mit.edu'
+HOST = 'localhost'
 PORT = 10020
 AgentPath = 'Agents'
 
