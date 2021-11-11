@@ -21,7 +21,7 @@ cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope
 gc = gspread.authorize(cred)
 
 #COMMAND_SERVER_SCRIPT_PATH = '/media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts' #For Robbie-yuri demo computer
-COMMAND_SERVER_SCRIPT_PATH = '/home/irg/puns_demo/LTL_specification_MDP_control_MDP' #For the 31 Franka computer
+COMMAND_SERVER_SCRIPT_PATH = '/home/irg/puns_demo/LTL_specification_MDP_control_MDP/scripts/' #For the 31 Franka computer
 #COMMAND_SERVER_SCRIPT_PATH = '' Make sure to set this whenever you are using a new computer. 
 # TODO: Perhaps we can set up a constants file where all these paths are stored
 
