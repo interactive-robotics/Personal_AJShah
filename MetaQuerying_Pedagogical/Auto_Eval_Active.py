@@ -25,6 +25,8 @@ from multiprocessing import Pool
 from itertools import repeat
 import re
 
+WEBPPL_SCRIPT = '/users/ashah137/node_modules/webppl/webppl' #Specifically for running on Oscar computing environment
+
 
 def apply(f,x):
     return f(**x)
@@ -156,7 +158,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
         initial_demos.append(trace)
 
     # Run Batch Inference
-    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
+    infer_command = f'{WEBPPL_SCRIPT} batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
     returnval = os.system(infer_command)
     if returnval: Exception('Inference Failure')
 
@@ -187,7 +189,7 @@ run_id = 1, ground_truth_formula = None, write_file = False, verbose=True):
 
         # Update the posterior distribution using active BSI
         if verbose: print(f'Trial {run_id}: Updating posterior after demo {n_demo+i+1}')
-        infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
+        infer_command = f'{WEBPPL_SCRIPT} active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
         returnval = os.system(infer_command)
         if returnval: Exception('Inference failure')
 
@@ -243,7 +245,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
         initial_demos.append(trace)
 
     # Run batch Inference
-    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
+    infer_command = f'{WEBPPL_SCRIPT} batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
     returnval = os.system(infer_command)
     if returnval: Exception('Inference Failure')
 
@@ -294,7 +296,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
 
             # Update the posterior distribution using active BSI
             if verbose: print(f'Trial {run_id}: Updating posterior after demo {n_demo+i+1}')
-            infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
+            infer_command = f'{WEBPPL_SCRIPT} active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
             returnval = os.system(infer_command)
             if returnval: Exception('Inference failure')
 
@@ -344,7 +346,7 @@ run_id = 1, ground_truth_formula = None, pedagogical=False, selectivity = None, 
 
             # Update the posterior distribution using active BSI
             if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
-            infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
+            infer_command = f'{WEBPPL_SCRIPT} active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
             returnval = os.system(infer_command)
             if returnval: Exception('Inference failure')
 
@@ -403,7 +405,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_
 
 
         # Run batch Inference
-        infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo + n_query}'
+        infer_command = f'{WEBPPL_SCRIPT} batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo + n_query}'
         returnval = os.system(infer_command)
         if returnval: Exception('Inference Failure')
 
@@ -428,7 +430,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_
 
             # Update the posterior distribution using active BSI
             if verbose: print(f'Trial {run_id}: Updating posterior after demo {n_demo+i+1}')
-            infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
+            infer_command = f'{WEBPPL_SCRIPT} active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
             returnval = os.system(infer_command)
             if returnval: Exception('Inference failure')
 
@@ -457,7 +459,7 @@ def run_batch_trial(directory, demo = 2, n_query = 4, run_id = 1, k = 3, ground_
             write_demo_query_data(new_traj, True, os.path.join(directory, params.compressed_data_path), filename = 'Demo')
 
         # Run batch Inference
-        infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo + n_query}'
+        infer_command = f'{WEBPPL_SCRIPT} batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo + n_query}'
         returnval = os.system(infer_command)
         if returnval: Exception('Inference Failure')
 
@@ -509,7 +511,7 @@ verbose = True, write_file = False):
         initial_demos.append(trace)
 
     # Run batch Inference
-    infer_command = f'webppl batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
+    infer_command = f'{WEBPPL_SCRIPT} batch_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory, params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nTraj {n_demo}'
     returnval = os.system(infer_command)
     if returnval: Exception('Inference Failure')
 
@@ -555,7 +557,7 @@ verbose = True, write_file = False):
 
         # Update the posterior distribution using active BSI
         if verbose: print(f'Trial {run_id}: Updating posterior after query {i+1}')
-        infer_command = f'webppl active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory,params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
+        infer_command = f'{WEBPPL_SCRIPT} active_bsi.js --require webppl-json --require webppl-fs -- --nSamples {global_params.n_samples}  --nBurn {global_params.n_burn} --dataPath \'{os.path.join(directory,params.compressed_data_path)}\' --outPath \'{os.path.join(directory, params.distributions_path)}\' --nQuery {i+1}'
         returnval = os.system(infer_command)
         if returnval: Exception('Inference failure')
 

@@ -3,7 +3,8 @@ import os
 n_waypoints = 5
 
 # File paths
-results_path = '/home/ajshah/Results/Results_5_with_baseline'
+#results_path = '/home/ajshah/Results/Results_5_with_baseline'
+results_path = '/users/ashah137/scratch/Results_Meta_Puns'
 
 #data_path = 'Batch_Data'
 raw_data_path = 'RawData'
