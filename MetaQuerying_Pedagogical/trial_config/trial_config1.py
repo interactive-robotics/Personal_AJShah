@@ -37,4 +37,4 @@ command_headers = [f'python active_trial.py',
 n_data = n_demo + n_query
 
 #result_path = f'/home/ajshah/Results/Test_Custom'
-result_path = f'/home/ajshah/Results/Results_15_Active6'
+result_path = f'/users/ashah137/scratch/Results_Meta_Puns'
