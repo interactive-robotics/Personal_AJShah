@@ -859,7 +859,7 @@ if __name__ == '__main__':
 
     from meta_analysis import *
 
-    for trial_config in [tf9]:
+    for trial_config in [tf1]:
         run_trial(trial_config)
         directory = trial_config.result_path
         data = read_data(directory)
