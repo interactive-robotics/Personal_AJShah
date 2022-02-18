@@ -25,7 +25,8 @@ from multiprocessing import Pool
 from itertools import repeat
 import re
 
-WEBPPL_SCRIPT = '/users/ashah137/node_modules/webppl/webppl' #Specifically for running on Oscar computing environment
+#WEBPPL_SCRIPT = '/users/ashah137/node_modules/webppl/webppl' #Specifically for running on Oscar computing environment
+WEBPPL_SCRIPT = 'webppl' # If running the code on a local machine
 
 
 def apply(f,x):
