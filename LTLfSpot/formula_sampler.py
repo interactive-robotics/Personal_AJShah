@@ -82,7 +82,7 @@ def ltl2digraph(formula):
         for edge in aut.out(state):
             edge_formula = spot.bdd_format_formula(bdd, edge.cond)
             out_state = edge.dst
-            nodelist[state][out_state] = edge_formula
+            nodelist[state][out_state] = {'edge_label': edge_formula}
     return nodelist
 
 
