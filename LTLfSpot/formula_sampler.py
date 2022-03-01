@@ -7,6 +7,12 @@ Created on Mon Feb 28 13:07:11 2022
 
 import numpy as np
 from ltlf2ltl_translator import *
+import sys
+try:
+    import spot
+except:
+    print('Spot not installed')
+
 
 global_props = ['thayer', 'waterman']
 locations = {}
@@ -62,6 +68,23 @@ def sample_formula(spot_str = True):
             return ltl_tree2string(formula)
     else:
         return formula
+
+
+def ltl2digraph(formula):
+    if spot not in sys.modules:
+        print('Spot not installed/imported')
+        return
+    
+    nodelist = defaultdict(dict)
+    bdd = aut.get_dict()
+
+    for state in range(aut.num_states()):
+        for edge in aut.out(state):
+            edge_formula = spot.bdd_format_formula(bdd, edge.cond)
+            out_state = edge.dst
+            nodelist[state][out_state] = edge_formula
+    return nodelist
+
 
 def sample_global_clauses():
     global_flip = np.random.binomial(1,0.5)
@@ -156,7 +179,7 @@ def order2constraints(linear_chains):
         return clauses
     else:
         return []
-        
+
                     
             
     
