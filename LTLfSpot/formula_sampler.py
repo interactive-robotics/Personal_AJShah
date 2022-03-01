@@ -71,7 +71,7 @@ def sample_formula(spot_str = True):
 
 
 def ltl2digraph(formula):
-    if spot not in sys.modules:
+    if 'spot' not in sys.modules:
         print('Spot not installed/imported')
         return
     
