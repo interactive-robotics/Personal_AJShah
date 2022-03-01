@@ -8,6 +8,7 @@ Created on Mon Feb 28 13:07:11 2022
 import numpy as np
 from ltlf2ltl_translator import *
 import sys
+from collections import defaultdict
 try:
     import spot
 except:
@@ -74,7 +75,7 @@ def ltl2digraph(formula):
     if 'spot' not in sys.modules:
         print('Spot not installed/imported')
         return
-    
+    aut = spot.translate(formula, 'BA', 'complete')
     nodelist = defaultdict(dict)
     bdd = aut.get_dict()
 
@@ -82,7 +83,7 @@ def ltl2digraph(formula):
         for edge in aut.out(state):
             edge_formula = spot.bdd_format_formula(bdd, edge.cond)
             out_state = edge.dst
-            nodelist[state][out_state] = edge_formula
+            nodelist[state][out_state] = {'edge_label': edge_formula}
     return nodelist
 
 
