@@ -38,7 +38,7 @@ def ltl_tree2string(formula):
     string
     Spot compatible LTL formula string
     """
-    
+    #print(formula)
     if not CheckSpecialSyntax(formula, SpecialSyntax)[0]:
         print('Invalid Formula, Check LTL syntax. Note this translator only supports, X, F, G, U temporal operators')
         return ''
