@@ -91,7 +91,7 @@ def ltl2digraph(formula):
     
     rejecting_states = []
     for state in dfa.nodes:
-        if state not in accepting_states and len(paths_to_accepting_states(dfa, state, accepting_states)):
+        if state not in accepting_states and len(paths_to_accepting_states(dfa, state, accepting_states)) == 0:
             rejecting_states.append(state)
     
     return dfa, accepting_states, rejecting_states
