@@ -13,6 +13,7 @@ try:
     import spot
 except:
     print('Spot not installed')
+import networkx as nx
 
 
 global_props = ['thayer', 'waterman']
@@ -78,13 +79,22 @@ def ltl2digraph(formula):
     aut = spot.translate(formula, 'BA', 'complete')
     nodelist = defaultdict(dict)
     bdd = aut.get_dict()
+    
+    accepting_states = [state for state in range(aut.num_states()) if aut.state_is_accepting(state)]
 
     for state in range(aut.num_states()):
         for edge in aut.out(state):
             edge_formula = spot.bdd_format_formula(bdd, edge.cond)
             out_state = edge.dst
             nodelist[state][out_state] = {'edge_label': edge_formula}
-    return nodelist
+    dfa = nx.DiGraph(nodelist)
+    
+    rejecting_states = []
+    for state in dfa.nodes:
+        if state not in accepting_states and len(paths_to_accepting_states(dfa, state, accepting_states)):
+            rejecting_states.append(state)
+    
+    return dfa, accepting_states, rejecting_states
 
 
 def sample_global_clauses():
@@ -180,6 +190,13 @@ def order2constraints(linear_chains):
         return clauses
     else:
         return []
+
+def paths_to_accepting_states(dfa, state, accepting_states):
+    
+    paths = []
+    for acc_state in accepting_states:
+        paths.extend(list(nx.algorithms.all_simple_paths(dfa,state,acc_state)))
+    return paths
 
                     
             
