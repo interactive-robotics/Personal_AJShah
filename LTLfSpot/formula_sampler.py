@@ -22,12 +22,32 @@ locations['thayer'] = ['store','cafe']
 locations['waterman'] = ['bank']
 
 def preferred_path_length(formula):
-    a=1
+    
     
     
 def failure_paths(formula):
     a=1
     
+
+def get_feasible_paths(dfa, paths):
+    feasible_paths = []
+    edge_paths = map(nx.utils.pairwise, paths)
+    for path in edge_paths:
+        is_valid_path = True
+        
+        for start_node, end_node in path:
+            formula = dfa.get_edge_data(start_node, end_node)['edge_label']
+            if '&' in formula and '|' not in formula:
+                true_ap = 0
+                for prop in formula.split('&'):
+                    if '~' not in prop:
+                        true_ap = true_ap + 1
+                if true_ap > 1:
+                    is_valid_path = False
+                    break
+        if is_valid_path:
+            feasible_paths.append(path)
+    return feasible_paths
 
 def sample_formula(spot_str = True):
     
