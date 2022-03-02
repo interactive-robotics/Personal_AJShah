@@ -21,6 +21,13 @@ locations = {}
 locations['thayer'] = ['store','cafe']
 locations['waterman'] = ['bank']
 
+def preferred_path_length(formula):
+    
+    
+def failure_paths(formula):
+    a=1
+    
+
 def sample_formula(spot_str = True):
     
     clauses = []
@@ -80,6 +87,7 @@ def ltl2digraph(formula):
     nodelist = defaultdict(dict)
     bdd = aut.get_dict()
     
+    initial_state = aut.get_initial_state_number()
     accepting_states = [state for state in range(aut.num_states()) if aut.state_is_accepting(state)]
 
     for state in range(aut.num_states()):
@@ -91,10 +99,11 @@ def ltl2digraph(formula):
     
     rejecting_states = []
     for state in dfa.nodes:
+
         if state not in accepting_states and len(paths_to_accepting_states(dfa, state, accepting_states)) == 0:
             rejecting_states.append(state)
     
-    return dfa, accepting_states, rejecting_states
+    return dfa, accepting_states, rejecting_states, initial_state
 
 
 def sample_global_clauses():
