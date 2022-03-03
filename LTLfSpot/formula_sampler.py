@@ -22,16 +22,24 @@ locations['thayer'] = ['store','cafe']
 locations['waterman'] = ['bank']
 
 def preferred_path_length(formula):
-    
-    
+    preferred_path = get_preferred_path(formula)
+    return len(preferred_path)
     
 def failure_paths(formula):
-    a=1
+    dfa, accepting_states, rejecting_states, initial_state(formula)
+    failure_paths = nx.algorithms.all_simple_paths(dfa, initial_state, rejecting_states[0])
+    return len(failure_paths)
     
+    
+def get_preferred_path(formula):
+    dfa, accepting_states, rejecting_states, initial_state = ltl2digraph(formula)
+    simple_paths = nx.algorithms.all_simple_paths(dfa, initial_state, accepting_states[0])
+    feasible_paths = get_feasible_paths(dfa, simple_paths)
+    return feasible_paths[0]
 
 def get_feasible_paths(dfa, paths):
     feasible_paths = []
-    edge_paths = map(nx.utils.pairwise, paths)
+    #edge_paths = map(nx.utils.pairwise, paths)
     for path in edge_paths:
         is_valid_path = True
         
@@ -40,7 +48,7 @@ def get_feasible_paths(dfa, paths):
             if '&' in formula and '|' not in formula:
                 true_ap = 0
                 for prop in formula.split('&'):
-                    if '~' not in prop:
+                    if '!' not in prop:
                         true_ap = true_ap + 1
                 if true_ap > 1:
                     is_valid_path = False
