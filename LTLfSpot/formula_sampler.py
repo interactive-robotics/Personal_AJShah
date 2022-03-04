@@ -14,12 +14,17 @@ try:
 except:
     print('Spot not installed')
 import networkx as nx
+import sympy
 
 
 global_props = ['thayer', 'waterman']
 locations = {}
 locations['thayer'] = ['store','cafe']
 locations['waterman'] = ['bank']
+
+'''Key Functions'''
+
+#Given a formula get the lenght of the preffered path and number of failure paths
 
 def preferred_path_length(formula):
     preferred_path = get_preferred_path(formula)
@@ -29,33 +34,14 @@ def failure_paths(formula):
     dfa, accepting_states, rejecting_states, initial_state(formula)
     failure_paths = nx.algorithms.all_simple_paths(dfa, initial_state, rejecting_states[0])
     return len(failure_paths)
-    
-    
+
 def get_preferred_path(formula):
     dfa, accepting_states, rejecting_states, initial_state = ltl2digraph(formula)
     simple_paths = nx.algorithms.all_simple_paths(dfa, initial_state, accepting_states[0])
-    feasible_paths = get_feasible_paths(dfa, simple_paths)
+    feasible_paths = get_feasible_paths2(dfa, simple_paths)
     return feasible_paths[0]
 
-def get_feasible_paths(dfa, paths):
-    feasible_paths = []
-    #edge_paths = map(nx.utils.pairwise, paths)
-    for path in edge_paths:
-        is_valid_path = True
-        
-        for start_node, end_node in path:
-            formula = dfa.get_edge_data(start_node, end_node)['edge_label']
-            if '&' in formula and '|' not in formula:
-                true_ap = 0
-                for prop in formula.split('&'):
-                    if '!' not in prop:
-                        true_ap = true_ap + 1
-                if true_ap > 1:
-                    is_valid_path = False
-                    break
-        if is_valid_path:
-            feasible_paths.append(path)
-    return feasible_paths
+# Sample a random formula
 
 def sample_formula(spot_str = True):
     
@@ -107,6 +93,52 @@ def sample_formula(spot_str = True):
     else:
         return formula
 
+'''Automaton Analysis tools'''
+
+def get_edge_formula_distance(self_formula, edge_formula):
+    
+    self_formula = sympy.sympify(self_formula.replace('!','~'))
+    edge_formula = sympy.sympify(edge_formula.replace('!','~'))
+    self_models = sympy.logic.inference.satisfiable(self_formula, all_models = True)
+    edge_models = sympy.logic.inference.satisfiable(edge_formula, all_models = True)
+    
+    min_distances = [min([model_distance(m1,m2) for m1 in self_models]) for m2 in edge_models]
+    distance = min(min_distances)
+    
+    return distance
+
+def model_distance(m1, m2):
+    distance = 0
+    for prop in m2:
+        if prop in m1:
+            if m1[prop] != m2[prop]: distance = distance + 1
+    return distance
+
+def is_feasible_edge(dfa, start, end):
+    self_formula = dfa.get_edge_data(start, start)['edge_label'].replace('!','~')
+    edge_formula = dfa.get_edge_data(start, end)['edge_label'].replace('!','~')
+    #print(get_edge_formula_distance(self_formula, edge_formula))
+    if get_edge_formula_distance(self_formula, edge_formula) > 1:
+        return False
+    else:
+        return True
+    
+
+def get_feasible_paths2(dfa, paths):
+    feasible_paths = []
+    edge_paths = map(nx.utils.pairwise, paths)
+    edge_paths = [list(a) for a in edge_paths]
+    for path in edge_paths:
+        #print(path)
+        valid_path = True
+        for start, end in path:
+            self_formula = dfa.get_edge_data(start, start)['edge_label'].replace('!','~')
+            edge_formula = dfa.get_edge_data(start, end)['edge_label'].replace('!','~')
+            if get_edge_formula_distance(self_formula, edge_formula) > 1:
+                valid_path = False
+        if valid_path: feasible_paths.append(path)
+    return feasible_paths
+
 
 def ltl2digraph(formula):
     if 'spot' not in sys.modules:
@@ -134,6 +166,15 @@ def ltl2digraph(formula):
     
     return dfa, accepting_states, rejecting_states, initial_state
 
+def paths_to_accepting_states(dfa, state, accepting_states):
+    
+    paths = []
+    for acc_state in accepting_states:
+        paths.extend(list(nx.algorithms.all_simple_paths(dfa,state,acc_state)))
+    return paths
+
+
+''' Sampling Utility Functions'''
 
 def sample_global_clauses():
     global_flip = np.random.binomial(1,0.5)
@@ -229,12 +270,6 @@ def order2constraints(linear_chains):
     else:
         return []
 
-def paths_to_accepting_states(dfa, state, accepting_states):
-    
-    paths = []
-    for acc_state in accepting_states:
-        paths.extend(list(nx.algorithms.all_simple_paths(dfa,state,acc_state)))
-    return paths
 
                     
             
