@@ -28,6 +28,9 @@ locations['waterman'] = ['bank']
 
 def preferred_path_length(formula):
     preferred_path = get_preferred_path(formula)
+    if len(preferred_path) == 1:
+        if preferred_path[0][0] == preferred_path[0][1]: #We have sampled a safety LTL formula
+            return 0 
     return len(preferred_path)
     
 def failure_paths(formula):
@@ -37,6 +40,8 @@ def failure_paths(formula):
 
 def get_preferred_path(formula):
     dfa, accepting_states, rejecting_states, initial_state = ltl2digraph(formula)
+    if initial_state in accepting_states:
+        return [(initial_state,initial_state)]
     simple_paths = nx.algorithms.all_simple_paths(dfa, initial_state, accepting_states[0])
     feasible_paths = get_feasible_paths2(dfa, simple_paths)
     return feasible_paths[0]
