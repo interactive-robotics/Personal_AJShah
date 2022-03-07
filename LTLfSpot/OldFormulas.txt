@@ -1,0 +1,18 @@
+F bank
+F store
+F cafe
+G waterman & F bank
+waterman U bank
+G thayer & F store
+thayer U store
+!thayer U bank
+G !waterman & F store
+! waterman U store
+G !waterman & cafe
+G thayer & F(store & F cafe)
+G thayer & F(cafe & F store)
+G !waterman & F(cafe & F store)
+F store & F bank & F cafe
+F store & ! cafe U bank & ! store U cafe
+F (store & F (cafe & F bank))
+thayer U store & ! store U cafe & F bank
