@@ -11,6 +11,9 @@ import sys
 def print_hello(rank, size, name):
   msg = "Hello World! I am process {0} of {1} on {2}.\n"
   sys.stdout.write(msg.format(rank, size, name))
+  
+def test_mpi_executor(n_cores = 48):
+    
 
 if __name__ == "__main__":
   size = MPI.COMM_WORLD.Get_size()
