@@ -16,9 +16,10 @@ def print_hello(rank, size, name):
   sys.stdout.write(msg.format(rank, size, name))
   
 def test_mpi_executor(n_cores = 48):
-    commands = [f'python run_single_test.py']
+    commands = [f'python run_single_test.py {i}' for i in range(n_cores)]
+    print(commands)
     with MPIPoolExecutor(max_workers = n_cores) as executor:
-        retvals = executor.pool(os.system, commands)
+        retvals = executor.map(os.system, commands)
     retvals = list(retvals)
     return retvals
     
