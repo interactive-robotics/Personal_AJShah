@@ -33,6 +33,9 @@ def mpi_test():
 def dist_test_func(i):
     rank = MPI.COMM_WORLD.Get_rank()
     name = MPI.Get_processor_name()
+    import numpy as np
+    a = np.eye(2)
+    print(a)
     print(f'Waiting for 10 seconds. Executing on {name} process {rank}')
     return 0
     
