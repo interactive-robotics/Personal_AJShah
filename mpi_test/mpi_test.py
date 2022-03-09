@@ -42,11 +42,18 @@ def mpi_test_pool(n_cores = 16):
     return retvals
     
 
+def mpi_test_pool2(n_cores=16):
+    commands = [f'python run_single_test.py {i}' for i in range(n_cores)]
+    with MPIPoolExecutor(max_workers=n_cores) as pool:
+        retvals = pool.map(os.system, commands)
+    return retvals
+        
+
 if __name__ == "__main__":
     
     mpi_test()
-    mpi_test_pool()
-    
+    #mpi_test_pool()
+    mpi_test_pool2()
     '''
     start = time.time()
     n_cores = 32
