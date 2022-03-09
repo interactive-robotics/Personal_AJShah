@@ -26,6 +26,12 @@ def test_mpi_executor(n_cores = 48):
 
 if __name__ == "__main__":
     start = time.time()
-    retvals = test_mpi_executor(32)
+    n_cores = 32
+    commands = [f'python run_single_test.py {i}' for i in range(n_cores)]
+    print(commands)
+    with MPIPoolExecutor(max_workers = n_cores) as executor:
+        retvals = executor.map(os.system, commands)
+    retvals = list(retvals)
+    #return retvals
     end = time.time()
     print('Time elapsed: ', end-start)
