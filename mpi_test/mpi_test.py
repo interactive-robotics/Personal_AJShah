@@ -22,9 +22,20 @@ def test_mpi_executor(n_cores = 48):
         retvals = executor.map(os.system, commands)
     retvals = list(retvals)
     return retvals
+
+def mpi_test():
+    size = MPI.COMM_WORLD.Get_size()
+    rank = MPI.COMM_WORLD.Get_rank()
+    name = MPI.Get_processor_name()
+    print_hello(rank, size, name)
     
 
 if __name__ == "__main__":
+    
+    
+    mpi_test()
+    
+    '''
     start = time.time()
     n_cores = 32
     commands = [f'python run_single_test.py {i}' for i in range(n_cores)]
@@ -35,3 +46,4 @@ if __name__ == "__main__":
     #return retvals
     end = time.time()
     print('Time elapsed: ', end-start)
+    '''
