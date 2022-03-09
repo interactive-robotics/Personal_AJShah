@@ -1,0 +1,465 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 4355975
+##  Job Name : mpi_test.sh
+##  Nodelist : node[1306-1307,1309-1310]
+##      CPUs : 32
+##  Mem/Node : 4096 MB
+## Directory : /gpfs/home/ashah137/Github/Personal_AJShah/mpi_test
+##   Started : Wed Mar  9 13:41:32 EST 2022
+###############################################################################
+module: loading 'anaconda/2020.02'
+module: anaconda: "See https://docs.ccv.brown.edu/oscar/software/anaconda for potential issues on VNC and batch jobs"
+module: loading 'mpi/openmpi_4.0.5_gcc_10.2_slurm20'
+module: mpi: To use: module load gcc/10.2 cuda/11.1.1 (for cuda support)
+module: loading 'gcc/10.2'
+module: gcc: "Note: loading the gcc module overrides the gcc version on the system.  If you want to revert to the version of gcc provided by the OS, unload the gcc module."
+module: loading 'cuda/11.1.1'
+module: cuda: To use: module load gcc/10.2
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 3 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 7 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 2 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 4 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 1 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 30 of 32 on node1310.oscar.ccv.brown.edu.
+Hello World! I am process 6 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 28 of 32 on node1310.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 25 of 32 on node1310.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 9 of 32 on node1307.oscar.ccv.brown.edu.
+Hello World! I am process 29 of 32 on node1310.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 11 of 32 on node1307.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 12 of 32 on node1307.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 13 of 32 on node1307.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 27 of 32 on node1310.oscar.ccv.brown.edu.
+Hello World! I am process 15 of 32 on node1307.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 26 of 32 on node1310.oscar.ccv.brown.edu.
+Hello World! I am process 24 of 32 on node1310.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 14 of 32 on node1307.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 0 of 32 on node1306.oscar.ccv.brown.edu.
+Hello World! I am process 5 of 32 on node1306.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 10 of 32 on node1307.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 8 of 32 on node1307.oscar.ccv.brown.edu.
+Hello World! I am process 31 of 32 on node1310.oscar.ccv.brown.edu.
+Hello World! I am process 16 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 17 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 18 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 19 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 20 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 21 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 22 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+
+Hello World! I am process 23 of 32 on node1309.oscar.ccv.brown.edu.
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 290, in _manager_spawn
+    comm = serialized(client_spawn)(pyexe, pyargs, nprocs, info)
+  File "/users/ashah137/anaconda/lpopl/lib/python3.7/site-packages/mpi4py/futures/_lib.py", line 901, in client_spawn
+    comm = MPI.COMM_SELF.Spawn(python_exe, args, max_workers, info)
+  File "mpi4py/MPI/Comm.pyx", line 1931, in mpi4py.MPI.Intracomm.Spawn
+mpi4py.MPI.Exception: MPI_ERR_SPAWN: could not spawn processes
+

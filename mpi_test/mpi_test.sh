@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -n 32
-#SBATCH -N 2
+
 #SBATCH --mem=4G
 
 module load anaconda/2020.02

@@ -1,0 +1,34 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 4356178
+##  Job Name : mpi_test.sh
+##  Nodelist : node[1323-1324,1326-1327]
+##      CPUs : 32
+##  Mem/Node : 4096 MB
+## Directory : /gpfs/home/ashah137/Github/Personal_AJShah/mpi_test
+##   Started : Wed Mar  9 13:45:31 EST 2022
+###############################################################################
+module: loading 'anaconda/2020.02'
+module: anaconda: "See https://docs.ccv.brown.edu/oscar/software/anaconda for potential issues on VNC and batch jobs"
+module: loading 'mpi/openmpi_4.0.5_gcc_10.2_slurm20'
+module: mpi: To use: module load gcc/10.2 cuda/11.1.1 (for cuda support)
+module: loading 'gcc/10.2'
+module: gcc: "Note: loading the gcc module overrides the gcc version on the system.  If you want to revert to the version of gcc provided by the OS, unload the gcc module."
+module: loading 'cuda/11.1.1'
+module: cuda: To use: module load gcc/10.2
+Hello World! I am process 0 of 32 on node1323.oscar.ccv.brown.edu.
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
+Waiting for 10 seconds. Executing on {name} process {rank}
