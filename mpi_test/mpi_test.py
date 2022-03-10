@@ -38,6 +38,13 @@ def dist_test_func(i):
     print(a)
     print(f'Waiting for 10 seconds. Executing on {name} process {rank}')
     return 0
+
+def dist_test_func_args(i,j,k):
+    rank = MPI.COMM_WORLD.Get_rank()
+    name = MPI.Get_processor_name()
+    
+    print(f'My arguments were {i}, {j}, {k}')
+    return 0
     
 def mpi_test_pool(n_cores = 16):
     with MPIPoolExecutor(max_workers=n_cores) as pool:
@@ -49,6 +56,12 @@ def mpi_test_pool2(n_cores=16):
     commands = [f'python run_single_test.py {i}' for i in range(n_cores)]
     with MPIPoolExecutor(max_workers=n_cores) as pool:
         retvals = pool.map(os.system, commands)
+    return retvals
+
+def mpi_test_pool_args(n_cores = 16):
+    args = [('i','j','k')]*n_cores
+    with MPIPoolExecutor(max_workers = n_cores) as pool:
+        retvals = pool.starmap(dist_test_func_args, args)
     return retvals
         
 
