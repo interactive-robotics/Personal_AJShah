@@ -70,7 +70,7 @@ class runInteractiveDemoNoRobot():
         self.cur_state = tuple([0] * self.num_objs)
 
         #log_file_path = log_file_path + time.strftime("%y%m%d_%H%M%S",
-                                                      time.localtime())
+                                                      # time.localtime())
 
         # 0. Send a dummy message to initiate specification MDP.
         self.send_control_state(self.cur_state)

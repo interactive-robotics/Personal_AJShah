@@ -1,4 +1,5 @@
 import puns
+from IPython import embed
 from puns.utils import CreateSmallDinnerMDP,CreateDinnerMDP, CreateSmallDinnerMDP, Eventually, Order
 from puns.ControlMDP import SmallTableMDP
 from PUnSClient import *
@@ -152,7 +153,10 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     return
 
 def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
-    clear_demonstrations()
+    
+    # Shen 220601: we clear demos after Meta_demo.
+    # clear_demonstrations()
+    
     clear_logs()
     clear_dists()
     display_welcome()
@@ -191,6 +195,10 @@ def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selec
     post_demo(MDP, n_postdemo)
 
     display_post()
+    
+    # Shen 220601: we clear demos after Meta_demo.
+    clear_demonstrations()
+    
     return
 
 
@@ -234,7 +242,10 @@ def trial_demonstration(n_trial = 1):
 def batch_bsi(n_demo = 2, demo_type = 'virtual'):
     '''returns the demonstrations and the updated posterior distribution after running batch BSI on server'''
     '''Also writes the appropriate file record for the subject'''
-    clear_demonstrations()
+    
+    # Shen 220601: we clear demos after Meta_demo.
+    # clear_demonstrations()
+    
     demos = []
     for i in range(n_demo):
         #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
@@ -277,6 +288,8 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     while returnval:
         scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, AUTONOMOUS_SERVER)
         command = f'python {scriptfile} query {i}'
+        # python /home/irg/puns_demo/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query 0
+        print(command)
         returnval = os.system(command)
         if returnval:
             print('Trying again, reset the table and reactivate the robot')
@@ -433,10 +446,12 @@ def parse_demonstration(demo_id = 0):
         return trace_slices
 
     else:
-        print(f'Record demonstration {demo_id}')
-        print('Press Enter when demonstration is recorded')
-        input()
-        return parse_demonstration(demo_id)
+        # Shen: 220601: we don't allow waiting for demos in this script.
+        raise Exception("Please provide initial demos and run this again!")
+        # print(f'Record demonstration {demo_id}')
+        # print('Press Enter when demonstration is recorded')
+        # input()
+        # return parse_demonstration(demo_id)
 
 
 '''%%%%%%%% In Person UI and joystick helper functions %%%%%%%'''
