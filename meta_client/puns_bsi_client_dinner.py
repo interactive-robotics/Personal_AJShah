@@ -12,6 +12,7 @@ import os
 import inputs
 import shutil
 from gslides_utility import *
+import signal
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -224,7 +225,12 @@ def post_demo(MDP, n_postdemo = 3):
             scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, AUTONOMOUS_SERVER)
             command = f'python3 {scriptfile} demo {i}'
             returnval = os.system(command)
-            if returnval:
+
+            # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
+            if returnval == signal.SIGINT:
+                print("You just hit ctrl+c, so exit.")
+                exit()
+            elif returnval:
                 print('Trying again: Reset the task and reactivate the robot')
     return
 
@@ -236,7 +242,12 @@ def trial_demonstration(n_trial = 1):
             scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
             command = f'python {scriptfile} --demo={i+1} --n-demo={1} --trial'
             returnval = os.system(command)
-            if returnval:
+
+            # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
+            if returnval == signal.SIGINT:
+                print("You just hit ctrl+c, so exit.")
+                exit()
+            elif returnval:
                 print('Trying again, reset the table and reactivate robot')
 
 def batch_bsi(n_demo = 2, demo_type = 'virtual'):
@@ -257,7 +268,12 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
                 scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
                 command = f'python {scriptfile} --demo={i+1} --n-demo={n_demo}'
                 returnval = os.system(command)
-                if returnval:
+
+                # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
+                if returnval == signal.SIGINT:
+                    print("You just hit ctrl+c, so exit.")
+                    exit()
+                elif returnval:
                     print('Trying again, reset the table and reactivate the robot')
         else:
             #We need a physical demonstration
@@ -291,7 +307,12 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
         # python /home/irg/puns_demo/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query 0
         print(command)
         returnval = os.system(command)
-        if returnval:
+
+        # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
+        if returnval == signal.SIGINT:
+            print("You just hit ctrl+c, so exit.")
+            exit()
+        elif returnval:
             print('Trying again, reset the table and reactivate the robot')
 
     display_query_assessment()
@@ -323,7 +344,13 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
             scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
             command = f'python {scriptfile} --demo={demo_id} --n-demo={n_demo}'
             returnval = os.system(command)
-            if returnval: print('Trying again, reset the table and reactivate the robot')
+
+            # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
+            if returnval == signal.SIGINT:
+                print("You just hit ctrl+c, so exit.")
+                exit()
+            elif returnval:
+                print('Trying again, reset the table and reactivate the robot')
     else:
         display_demo_intro(demo_id, n_demo)
     trace = parse_demonstration(demo_id) #The execution should pause here till the demonstrations is recorded
