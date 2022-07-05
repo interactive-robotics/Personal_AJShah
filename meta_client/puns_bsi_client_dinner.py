@@ -23,7 +23,7 @@ cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope
 gc = gspread.authorize(cred)
 
 #COMMAND_SERVER_SCRIPT_PATH = '/media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts' #For Robbie-yuri demo computer
-COMMAND_SERVER_SCRIPT_PATH = '/home/irg/puns_demo/LTL_specification_MDP_control_MDP/scripts/' #For the 31 Franka computer
+COMMAND_SERVER_SCRIPT_PATH = '/home/panda1/puns_demo/LTL_specification_MDP_control_MDP/scripts/' #For the 31 Franka computer
 #COMMAND_SERVER_SCRIPT_PATH = '' Make sure to set this whenever you are using a new computer. 
 # TODO: Perhaps we can set up a constants file where all these paths are stored
 
@@ -240,7 +240,7 @@ def trial_demonstration(n_trial = 1):
         returnval = 1
         while returnval:
             scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
-            command = f'python {scriptfile} --demo={i+1} --n-demo={1} --trial'
+            command = f'python3 {scriptfile} --demo={i+1} --n-demo={1} --trial'
             returnval = os.system(command)
 
             # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
@@ -266,7 +266,7 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
             returnval = 1
             while returnval:
                 scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
-                command = f'python {scriptfile} --demo={i+1} --n-demo={n_demo}'
+                command = f'python3 {scriptfile} --demo={i+1} --n-demo={n_demo}'
                 returnval = os.system(command)
 
                 # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
@@ -303,8 +303,8 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     returnval = 1
     while returnval:
         scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, AUTONOMOUS_SERVER)
-        command = f'python {scriptfile} query {i}'
-        # python /home/irg/puns_demo/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query 0
+        command = f'python3 {scriptfile} query {i}'
+        # python /home/panda1/puns_demo/LTL_specification_MDP_control_MDP/scripts/run_q_learning_agent_as_server_interactive.py query 0
         print(command)
         returnval = os.system(command)
 
@@ -342,7 +342,7 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
     if demo_type == 'virtual':
         while returnval:
             scriptfile = os.path.join(COMMAND_SERVER_SCRIPT_PATH, TELEOP_SERVER)
-            command = f'python {scriptfile} --demo={demo_id} --n-demo={n_demo}'
+            command = f'python3 {scriptfile} --demo={demo_id} --n-demo={n_demo}'
             returnval = os.system(command)
 
             # 220629: Shen added this, so that the script can be killed by ctrl+c, based on https://stackoverflow.com/questions/42693527/stop-an-infinite-while-loop-repeatedly-invoking-os-system
