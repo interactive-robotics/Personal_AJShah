@@ -3,10 +3,11 @@
 import math, copy, argparse, os, yaml, sys, time
 from catkin.find_in_workspaces import find_in_workspaces
 import socket, re
-from tqdm import tqdm
+import rospy
 
 server_address_observation = ('localhost', 10000)
 server_address_action = ('localhost',10001)
+server_address_start_end = ('localhost', 10002)
 num_steps = 1
 
 DEBUG = False
@@ -64,34 +65,19 @@ class runInteractiveDemoNoRobot():
             if tmp == -2:
                 break
 
-    def run(self, log_file_path):
+    def run(self):
         self.num_objs = len(self.objId_2_objName)
         self.num_steps = num_steps
         self.cur_state = tuple([0] * self.num_objs)
 
-        #log_file_path = log_file_path + time.strftime("%y%m%d_%H%M%S",
-                                                      # time.localtime())
-
         # 0. Send a dummy message to initiate specification MDP.
         self.send_control_state(self.cur_state)
-
-        time_log = []
 
         while True:
             # 1. Receive the action from specification MDP.
             control_action = self.receive_control_action()
             if DEBUG:
                 print("Received control_action=" + str(control_action))
-
-            time_log_iteration = {}
-            if log_file_path != "":
-                time_log_iteration[
-                    "cur_state_before_executing_control_action"] = list(
-                        self.cur_state)
-                time_log_iteration["control_action"] = control_action
-                if control_action != -1:
-                    time_log_iteration["object_name"] = self.objId_2_objName[
-                        control_action]
 
             if control_action == -1:
                 if DEBUG:
@@ -114,12 +100,6 @@ class runInteractiveDemoNoRobot():
                 cur_state_tmp[control_action] = 1
                 debug_msg = "success"
             self.cur_state = tuple(cur_state_tmp)
-
-            if log_file_path != "":
-                time_log_iteration["debug_msg"] = debug_msg
-                time_log.append(time_log_iteration)
-                #with open(log_file_path + ".yaml", 'w') as outfile:
-                #    yaml.dump(time_log, outfile, default_flow_style=False)
 
             # 3. Send the new control state back to
             # the specification MDP.
@@ -191,42 +171,65 @@ class runInteractiveDemoNoRobot():
         return control_action
 
 
+def receive_starting_ending_signal():
+    # In run_q_learning_agent_as_server_interactive.py, we send 1 to run_interactive_demo.py to start it. In Meta_Demo.py, we send 2 to run_interactive_demo.py to end it.
+    sock_start_end = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print('Starting up on %s port %s' % server_address_start_end)
+    # https://stackoverflow.com/questions/7354476/python-socket-object-accept-time-out
+    sock_start_end.settimeout(1200) 
+    # Bind the socket to the port
+    sock_start_end.bind(server_address_start_end)
+    # Listen for incoming connections
+    sock_start_end.listen(1)
+    
+    signal = None
+
+    # Wait for a connection
+    print('[receive_starting_ending_signal] Waiting for a connection')
+    connection, client_address = sock_start_end.accept()
+    try:
+        print('[receive_starting_ending_signal] Connection from', client_address)
+        # We need to concatenate the series of messages and
+        # remove the b from "b'string'".
+        response = ""
+
+        # Receive the data in small chunks and retransmit it
+        while True:
+            data = connection.recv(16)
+            print('[receive_starting_ending_signal] Received "%s"' % data)
+            if data:
+                response += data.decode("utf-8")
+                print('[receive_starting_ending_signal] Sending data back to the client: ' + response)
+                connection.sendall(data)
+            else:
+                print('[receive_starting_ending_signal] No more data from', client_address)
+                break
+
+        print("[receive_starting_ending_signal] response=[" + str(response) + "]")
+        assert (response[0] == "#" and response[-1] == "#")
+        result = re.search("#(.*)#", response)
+        signal_str = result.group(1)
+        signal = int(signal_str)
+    finally:
+        print("[receive_starting_ending_signal] Clean up the connection")
+        connection.close()
+        sock_start_end.close()
+    return signal
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Pickup and Place multiple objects while "\
-                "interacting with a specification MDP")
+    # https://github.com/shenlirobot/table_setup/blob/museum/scripts/run_interactive_demo.py
+    count = 0
+    while not rospy.is_shutdown():
+        rospy.logwarn("\n\n\nWaiting for starting signal")
+        starting_ending_signal = receive_starting_ending_signal()
+        rospy.logwarn("Received starting_ending_signal=" + str(starting_ending_signal))
+        assert starting_ending_signal in [1,2]
+        if starting_ending_signal == 2:
+            break
 
-    parser.add_argument(
-        "-fn",
-        dest="log_file_name",
-        default="",
-        type=str,
-        help="log_file_name")
-    parser.add_argument(
-        "-itr",
-        dest="num_iteration",
-        default=1,
-        type=int,
-        help="num_iteration")
+        d = runInteractiveDemoNoRobot()
+        d.run()
+        d.close_sock()
 
-    args = parser.parse_args()
-    num_iteration = int(args.num_iteration)
-    assert (num_iteration > 0)
-    #log_file_name = args.log_file_name
-    #log_path = find_in_workspaces(
-    #    search_dirs=['share'],
-    #    project="table_setup",
-    #    path='logs',
-    #    first_match_only=True)[0]
-    log_file_path = 'log.txt'
-    print("log_file_path=", log_file_path)
-
-    d = runInteractiveDemoNoRobot()
-    for i in tqdm(range(num_iteration)):
-        #print('checking connection')
-        #d.check_connection()
-        #print('connection verified')
-        d.run(log_file_path=log_file_path + "_" + str(i) + "_")
-    d.close_sock()
-
-    print("\nDone")
+        print("\nDone")
+    print("ALL DONE!")
