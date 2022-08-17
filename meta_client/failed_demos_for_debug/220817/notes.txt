@@ -1,0 +1,46 @@
+This is for Shen and Ankit's email on 220817 with title <question about puns>:
+
+-------------------------
+Hi Ankit:
+
+I ran into a problem of puns today and could not figure it out. Could you take a look when you get time?
+
+I recorded 3 initial demos, as attached, and then when running Meta_Demo.py, I got this message: (I tried to check the code but could not figure out. The weird thing is that the error message does not seem deterministic. Sometimes it happens and sometimes it does not. Could you help check why?)
+
+['[0, 0, 0, 0, 0]\n', '[1, 0, 0, 0, 0]\n', '[1, 0, 0, 0, 1]\n', '[1, 0, 0, 1, 1]\n', '[0, 1, 0, 1, 1]\n', '[0, 0, 1, 1, 1]\n']
+@[DinnerPlate=0, SmallPlate=0, Bowl=0, Knife=0, Fork=0, ]
+['[0, 0, 0, 0, 0]\n', '[0, 0, 0, 0, 1]\n', '[1, 0, 0, 0, 1]\n', '[1, 0, 0, 1, 1]\n', '[0, 1, 0, 1, 1]\n', '[0, 0, 1, 1, 1]\n']
+@[DinnerPlate=0, SmallPlate=0, Bowl=0, Knife=0, Fork=0, ]
+['[0, 0, 0, 0, 0]\n', '[0, 0, 0, 0, 1]\n', '[1, 0, 0, 0, 1]\n', '[0, 1, 0, 0, 1]\n', '[0, 1, 0, 1, 1]\n', '[0, 0, 1, 1, 1]\n']
+@[DinnerPlate=0, SmallPlate=0, Bowl=0, Knife=0, Fork=0, ]
+Sending Demonstration Data
+Awaiting Reply ...
+Distribution Received
+
+Initial Batch distributions has 502 formulas
+@[DinnerPlate=0, SmallPlate=0, Bowl=0, Knife=0, Fork=0, ]
+/home/panda1/.local/lib/python3.8/site-packages/scipy/spatial/distance.py:1304: RuntimeWarning: invalid value encountered in sqrt
+  return np.sqrt(js / 2.0)
+100%|██████████████████████████████████████████| 502/502 [00:00<00:00, 552.94it/s]
+Traceback (most recent call last):
+  File "Meta_Demo.py", line 13, in <module>
+    Meta_demo(n_demo = 3, n_query = 1, n_postdemo = 1)
+  File "/home/panda1/puns_demo/Personal_AJShah/meta_client/puns_bsi_client_dinner.py", line 188, in Meta_demo
+    dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
+  File "/home/panda1/puns_demo/Personal_AJShah/meta_client/puns_bsi_client_dinner.py", line 356, in incremental_demo_update
+    trace = parse_demonstration(demo_id) #The execution should pause here till the demonstrations is recorded
+  File "/home/panda1/puns_demo/Personal_AJShah/meta_client/puns_bsi_client_dinner.py", line 477, in parse_demonstration
+    raise Exception("Please provide initial demos and run this again!")
+Exception: Please provide initial demos and run this again!
+
+------------------------------------------
+HI Shen
+
+I think I have figured out the reason. The mode that you are operating the demo in is the meta-active learning mode where the robot selects whether the next data input from the teacher should be a query assessment or the teacher should provide an additional demonstration. It is happening non-deterministically because there are some combinations of the initial 3 demos where the robot wants to ask for an additional demonstration. And this error is being triggered whenever you require an additional demo. I see that you have modified the script to raise an exception rather than wait for the demo to be recorded.
+
+I think the simplest solution to this would be to always force the robot to be in active learning mode. You can do that in either of the following ways:
+Change line 13 of Meta_Demo.py from " Meta_demo(n_demo = 3, n_query = 1, n_postdemo = 1)" to " Active_run(n_demo = 3, n_query = 1, n_postdemo = 1)". However the "*_run" functions have additional data logging functionalities that are not needed for the exhibit.
+The alternative solution is to modify the Meta_demo function by forcing the meta policy to always choose demo. You can do that as follows:
+Comment out line 184
+add "demo = False"
+I would infact prefer if you copied over Meta_demo() into a new function Active_demo() with the changes mentioned in option 2 and then change line13 of Meta_Demo.py to that new function instead. Let me know what works for you
