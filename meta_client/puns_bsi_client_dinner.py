@@ -152,7 +152,7 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
 
     display_post()
     return
-# 220817: Based on Shen and Ankit's email about <question about puns>:
+# 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
 def Active_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
     
     # Shen 220601: we clear demos after Meta_demo.
@@ -181,7 +181,7 @@ def Active_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, sel
         # print('Query expected gain: ', query_entropy_gain)
         # print('Demo expected gain: ', demonstration_entropy_gain)
 
-        # 220817: Based on Shen and Ankit's email about <question about puns>:
+        # 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
         # demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
         demo = False
 

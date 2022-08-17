@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # Meta_demo(n_demo = 3, n_query = 1, n_postdemo = 1)
     #record_subject_data(subject_id,'Lab_Demo')
 
-    # 220817: Based on Shen and Ankit's email about <question about puns>:
+    # 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
     Active_demo(n_demo = 3, n_query = 1, n_postdemo = 1)
 
     # In run_q_learning_agent_as_server_interactive.py, we send 1 to run_interactive_demo.py to start it. In Meta_Demo.py, we send 2 to run_interactive_demo.py to end it.
