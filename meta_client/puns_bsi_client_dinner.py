@@ -11,20 +11,21 @@ import dill
 import os
 import inputs
 import shutil
-from gslides_utility import *
+#from gslides_utility import *
 import signal
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-scope = ['https://spreadsheets.google.com/feeds']
-cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope)
-gc = gspread.authorize(cred)
+### Removing authorization for google APIs
+#scope = ['https://spreadsheets.google.com/feeds']
+#cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope)
+#gc = gspread.authorize(cred)
 
 #COMMAND_SERVER_SCRIPT_PATH = '/media/homes/demo/puns_demo/src/LTL_specification_MDP_control_MDP/scripts' #For Robbie-yuri demo computer
 COMMAND_SERVER_SCRIPT_PATH = '/home/panda1/puns_demo/LTL_specification_MDP_control_MDP/scripts/' #For the 31 Franka computer
-#COMMAND_SERVER_SCRIPT_PATH = '' Make sure to set this whenever you are using a new computer. 
+#COMMAND_SERVER_SCRIPT_PATH = '' Make sure to set this whenever you are using a new computer.
 # TODO: Perhaps we can set up a constants file where all these paths are stored
 
 SUBJECT_DATA_PATH = '/home/shen/TableSetup_SubjectData/' # For Robbit-yuri computer
@@ -44,7 +45,7 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
     clear_demonstrations()
     clear_logs()
     clear_dists()
-    display_welcome()
+    #display_welcome()
     plt.pause(5)
 
     #Run the trial demonstrations
@@ -68,7 +69,7 @@ def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strate
     #perform the evaluation trials
     post_demo(MDP, n_postdemo)
 
-    display_post()
+    #display_post()
     return
 
 def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
@@ -76,7 +77,7 @@ def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     clear_demonstrations()
     clear_logs()
     clear_dists()
-    display_welcome()
+    #display_welcome()
     plt.pause(5)
 
     #Run the trial demonstrations
@@ -100,7 +101,7 @@ def Batch_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3):
     #perform the evaluation trials
     post_demo(MDP, n_postdemo)
 
-    display_post()
+    #display_post()
     return
 
 def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = True, selectivity = 0, meta_policy = 'info_gain', query_strategy = 'uncertainty_sampling', k = 2):
@@ -108,7 +109,7 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     clear_demonstrations()
     clear_logs()
     clear_dists()
-    display_welcome()
+    #display_welcome()
     plt.pause(5)
 
     #Run the trial demonstrations
@@ -150,17 +151,17 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
     #perform the evaluation trials
     post_demo(MDP, n_postdemo)
 
-    display_post()
+    #display_post()
     return
 # 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
 def Active_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
-    
+
     # Shen 220601: we clear demos after Meta_demo.
     # clear_demonstrations()
-    
+
     clear_logs()
     clear_dists()
-    display_welcome()
+    #display_welcome()
     plt.pause(5)
 
     #Initialize specification with batch BSI
@@ -174,12 +175,6 @@ def Active_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, sel
 
     #For each query opportunity, decide whether to ask for a demonstration or perform a query
     for i in range(n_query):
-
-        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
-        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
-        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
-        # print('Query expected gain: ', query_entropy_gain)
-        # print('Demo expected gain: ', demonstration_entropy_gain)
 
         # 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
         # demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
@@ -197,22 +192,22 @@ def Active_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, sel
     #perform the evaluation trials
     post_demo(MDP, n_postdemo)
 
-    display_post()
-    
+    #display_post()
+
     # Shen 220601: we clear demos after Meta_demo.
     clear_demonstrations()
-    
+
     return
 
 
 def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
-    
+
     # Shen 220601: we clear demos after Meta_demo.
     # clear_demonstrations()
-    
+
     clear_logs()
     clear_dists()
-    display_welcome()
+    #display_welcome()
     plt.pause(5)
 
     #Initialize specification with batch BSI
@@ -227,12 +222,6 @@ def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selec
     #For each query opportunity, decide whether to ask for a demonstration or perform a query
     for i in range(n_query):
 
-        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
-        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
-        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
-        # print('Query expected gain: ', query_entropy_gain)
-        # print('Demo expected gain: ', demonstration_entropy_gain)
-
         demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
 
         if demo:
@@ -245,13 +234,13 @@ def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selec
             MDP = CreateSmallDinnerMDP(specfile)
 
     #perform the evaluation trials
-    post_demo(MDP, n_postdemo)
+    #post_demo(MDP, n_postdemo)
 
-    display_post()
-    
+    #display_post()
+
     # Shen 220601: we clear demos after Meta_demo.
     clear_demonstrations()
-    
+
     return
 
 
@@ -259,17 +248,17 @@ def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selec
 ''' %%%%%% High level functions for remote experiments %%%%%%% '''
 
 def post_demo(MDP, n_postdemo = 3):
-    display_waiting()
+    #display_waiting()
     puns_request = create_puns_message(MDP, 'Puns')
     #agent = send_puns_request(puns_request)
     agent = send_puns_request(puns_request)
     print('Final Agent saved')
 
     #send_text('Task B: Start Testing Phase\n')
-    display_questionnaire()
+    #display_questionnaire()
     plt.pause(10)
     for i in range(n_postdemo):
-        display_eval_slide(i+1, n_postdemo)
+        #display_eval_slide(i+1, n_postdemo)
         #send_text(f'Testing phase\n\nShowing {i+1} of {n_postdemo} task executions')
         returnval = 1
         while returnval:
@@ -301,18 +290,18 @@ def trial_demonstration(n_trial = 1):
             elif returnval:
                 print('Trying again, reset the table and reactivate robot')
 
-def batch_bsi(n_demo = 2, demo_type = 'virtual'):
+def batch_bsi(n_demo = 2, demo_type = 'physical'):
     '''returns the demonstrations and the updated posterior distribution after running batch BSI on server'''
     '''Also writes the appropriate file record for the subject'''
-    
+
     # Shen 220601: we clear demos after Meta_demo.
     # clear_demonstrations()
-    
+
     demos = []
     for i in range(n_demo):
         #send_text(f'Learning Phase \n\n Collect demo {i+1} of {n_demo} \n\n Use the web form to teleoperate')
         #print('Press ENTER once complete')
-        if demo_type == 'virtual':
+        if demo_type == 'virtual': #Virtual demo type will no longer be supported once the google API dependency is removed
 
             returnval = 1
             while returnval:
@@ -326,9 +315,6 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
                     exit()
                 elif returnval:
                     print('Trying again, reset the table and reactivate the robot')
-        else:
-            #We need a physical demonstration
-            display_demo_intro(i, n_demo)
 
         trace = parse_demonstration(i) #The execution should pause at this step till demonstrations are recorded
         new_demo = {}
@@ -345,11 +331,11 @@ def batch_bsi(n_demo = 2, demo_type = 'virtual'):
     return demos, dist, specfile
 
 def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Active', k = 1):
-    display_waiting()
+    #display_waiting()
     puns_request = create_puns_message(MDP, query_type, query_strategy, k)
     agent = send_puns_request(puns_request)
 
-    display_query_waiting()
+    #display_query_waiting()
     #send_text('Learning Phase: Performing query demonstration.\n\n The robot is uncertain about this task execution \n\n Evaluate the robot\'s performance')
     returnval = 1
     while returnval:
@@ -366,12 +352,14 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
         elif returnval:
             print('Trying again, reset the table and reactivate the robot')
 
-    display_query_assessment()
+    #display_query_assessment()
     plt.pause(2)
 
-    label = get_latest_assessment()[0]
+    label = get_latest_assessment()[0] # TODO This needs to be changed with whatever new assessment method is decided upon
+    #You can replace this in the interim with the get_label_with_confirmation(), if you have an XBox controller.
+    #It might work with any USB based controller but you will have to edit the get_label_from_joystick() function.
     assessment = 'Acceptable' if label else 'Unacceptable'
-    display_query_confirmation(assessment)
+    #display_query_confirmation(assessment)
 
     with open(f'logs/query_{i}.pkl','rb') as file:
         trace_slices = dill.load(file)
@@ -403,7 +391,7 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
             elif returnval:
                 print('Trying again, reset the table and reactivate the robot')
     else:
-        display_demo_intro(demo_id, n_demo)
+        #display_demo_intro(demo_id, n_demo)
     trace = parse_demonstration(demo_id) #The execution should pause here till the demonstrations is recorded
     new_demo = {}
     new_demo['trace'] = trace
@@ -541,6 +529,10 @@ def send_text(text):
         s.sendall(text.encode())
 
 def get_label_from_joystick():
+    #This uses a 2 step process. You press one button to prime the system to receive the label on the next press.
+    #Then you use the next press to signal True or False
+    #If you use anything other than an XBox controller you will need to change 'BTN_START','BTN_TR','BTN_TL' to the correct map.
+    #For example to provide the label True, you will press start, then press the button for true
 
     if not inputs.devices.gamepads: Exception('Please connect joystick')
     #send_text('Press Start to provide label')
@@ -549,7 +541,7 @@ def get_label_from_joystick():
     while True:
         event = inputs.get_gamepad()[-1]
         if event.code == 'BTN_START' and event.state == 0:
-            send_text('Ready to receive input now ')
+            #send_text('Ready to receive input now ')
             break
     while True:
         event = inputs.get_gamepad()[-1]
@@ -563,19 +555,20 @@ def get_label_from_joystick():
     return label
 
 def get_label_with_confirmation():
-    send_text('Press Start to provide label')
+    # This function basically asks you to repeat the assessment twice and have it match.
+    print('Press Start to provide label')
     label1 = get_label_from_joystick()
-    send_text(f'Provided label: {label1} \n\n Press Start \n Then confirm label: {label1}')
+    print(f'Provided label: {label1} \n\n Press Start \n Then confirm label: {label1}')
     plt.pause(0.2)
     #send_text('Provide the same label again to continue')
     label2 = get_label_from_joystick()
 
     if label1 == label2:
-        send_text(f'Label confirmed')
+        print(f'Label confirmed')
         plt.pause(0.2)
         return label1
     else:
-        send_text('There was a label mismatch!\n\n Try Again when prompted')
+        print('There was a label mismatch!\n\n Try Again when prompted')
         plt.pause(5)
         return get_label_with_confirmation()
 
