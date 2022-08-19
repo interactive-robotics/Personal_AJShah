@@ -152,6 +152,58 @@ def Meta_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, pedagogical = 
 
     display_post()
     return
+# 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
+def Active_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
+    
+    # Shen 220601: we clear demos after Meta_demo.
+    # clear_demonstrations()
+    
+    clear_logs()
+    clear_dists()
+    display_welcome()
+    plt.pause(5)
+
+    #Initialize specification with batch BSI
+    demos, dist, specfile = batch_bsi(n_demo = n_demo, demo_type = 'physical')
+
+    #Initialize the MDP
+    n_form = len(dist['probs'])
+    print(f'Initial Batch distributions has {n_form} formulas')
+    specfile = 'Distributions/dist_0.json'
+    MDP = CreateSmallDinnerMDP(specfile)
+
+    #For each query opportunity, decide whether to ask for a demonstration or perform a query
+    for i in range(n_query):
+
+        # state, _ = identify_desired_state(MDP.specification_fsm, query_type = 'info_gain')
+        # query_entropy_gain = compute_expected_entropy_gain(state, MDP.specification_fsm)
+        # demonstration_entropy_gain = compute_expected_entropy_gain_demonstrations(MDP.specification_fsm)
+        # print('Query expected gain: ', query_entropy_gain)
+        # print('Demo expected gain: ', demonstration_entropy_gain)
+
+        # 220817: Based on Shen and Ankit's email about <question about puns> (see https://github.com/interactive-robotics/Personal_AJShah/blob/museum_demo/meta_client/failed_demos_for_debug/220817/notes.txt):
+        # demo, demonstration_gain, query_gain = run_meta_policy(MDP.specification_fsm, meta_policy, query_strategy, pedagogical, selectivity)
+        demo = False
+
+        if demo:
+            #Ask for a demonstration
+            dist, label, trace_slices, specfile = incremental_demo_update(i, MDP, n_demo, demo_type = 'physical')
+            MDP = CreateSmallDinnerMDP(specfile)
+        else:
+            #perform a query and ask for a label
+            dist, label, trace_slices, specfile = perform_active_query(i, MDP, query_type = 'Active', k=k)
+            MDP = CreateSmallDinnerMDP(specfile)
+
+    #perform the evaluation trials
+    post_demo(MDP, n_postdemo)
+
+    display_post()
+    
+    # Shen 220601: we clear demos after Meta_demo.
+    clear_demonstrations()
+    
+    return
+
 
 def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selectivity = 0, meta_policy = 'max_model_change', query_strategy = 'uncertainty_sampling', k=2):
     
@@ -201,7 +253,6 @@ def Meta_demo(n_demo = 3, n_query = 3, n_postdemo = 1, pedagogical = True, selec
     clear_demonstrations()
     
     return
-
 
 
 
