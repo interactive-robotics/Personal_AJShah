@@ -23,7 +23,12 @@ def train_puns(data):
     MDP.specification_fsm.reward_function = CreateReward(MDP.specification_fsm._partial_rewards)
     agent = QLearningAgent(MDP)
     print('Training Min regret agent')
-    agent.explore(episode_limit = 10000, action_limit = 100000, verbose = True)
+
+    # 220819: Shen: modify the 2nd phase training to 5000.
+    # For the final PUnS request, you can change the number of training episodes in the file root/meta_server/puns_server.py, in the train_puns() function, line 26 in the agent.explore() call arguments. We talked about this, and I think 5000 episodes should suffice. 
+    # If you want to change the number of episodes for the active query, you will have to change it in Personal_AJShah/meta_server/query_selection.py line 141 in create_active_query() function. For the demo, I think anything less than 5000 and you run the risk of the robot not learning the task correctly. 
+    agent.explore(episode_limit = 5000, action_limit = 100000, verbose = True)
+    # agent.explore(episode_limit = 10000, action_limit = 100000, verbose = True)
 
     eval_agent = ExplorerAgent(MDP, input_policy=agent.create_learned_softmax_policy(0.01))
     return eval_agent
