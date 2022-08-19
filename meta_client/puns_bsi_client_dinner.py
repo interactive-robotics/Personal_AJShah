@@ -382,6 +382,8 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     while not rospy.is_shutdown():
         if active_query_ROS_msg is None:
             rate.sleep()
+        elif active_query_ROS_msg not in ["Acceptable", "Unacceptable"]:
+            rate.sleep()
         else:
             break
     print("Receiving feedback="+str(active_query_ROS_msg))
@@ -390,7 +392,7 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     elif active_query_ROS_msg == "Unacceptable":
         label = False
     else:
-        raise Exception("Invalid active_query_ROS_msg!")
+        raise Exception("You should not be here!")
     active_query_ROS_msg = None
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>    
 
