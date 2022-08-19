@@ -18,6 +18,10 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
+import rospy
+from std_msgs.msg import String
+
+
 ### Removing authorization for google APIs
 #scope = ['https://spreadsheets.google.com/feeds']
 #cred = ServiceAccountCredentials.from_json_keyfile_name('GSheetsKey.json', scope)
@@ -40,6 +44,9 @@ TEXT_HOST = 'localhost'
 TEXT_PORT = 20000
 
 #Write recoveries for all of them in the task file to recover from unexpected failures
+
+active_query_ROS_msg = None
+
 
 def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'uncertainty_sampling', k = 2):
     clear_demonstrations()
@@ -331,6 +338,9 @@ def batch_bsi(n_demo = 2, demo_type = 'physical'):
     return demos, dist, specfile
 
 def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Active', k = 1):
+    # 220819: Shen: adding ROS interface for getting feedback.
+    global active_query_ROS_msg
+    
     #display_waiting()
     puns_request = create_puns_message(MDP, query_type, query_strategy, k)
     agent = send_puns_request(puns_request)
@@ -355,10 +365,37 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     #display_query_assessment()
     plt.pause(2)
 
-    label = get_latest_assessment()[0] # TODO This needs to be changed with whatever new assessment method is decided upon
+    # label = get_latest_assessment()[0] # TODO This needs to be changed with whatever new assessment method is decided upon
     #You can replace this in the interim with the get_label_with_confirmation(), if you have an XBox controller.
     #It might work with any USB based controller but you will have to edit the get_label_from_joystick() function.
+
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>    
+    # 220819: Shen: adding ROS interface for getting feedback.
+    # Acceptable: rostopic pub -1 /puns_feedback std_msgs/String "data: 'Acceptable'"
+    # Unacceptable: rostopic pub -1 /puns_feedback std_msgs/String "data: 'Unacceptable'"
+    # https://github.com/shenlirobot/museum_notes/blob/3cb847a5ce82d6bbc293f49c09045b1f806be22a/mit-museum/mitmuseum/demo_scripts/kitchentable/kt-feedback-y.sh#L18
+    # https://github.com/shenlirobot/museum_notes/blob/3cb847a5ce82d6bbc293f49c09045b1f806be22a/mit-museum/mitmuseum/demo_scripts/kitchentable/kt-feedback-n.sh#L18
+    rospy.Subscriber("/puns_feedback", String, perform_active_query_ROS_callback)
+    rate = rospy.Rate(10) # 10hz
+    rospy.sleep(1)
+    print("Waiting for feedback ...")
+    while not rospy.is_shutdown():
+        if active_query_ROS_msg is None:
+            rate.sleep()
+        else:
+            break
+    print("Receiving feedback="+str(active_query_ROS_msg))
+    if active_query_ROS_msg == "Acceptable":
+        label = True
+    elif active_query_ROS_msg == "Unacceptable":
+        label = False
+    else:
+        raise Exception("Invalid active_query_ROS_msg!")
+    active_query_ROS_msg = None
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>    
+
     assessment = 'Acceptable' if label else 'Unacceptable'
+    print(assessment + "\n\n")
     #display_query_confirmation(assessment)
 
     with open(f'logs/query_{i}.pkl','rb') as file:
@@ -373,6 +410,11 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     with open(specfile,'w') as file:
         json.dump(dist, file)
     return dist, label, trace_slices, specfile
+
+def perform_active_query_ROS_callback(data):
+    # 220819: Shen: adding ROS interface for getting feedback.
+    global active_query_ROS_msg
+    active_query_ROS_msg = data.data
 
 def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
     #Collect the demonstration
@@ -392,6 +434,8 @@ def incremental_demo_update(i, MDP, n_demo = 2, demo_type = 'virtual'):
                 print('Trying again, reset the table and reactivate the robot')
     else:
         #display_demo_intro(demo_id, n_demo)
+        # 220819: Shen:
+        raise Exception("You should not be here!")
     trace = parse_demonstration(demo_id) #The execution should pause here till the demonstrations is recorded
     new_demo = {}
     new_demo['trace'] = trace

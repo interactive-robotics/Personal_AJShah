@@ -3,10 +3,16 @@ import sys
 from IPython import embed
 import socket
 import re, argparse
+import rospy
+
 
 server_address_start_end = ('localhost', 10002)
 
 if __name__ == '__main__':
+    rospy.init_node('Meta_Demo', anonymous=True)
+    # Make sure sim time is working
+    while not rospy.Time.now():
+        pass
 
     subject_id = sys.argv[1]
     #active_trial_remote(nQuery=3, n_postdemo = 3, n_demo = 2)
