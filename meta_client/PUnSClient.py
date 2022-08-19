@@ -36,6 +36,10 @@ def send_puns_request(data, return_agent = True):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST,PORT))
         print('Connected to PUnS Server')
+        
+        # 220819: make it always wait
+        # https://docs.python.org/3/library/socket.html#socket.socket.settimeout
+        s.settimeout(None)
 
         s.sendall(dill.dumps(data))
         s.sendall(b'DONE')
