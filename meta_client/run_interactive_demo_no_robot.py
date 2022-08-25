@@ -5,9 +5,9 @@ from catkin.find_in_workspaces import find_in_workspaces
 import socket, re
 import rospy
 
-server_address_observation = ('localhost', 10000)
-server_address_action = ('localhost',10001)
-server_address_start_end = ('localhost', 10002)
+server_address_observation = ('localhost', 30000)
+server_address_action = ('localhost',30001)
+server_address_start_end = ('localhost', 20002)
 num_steps = 1
 
 DEBUG = False
