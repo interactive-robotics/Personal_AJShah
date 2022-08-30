@@ -379,6 +379,14 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     rate = rospy.Rate(10) # 10hz
     rospy.sleep(1)
     print("Waiting for feedback ...")
+
+    # 220830: Shen: adding ROS interface to publish a message when it is ready to take feedback. This message will be used by the GUI.
+    # You can test this message by:
+    # rostopic pub -1 /puns_feedback/status std_msgs/String "data: 'ready'"
+    status_pub=rospy.Publisher('/puns_feedback/status', String, queue_size=10)
+    rospy.sleep(1)
+    status_pub.publish("ready")
+
     while not rospy.is_shutdown():
         if active_query_ROS_msg is None:
             rate.sleep()
