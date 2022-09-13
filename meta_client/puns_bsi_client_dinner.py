@@ -47,6 +47,8 @@ TEXT_PORT = 20000
 
 active_query_ROS_msg = None
 
+readiness_output_dir='/home/panda1/MIT_demo_tmp'
+
 
 def Active_run(trials = 1, n_demo = 2, n_query = 3, n_postdemo = 3, query_strategy = 'uncertainty_sampling', k = 2):
     clear_demonstrations()
@@ -383,9 +385,13 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     # 220830: Shen: adding ROS interface to publish a message when it is ready to take feedback. This message will be used by the GUI.
     # You can test this message by:
     # rostopic pub -1 /puns_feedback/status std_msgs/String "data: 'ready'"
-    status_pub=rospy.Publisher('/puns_feedback/status', String, queue_size=10)
-    rospy.sleep(1)
-    status_pub.publish("ready")
+    # status_pub=rospy.Publisher('/puns_feedback/status', String, queue_size=10)
+    # rospy.sleep(1)
+    # status_pub.publish("ready")
+    # 220913: we replace ROS with written file
+    self.readiness_output_path = os.path.join(readiness_output_dir, 'puns_bsi_client_dinner_readiness.log')
+    with open(self.readiness_output_path, 'w') as f:
+        f.write('ready')
 
     while not rospy.is_shutdown():
         if active_query_ROS_msg is None:
