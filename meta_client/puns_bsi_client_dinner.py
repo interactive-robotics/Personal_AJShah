@@ -389,8 +389,8 @@ def perform_active_query(i, MDP, query_strategy = 'info_gain', query_type = 'Act
     # rospy.sleep(1)
     # status_pub.publish("ready")
     # 220913: we replace ROS with written file
-    self.readiness_output_path = os.path.join(readiness_output_dir, 'puns_bsi_client_dinner_readiness.log')
-    with open(self.readiness_output_path, 'w') as f:
+    readiness_output_path = os.path.join(readiness_output_dir, 'puns_bsi_client_dinner_readiness.log')
+    with open(readiness_output_path, 'w') as f:
         f.write('ready')
 
     while not rospy.is_shutdown():
