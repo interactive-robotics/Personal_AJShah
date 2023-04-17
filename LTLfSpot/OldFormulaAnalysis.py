@@ -27,5 +27,5 @@ if __name__ == '__main__':
         data.append(record)
     
     for r in data:
-        print(record['formula'],record['path_length'], record['fail_paths'])
+        print(r['formula'],r['path_length'], r['fail_paths'])
         

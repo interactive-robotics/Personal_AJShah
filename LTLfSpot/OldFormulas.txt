@@ -8,7 +8,7 @@ thayer U store
 !thayer U bank
 G !waterman & F store
 ! waterman U store
-G !waterman & cafe
+G !waterman & F cafe
 G thayer & F(store & F cafe)
 G thayer & F(cafe & F store)
 G !waterman & F(cafe & F store)

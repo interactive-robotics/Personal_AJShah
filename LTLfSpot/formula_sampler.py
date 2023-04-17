@@ -34,9 +34,12 @@ def preferred_path_length(formula):
     return len(preferred_path)
     
 def failure_paths(formula):
-    dfa, accepting_states, rejecting_states, initial_state(formula)
-    failure_paths = nx.algorithms.all_simple_paths(dfa, initial_state, rejecting_states[0])
-    return len(failure_paths)
+    dfa, accepting_states, rejecting_states, initial_state = ltl2digraph(formula)
+    if len(rejecting_states) > 0:
+        failure_paths = nx.algorithms.all_simple_paths(dfa, initial_state, rejecting_states[0])
+    else:
+        return 0
+    return len(list(failure_paths))
 
 def get_preferred_path(formula):
     dfa, accepting_states, rejecting_states, initial_state = ltl2digraph(formula)
@@ -100,6 +103,9 @@ def sample_formula(spot_str = True):
 
 '''Automaton Analysis tools'''
 
+def def_value():
+    return False
+
 def get_edge_formula_distance(self_formula, edge_formula):
     
     self_formula = sympy.sympify(self_formula.replace('!','~'))
@@ -112,11 +118,14 @@ def get_edge_formula_distance(self_formula, edge_formula):
     
     return distance
 
-def model_distance(m1, m2):
+def model_distance(m1, m2, default = defaultdict(def_value)):
     distance = 0
     for prop in m2:
         if prop in m1:
             if m1[prop] != m2[prop]: distance = distance + 1
+        else:
+            if m2[prop] != default[prop]: distance = distance + 1
+            
     return distance
 
 def is_feasible_edge(dfa, start, end):
