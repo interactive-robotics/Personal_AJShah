@@ -44,6 +44,7 @@ def simplify_puns(formula):
     """
     spot_formula = puns2spot(formula)
     spot_formula = spot.simplify(formula)
+    return spot2puns(spot_formula)
 
 
 def puns2spot(formula):
@@ -58,7 +59,7 @@ def puns2spot(formula):
     -------
     spot_formula: a spot.formula object that can be translated into any valid spot compatible syntax or automata.
     """
-    spot_string = ltl_tree2string(formula)
+    spot_string = _ltl_tree2string(formula)
     return spot.formula(spot_string)
 
 def spot2puns(spot_formula):
@@ -77,9 +78,9 @@ def spot2puns(spot_formula):
     """
     spot_formula = spot.unabbreviate(spot_formula,'RMW^e')
     prefix_string = spot_formula.__format__('l')
-    return ltl_string2tree(prefix_string)
+    return _ltl_string2tree(prefix_string)
 
-def ltl_string2tree(prefix_string):
+def _ltl_string2tree(prefix_string):
     """
     Converts a prefix formula string output by spot into an equivalent PUnS list representation.
 
@@ -119,7 +120,7 @@ def ltl_string2tree(prefix_string):
     return parse_elements(elements)[0]
     
 
-def ltl_tree2string(formula):
+def _ltl_tree2string(formula):
     
     """
     Translates an LTL formula in the tree format to a SPOT compatible string format.
