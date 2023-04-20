@@ -62,7 +62,7 @@ def puns2spot(formula):
     spot_string = _ltl_tree2string(formula)
     return spot.formula(spot_string)
 
-def spot2puns(spot_formula):
+def spot2puns(spot_formula:spot.formula):
     """
     Converts a spot formula into a list structure compatitible with the PUnS system
 
