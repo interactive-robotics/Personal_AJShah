@@ -19,6 +19,32 @@ op2symb['F'] = 'F'
 op2symb['G'] = 'G'
 op2symb['U'] = 'U'
 
+prefix2puns_opmap = {}
+prefix2puns_opmap['&'] = 'and'
+prefix2puns_opmap['|'] = 'or'
+prefix2puns_opmap['i'] = 'imp'
+prefix2puns_opmap['!'] = 'not'
+prefix2puns_opmap['U'] = 'U'
+prefix2puns_opmap['X'] = 'X'
+prefix2puns_opmap['F'] = 'F'
+prefix2puns_opmap['G'] = 'G'
+
+def simplify_puns(formula):
+    """
+    Simplifies an input PUnS formula into an rewritten PUnS formula
+
+    Parameters
+    ----------
+    formula : A valid PUns formula
+
+    Returns
+    -------
+    simplified_formula : A valid PUnS formula
+
+    """
+    spot_formula = puns2spot(formula)
+    spot_formula = spot.simplify(formula)
+
 
 def puns2spot(formula):
     """
@@ -49,7 +75,9 @@ def spot2puns(spot_formula):
     None.
 
     """
-    a=1
+    spot_formula = spot.unabbreviate(spot_formula,'RMW^e')
+    prefix_string = spot_formula.__format__('l')
+    return ltl_string2tree(prefix_string)
 
 def ltl_string2tree(prefix_string):
     """
@@ -62,10 +90,33 @@ def ltl_string2tree(prefix_string):
 
     Returns
     -------
-    None.
+    formula : list. Encodes the formula in PUnS valid format
+    
+    continuation : list of remaining non-inserted propositions after the formula has been returned
 
     """
-    a=1
+    literals = set(['t','f'])
+    binary_operators = set(['&','|','i','U','R'])
+    unary_operators = set(['X','F','G','!'])
+    
+    elements = prefix_string.replace('\"','').split(' ')
+    #formula = []
+    
+    def parse_elements(elements):
+        if len(elements) == 0:
+            return None
+        elif elements[0] not in literals | binary_operators | unary_operators:
+            return [elements[0]], elements[1:]
+        elif elements[0] in literals:
+            return (['true'], elements[1:]) if elements[0] == 't' else (['false'], elements[1:])
+        elif elements[0] in unary_operators:
+            f, continuation = parse_elements(elements[1:])
+            return ([prefix2puns_opmap[elements[0]], f], continuation)
+        elif elements[0] in binary_operators:
+            f1, continuation = parse_elements(elements[1:])
+            f2, continuation = parse_elements(continuation)
+            return ([prefix2puns_opmap[elements[0]], f1, f2],continuation)
+    return parse_elements(elements)[0]
     
 
 def ltl_tree2string(formula):
@@ -118,6 +169,6 @@ def ltl_tree2string(formula):
 
 if __name__ == '__main__':
     
-    formula2 = ['and',['a'],['b'],['c']]
+    a=1
     
    
