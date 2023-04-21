@@ -17,7 +17,7 @@ class TestProgression(unittest.TestCase):
         TraceSlice['P'] = False
         formula = ProgressSingleTimeStep(formula, TraceSlice)
         print('Testing single time step progression for G: Test 1')
-        self.assertEqual(formula, [False])
+        self.assertEqual(formula, ['false'])
 
     def test_SingleProgression_G2(self):
         formula = ['G',['P']]
@@ -41,7 +41,7 @@ class TestProgression(unittest.TestCase):
         TraceSlice['P'] = True
         formula = ProgressSingleTimeStep(formula, TraceSlice)
         print('Testing single time step progression for F: Test 2')
-        self.assertEqual(formula, [True])
+        self.assertEqual(formula, ['true'])
 
     def test_TraceProgression_U1(self):
         Trace = {}
@@ -51,7 +51,7 @@ class TestProgression(unittest.TestCase):
         Trace['length'] = 4
         formula = Progress(formula, Trace)
         print('Testing trace progression for U: Test 1')
-        self.assertEqual([True], formula)
+        self.assertEqual(['true'], formula)
 
     def test_TraceProgression_U2(self):
         Trace = {}
@@ -61,7 +61,7 @@ class TestProgression(unittest.TestCase):
         Trace['length'] = 5
         formula = Progress(formula, Trace)
         print('Testing trace progression for U: Test 2')
-        self.assertEqual(formula, [False])
+        self.assertEqual(formula, ['false'])
 
     def test_TraceProgression_U3(self):
         Trace = {}
@@ -81,7 +81,7 @@ class TestProgression(unittest.TestCase):
         Trace['length'] = 5
         formula = Progress(formula, Trace)
         print('Testing trace progression for U final value')
-        self.assertEqual(formula, [False])
+        self.assertEqual(formula, ['false'])
 
     def test_TraceProgression_G(self):
         formula = ['and', ['G',['T0']],['G',['T1']],['G',['T2']],['G',['T3']], ['G',['T4']]]
@@ -89,14 +89,14 @@ class TestProgression(unittest.TestCase):
         Signal['T1'][4] = False
         formula = Progress(formula, Signal)
         print('Testing trace progression for G: Test 1')
-        self.assertEqual(formula, [False])
+        self.assertEqual(formula, ['false'])
 
     def test_TraceProgression_G2(self):
         formula = ['and', ['G',['T0']],['G',['T1']],['G',['T2']],['G',['T3']], ['G',['T4']]]
         Signal = Constants.ImportSampleData(4)
         formula = Progress(formula, Signal)
         print('Testing trace progression for G: Test-2')
-        self.assertEqual(formula, [True])
+        self.assertEqual(formula, ['true'])
 
     def test_TraceProgression_GPartial(self):
         formula = ['and', ['G',['T0']],['G',['T1']],['G',['T2']],['G',['T3']], ['G',['T4']]]
@@ -113,7 +113,7 @@ class TestProgression(unittest.TestCase):
         Signal = Constants.ImportSampleData(4)
         formula = Progress(formula, Signal)
         print('Testing trace progression for F')
-        self.assertEqual(formula, [True])
+        self.assertEqual(formula, ['true'])
 
     def test_TraceProgression_FPartial(self):
         formula = ['and']
@@ -132,7 +132,7 @@ class TestProgression(unittest.TestCase):
         formula = ['F',['P']]
         formula = Progress(formula, trace)
         print('Testing endpoint progression for F: Test 1')
-        self.assertEqual(formula, [False])
+        self.assertEqual(formula, ['false'])
 
     def test_TraceProgression_F_endpoint2(self):
         trace = {}
@@ -141,7 +141,7 @@ class TestProgression(unittest.TestCase):
         formula = ['F',['P']]
         formula = Progress(formula, trace)
         print('Testing endpoint progression for F: tTest 2')
-        self.assertEqual(formula, [True])
+        self.assertEqual(formula, ['true'])
 
     def test_TraceProgression_G_endpoint(self):
         trace = {}
@@ -150,7 +150,7 @@ class TestProgression(unittest.TestCase):
         formula = ['G',['P']]
         formula = Progress(formula, trace)
         print('Testing endpoing for G: Test 1')
-        self.assertEqual(formula, [True])
+        self.assertEqual(formula, ['true'])
 
     def test_TraceProgression_G_endpoint2(self):
         trace = {}
@@ -159,7 +159,7 @@ class TestProgression(unittest.TestCase):
         formula = ['G',['P']]
         formula = Progress(formula, trace)
         print('Testing endpoing for G: Test 2')
-        self.assertEqual(formula, [False])
+        self.assertEqual(formula, ['false'])
 
 
 if __name__ == '__main__':

@@ -70,3 +70,13 @@ def get_all_truth_assignments(vocabulary):
         All_assignments.append(temp_assignment)
 
     return All_assignments
+
+
+if __name__ == '__main__':
+    
+    Trace = {}
+    formula = ['U',['a'],['b']]
+    Trace['a'] = [True, True, True, False]
+    Trace['b'] = [False, True, False, False]
+    Trace['length'] = 4
+    formula = Progress(formula, Trace, t = 3)

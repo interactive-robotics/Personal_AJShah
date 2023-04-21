@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from FormulaTools import *
+from puns.FormulaTools import *
 import spot
 
 SpecialSyntax = {}
@@ -43,7 +43,7 @@ def simplify_puns(formula):
 
     """
     spot_formula = puns2spot(formula)
-    spot_formula = spot.simplify(formula)
+    spot_formula = spot.simplify(spot_formula)
     return spot2puns(spot_formula)
 
 
@@ -152,19 +152,19 @@ def _ltl_tree2string(formula):
     
     elif formula[0] in special_ops:
         op = op2symb[formula[0]]
-        ltl_string = ltl_tree2string(formula[1])
+        ltl_string = _ltl_tree2string(formula[1])
         for subformula in formula[2::]:
-            ltl_string =  ltl_string + f' {op} '  + ltl_tree2string(subformula)
+            ltl_string =  ltl_string + f' {op} '  + _ltl_tree2string(subformula)
         ltl_string = '(' + ltl_string + ')'
         return ltl_string
     
     elif formula[0] in binary_ops:
         op = op2symb[formula[0]]
-        return '(' + ltl_tree2string(formula[1]) + ')' + f' {op} ' + '(' + ltl_tree2string(formula[2]) +')'
+        return '(' + _ltl_tree2string(formula[1]) + ')' + f' {op} ' + '(' + _ltl_tree2string(formula[2]) +')'
     
     elif formula[0] in unary_ops:
         op = op2symb[formula[0]]
-        return '(' + f' {op} ' + ltl_tree2string(formula[1]) + ')' 
+        return '(' + f' {op} ' + _ltl_tree2string(formula[1]) + ')' 
 
     
 

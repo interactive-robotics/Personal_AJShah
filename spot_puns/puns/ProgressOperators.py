@@ -8,13 +8,13 @@ Created on Thu Mar 14 11:48:37 2019
 
 import puns.Constants as Constants
 from puns.FormulaTools import *
-from puns.spot_wrapper import simplify
+from spot_wrapper import *
 
 
 def ProgressU(formula, SignalSlice, final):
     prog_phi1 = ProgressSingleTimeStep(formula[1], SignalSlice, final)
     prog_phi2 = ProgressSingleTimeStep(formula[2], SignalSlice, final)
-    return simplify_puns(['and',['or', prog_phi1,prog_phi2],formula])
+    return simplify_puns(['or',prog_phi2,['and', prog_phi1, formula]])
 
 
 def ProgressF(formula, SignalSlice, final):
@@ -38,14 +38,16 @@ def ProgressNot(formula, SignalSlice, final):
 
 
 def ProgressImp(formula, SignalSlice, final):
-    return simplify_puns(['imp', ProgressSingleTimeStep(formula[1], SignalSlice, final), ProgressSingleTimeStep(formula[2], SignalSlice final)])
+    prog_phi1 = ProgressSingleTimeStep(formula[1], SignalSlice, final)
+    prog_phi2 = ProgressSingleTimeStep(formula[2], SignalSlice, final)
+    return simplify_puns(['imp', prog_phi1, prog_phi2])
 
 def ProgressSingleTimeStep(formula, SignalSlice, final=False):
         #Deal with literals and atoms
     if IsAtom(formula[0]):
-        return [SignalSlice[formula[0]]]
-    if formula[0]=='true' or formula[0] == True: return [True]
-    if formula[0]=='false' or formula[0] == False: return [False]
+        return ['true'] if SignalSlice[formula[0]] else ['false']
+    if formula[0]=='true' or formula[0] == True: return ['true']
+    if formula[0]=='false' or formula[0] == False: return ['false']
 
     #Deal with logical operators
     if formula[0] == 'not': return ProgressNot(formula, SignalSlice, final)
@@ -64,6 +66,13 @@ def ProgressSingleTimeStep(formula, SignalSlice, final=False):
            return ProgressSingleTimeStep(formula[1], SignalSlice, final)
        if formula[0] == 'U':
            return ProgressSingleTimeStep(formula[2], SignalSlice, final)
+       
+
+if __name__ == '__main__':
+    formula = ['F',['p']]
+    TraceSlice = {}
+    TraceSlice['p'] = True
+    formula = ProgressSingleTimeStep(formula, TraceSlice)
 
 
 # def ProgressFinal(formula, SignalSlice):
