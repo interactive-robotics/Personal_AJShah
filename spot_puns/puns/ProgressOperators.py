@@ -43,6 +43,24 @@ def ProgressImp(formula, SignalSlice, final):
     return simplify_puns(['imp', prog_phi1, prog_phi2])
 
 def ProgressSingleTimeStep(formula, SignalSlice, final=False):
+    """
+    
+
+    Parameters
+    ----------
+    formula : list
+        DESCRIPTION.
+    SignalSlice : dict
+        DESCRIPTION.
+    final : Bool, optional
+        DESCRIPTION. The default is False.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
         #Deal with literals and atoms
     if IsAtom(formula[0]):
         return ['true'] if SignalSlice[formula[0]] else ['false']
