@@ -264,7 +264,7 @@ def IsTerminalState(state):
     return reduce(lambda memo, formula: memo and IsTerminal(json.loads(formula)), state, True)
 
 def IsTerminal(formula):
-    return json.dumps(formula) in set([json.dumps([True]),json.dumps([False])]) or IsSafe(formula)[0]
+    return json.dumps(formula) in set([json.dumps([True]),json.dumps([False]), json.dumps(['true']), json.dumps(['false'])]) or IsSafe(formula)[0]
 
 
 def FindTerminalStates_single_formula(progression_states):
@@ -279,8 +279,21 @@ def FindTerminalStates(progression_states):
     return terminal_states
 
 if __name__ == '__main__':
+    
+    formula = ['and',
+     ['G', ['not', ['W4']]],
+     ['G', ['not', ['W0']]],
+     ['F', ['W1']],
+     ['F', ['W2']],
+     ['F', ['W3']],
+     ['U', ['not', ['W2']], ['W1']],
+     ['U', ['not', ['W4']], ['W3']]]
+    
+    spec_fsm = SpecificationFSM([formula],[1])
 
-    '''Import Synthetic Domain data'''
+    
+    '''
+  
 
     PathToDataFile = ''
     SampleSignal = Constants.ImportSampleData(PathToDataFile)
@@ -293,3 +306,4 @@ if __name__ == '__main__':
 
     SMDP = SpecificationFSM(ProgressedFormulas_synth, Prob, reward_type = 'chance_constrained', risk_level = 0.2)
     G,colors = SMDP.visualize(colormap = 'reward')
+    '''

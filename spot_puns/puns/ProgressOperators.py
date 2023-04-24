@@ -8,7 +8,7 @@ Created on Thu Mar 14 11:48:37 2019
 
 import puns.Constants as Constants
 from puns.FormulaTools import *
-from spot_wrapper import *
+from puns.spot_wrapper import *
 
 
 def ProgressU(formula, SignalSlice, final):
@@ -26,11 +26,11 @@ def ProgressG(formula, SignalSlice, final):
 
 
 def ProgressAnd(formula, SignalSlice, final):
-    return simplify_puns(['and'].extend([ProgressSingleTimeStep(f, SignalSlice, final) for f in formula[1:]]))
+    return simplify_puns(['and'] + ([ProgressSingleTimeStep(f, SignalSlice, final) for f in formula[1:]]))
 
 
 def ProgressOr(formula, SignalSlice, final):
-    return simplify_puns(['or'].extend([ProgressSingleTimeStep(f, SignalSlice, final) for f in formula[1:]]))
+    return simplify_puns(['or'] + extend([ProgressSingleTimeStep(f, SignalSlice, final) for f in formula[1:]]))
 
 
 def ProgressNot(formula, SignalSlice, final):
@@ -44,21 +44,23 @@ def ProgressImp(formula, SignalSlice, final):
 
 def ProgressSingleTimeStep(formula, SignalSlice, final=False):
     """
-    
+    Progresses the LTL formula with the updated specification to hold till the end of the task given a single step truth value table of all
+    propositions.
 
     Parameters
     ----------
     formula : list
-        DESCRIPTION.
+        Valid LTL formula in the PUnS format.
     SignalSlice : dict
-        DESCRIPTION.
+        Dictionary of truth values of at least all propositions used to construct formula. keys are string identifiers of propositions and values
+        are Bools
     final : Bool, optional
-        DESCRIPTION. The default is False.
+        Indicates whether the signal slice indicates the last alphabet in the signal trace. The default is False.
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    list
+        A valid PUnS format formula.
 
     """
         #Deal with literals and atoms
@@ -87,9 +89,9 @@ def ProgressSingleTimeStep(formula, SignalSlice, final=False):
        
 
 if __name__ == '__main__':
-    formula = ['F',['p']]
-    TraceSlice = {}
-    TraceSlice['p'] = True
+    formula = ['and', ['G', ['not', ['W4']]], ['G', ['not', ['W0']]], ['F', ['W1']], ['F', ['W2']], ['F', ['W3']], ['U', ['not', ['W2']], ['W1']], ['U', ['not', ['W4']], ['W3']]]
+    TraceSlice = {'W0': True, 'W1': True, 'W2': True, 'W3': True, 'W4': True}
+    #TraceSlice['p'] = True
     formula = ProgressSingleTimeStep(formula, TraceSlice)
 
 

@@ -9,7 +9,7 @@ Created on Thu Mar 14 11:46:23 2019
 import puns.Constants as Constants
 import numpy.random as random
 import spot
-from .spot_wrapper import *
+#from puns.spot_wrapper import *
 
 
 def SampleFormula(depth, vocabulary):
@@ -166,19 +166,10 @@ def CheckSpecialSyntax(formula, special_syntax):
 
 
 def IsCoSafe(formula, engine = 'syntax'):
-    if engine == 'spot':
-        spot_formula = puns2spot(formula)
-        formula_type = spot.mp_class(formula)
-        return (True, formula) if formula_type in ['G','B'] else (False, formula)
-    else:
-        return CheckSpecialSyntax(formula, CoSafeSyntax)
+    return CheckSpecialSyntax(formula, CoSafeSyntax)
 
 
 def IsSafe(formula, engine = 'syntax'):
-    if engine == 'spot':
-        spot_formula = puns2spot(formula)
-        formula_type = spot.mp_class(formula)
-        return (True, formula) if formula_type == 'G' else (False, formula)
     return CheckSpecialSyntax(formula, SafeSyntax)
 
 
